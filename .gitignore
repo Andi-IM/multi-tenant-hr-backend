@@ -1,0 +1,33 @@
+# Dependencies
+node_modules
+.pnpm-debug.log
+
+# Build Outputs
+dist
+.next
+out
+build
+
+# Turborepo
+.turbo
+
+# Configuration/Environment
+.env
+.env.*
+!.env.example
+
+# IDEs
+.vscode
+.idea
+.DS_Store
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Database / Local Stores
+*.db
+*.sqlite
+prisma/migrations

@@ -1,0 +1,15 @@
+{
+  "name": "@jaga-id/company-b",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "echo \"Company B dev server not implemented yet\"",
+    "build": "echo \"Nothing to build\"",
+    "lint": "echo \"No linter set\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
