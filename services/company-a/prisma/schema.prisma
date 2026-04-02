@@ -1,13 +1,28 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Employee {
+  id                String       @id @default(auto()) @map("_id") @db.ObjectId
+  employeeId        String       @unique
+  fullName          String
+  companyId         String
+  joinDate          DateTime
+  status            String
+  workSchedule      WorkSchedule
+  timezone          String
+}
+
+type WorkSchedule {
+  shiftStart  String
+  shiftEnd    String
+  workingDays String[]
 }
