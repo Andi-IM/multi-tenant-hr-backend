@@ -1,8 +1,10 @@
 import 'dotenv/config';
-import web from './middleware/web';
+import app from './app.js';
 
-const port: number = process.env.PORT != null ? parseInt(process.env.PORT) : 3000;
+const port: number = process.env.PORT != null ? parseInt(process.env.PORT) : 3001;
 
-web.listen(port, () => {
-    console.log(`Company A Service Listen on port ${port}`)
-})
+app.listen(port, () => {
+  console.log(`🚀 Company A Service listening on port ${port}`);
+  console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`   Company ID: ${process.env.COMPANY_ID || 'A'}`);
+});
