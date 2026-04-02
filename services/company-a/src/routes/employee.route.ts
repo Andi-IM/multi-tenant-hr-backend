@@ -8,13 +8,49 @@ import type { AuthenticatedRequest } from '../types/auth.types.js';
 const router = Router();
 
 /**
- * POST /api/employees
- *
- * Pipeline:
- * 1. authenticateToken — verify JWT, attach user to req
- * 2. authorizeCompany — ensure user belongs to this company's service
- * 3. validate(createEmployeeSchema) — validate request body with Zod
- * 4. employeeController.create — business logic + response
+ * @openapi
+ * /api/employees:
+ *   post:
+ *     summary: Create a new employee
+ *     description: Adds a new employee to the database for the specified company. Access is restricted based on JWT companyId and the service's own companyId.
+ *     tags: [Employees]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Employee'
+ *     responses:
+ *       201:
+ *         description: Employee created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status: { type: string, example: success }
+ *                 message: { type: string, example: Employee created successfully }
+ *                 data: { $ref: '#/components/schemas/Employee' }
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Forbidden - cross-company access attempt
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       409:
+ *         description: Conflict - employeeId already exists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post(
   '/',

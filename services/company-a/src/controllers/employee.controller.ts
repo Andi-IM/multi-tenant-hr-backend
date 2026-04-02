@@ -33,7 +33,7 @@ export class EmployeeController {
         status: 'success',
         message: 'Employee created successfully',
         data: {
-          id: employee.id,
+          id: (employee as any)._id,
           employeeId: employee.employeeId,
           fullName: employee.fullName,
           companyId: employee.companyId,

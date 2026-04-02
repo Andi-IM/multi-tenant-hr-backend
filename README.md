@@ -9,15 +9,21 @@ The codebase is organized into workspaces using **pnpm** and coordinated using *
 *   `services/*`: Contains deployable microservices (e.g., `company-a`, `company-b`, `attendance`).
 *   `packages/*`: Contains shared configurations and libraries (e.g., TS config, ESLint config) to ensure consistency across services.
 
-## Rationale: Why Turborepo & pnpm?
+## Documentation & Design
 
-We chose **Turborepo** in combination with **pnpm** to orchestrate this monorepo for several key reasons:
+For a deep dive into our architectural decisions and data isolation strategies, refer to:
+- [**ARCHITECTURE.md**](./ARCHITECTURE.md): Explains the Layered Architecture, Dynamic Mongoose Multi-tenancy, and Rationale.
+- [**SRS.md**](./SRS.md): Software Requirements Specification.
 
-1.  **Strict Dependency Management (pnpm):** `pnpm` utilizes symlinks and a single global store, which is highly space-efficient and completely prevents "phantom dependencies" (where a service accidentally uses a package it didn't explicitly install). This brings robust stability to the monorepo.
-2.  **Blazing Fast Execution (pnpm + Turbo):** `pnpm` is extremely fast at installing packages.
-3.  **Efficient Caching (Turborepo):** Turborepo caches the outputs of builds and tests. If a service hasn't changed, Turborepo will replay the cached results instantly instead of re-running the task.
-4.  **Parallel Execution:** Turborepo schedules tasks (like `build` or `lint`) across all workspaces in parallel, maximizing CPU utilization.
-5.  **Simplified Developer Experience:** A single command (`pnpm run dev`) at the root can intelligently start the watch mode for all microservices simultaneously with clear, interleaved console output.
+## API Documentation (Swagger)
+
+Each service provides interactive Swagger UI documentation for testing and exploring the API.
+
+-   **Company A Service**: [http://localhost:3001/api-docs](http://localhost:3001/api-docs)
+-   **Attendance Service**: (Coming soon)
+
+> [!NOTE]
+> To use the Swagger UI for protected endpoints, you must obtain a valid JWT token (e.g., from a login endpoint or by running the test suite's token generator helper) and click the **Authorize** button.
 
 ## Setup & Installation
 

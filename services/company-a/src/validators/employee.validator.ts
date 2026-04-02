@@ -6,10 +6,10 @@ import { z } from 'zod';
  */
 const workScheduleSchema = z.object({
   startTime: z
-    .string({ required_error: 'startTime is required' })
+    .string({ message: 'startTime is required' })
     .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'startTime must be in HH:MM format (e.g., "09:00")'),
   endTime: z
-    .string({ required_error: 'endTime is required' })
+    .string({ message: 'endTime is required' })
     .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'endTime must be in HH:MM format (e.g., "17:00")'),
   workingDays: z
     .array(
@@ -35,24 +35,23 @@ const workScheduleSchema = z.object({
  */
 export const createEmployeeSchema = z.object({
   employeeId: z
-    .string({ required_error: 'employeeId is required' })
+    .string({ message: 'employeeId is required' })
     .min(1, 'employeeId cannot be empty'),
   fullName: z
-    .string({ required_error: 'fullName is required' })
+    .string({ message: 'fullName is required' })
     .min(2, 'fullName must be at least 2 characters'),
   companyId: z
-    .string({ required_error: 'companyId is required' })
+    .string({ message: 'companyId is required' })
     .min(1, 'companyId cannot be empty'),
   joinDate: z
-    .string({ required_error: 'joinDate is required' })
+    .string({ message: 'joinDate is required' })
     .datetime({ message: 'joinDate must be a valid ISO 8601 date string (e.g., "2025-01-15T00:00:00.000Z")' }),
   employmentStatus: z.enum(['ACTIVE', 'INACTIVE'], {
-    required_error: 'employmentStatus is required',
     message: 'employmentStatus must be either "ACTIVE" or "INACTIVE"',
   }),
   workSchedule: workScheduleSchema,
   timezone: z
-    .string({ required_error: 'timezone is required' })
+    .string({ message: 'timezone is required' })
     .min(1, 'timezone cannot be empty')
     .refine(
       (tz) => {

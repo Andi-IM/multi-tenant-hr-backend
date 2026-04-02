@@ -1,6 +1,9 @@
 import express, { type Application, type Request, type Response } from 'express';
 import routes from './routes/index.js';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger.config.js';
 import { errorHandler } from './middleware/error.middleware.js';
+
 
 /**
  * Express Application Configuration
@@ -26,6 +29,9 @@ app.get('/', (_req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+// --- API Documentation ---
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // --- API Routes ---
 app.use('/api', routes);
