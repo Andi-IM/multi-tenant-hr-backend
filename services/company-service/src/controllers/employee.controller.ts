@@ -95,6 +95,46 @@ export class EmployeeController {
       next(error);
     }
   }
+
+  /**
+   * GET /api/employees/:employeeId
+   *
+   * Retrieves detailed information for a single employee.
+   *
+   * @returns 200 OK with the employee data
+   */
+  async getById(
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const { employeeId } = req.params;
+      const employee = await employeeService.getEmployeeById(employeeId as string, COMPANY_ID);
+
+      res.status(200).json({
+        status: 'success',
+        data: {
+          id: (employee as any)._id,
+          employeeId: employee.employeeId,
+          fullName: employee.fullName,
+          companyId: employee.companyId,
+          joinDate: employee.joinDate,
+          employmentStatus: employee.status,
+          workSchedule: {
+            startTime: employee.workSchedule.shiftStart,
+            endTime: employee.workSchedule.shiftEnd,
+            workingDays: employee.workSchedule.workingDays,
+          },
+          timezone: employee.timezone,
+          createdAt: employee.createdAt,
+          updatedAt: employee.updatedAt,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 /** Singleton instance */

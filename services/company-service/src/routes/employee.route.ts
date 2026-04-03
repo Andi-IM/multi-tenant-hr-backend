@@ -144,4 +144,56 @@ router.patch(
   (req, res, next) => employeeController.update(req as AuthenticatedRequest, res, next),
 );
 
+/**
+ * @openapi
+ * /api/employees/{employeeId}:
+ *   get:
+ *     summary: Retrieve employee details
+ *     description: Returns the full profile of a single employee identified by their business-level employeeId. The query is scoped to the company database associated with the authenticated Admin's token, enforcing multi-tenant data isolation.
+ *     tags: [Employees]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: employeeId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The business-level employee identifier (e.g., "EMP-A-001")
+ *     responses:
+ *       200:
+ *         description: Employee details retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status: { type: string, example: success }
+ *                 data: { $ref: '#/components/schemas/Employee' }
+ *       401:
+ *         description: Unauthorized - missing or invalid token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Forbidden - cross-company access attempt
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Employee not found in this company's database
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get(
+  '/:employeeId',
+  authenticateToken as any,
+  authorizeCompany as any,
+  (req, res, next) => employeeController.getById(req as unknown as AuthenticatedRequest, res, next),
+);
+
 export default router;

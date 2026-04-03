@@ -312,3 +312,100 @@ describe('PATCH /api/employees/:employeeId', () => {
     expect(response.body.errors).toBeDefined();
   });
 });
+
+// ──────────────────────────────────────────────────────
+// GET /api/employees/:employeeId — Integration Tests
+// ──────────────────────────────────────────────────────
+
+describe('GET /api/employees/:employeeId', () => {
+  const validToken = generateTestToken({ companyId: 'A', role: 'ADMIN_HR' });
+
+  const mockEmployee = {
+    _id: 'mock-id',
+    employeeId: 'EMP-A-001',
+    fullName: 'Test Employee',
+    companyId: 'A',
+    joinDate: new Date('2025-01-15T00:00:00.000Z'),
+    status: 'ACTIVE',
+    workSchedule: {
+      shiftStart: '09:00',
+      shiftEnd: '17:00',
+      workingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+    },
+    timezone: 'Asia/Jakarta',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should return 200 with full employee details', async () => {
+    // @ts-ignore
+    vi.mocked(employeeRepository.findByEmployeeId).mockResolvedValue(mockEmployee);
+
+    const response = await request(app)
+      .get('/api/employees/EMP-A-001')
+      .set('Authorization', `Bearer ${validToken}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe('success');
+    expect(response.body.data).toBeDefined();
+    expect(response.body.data.employeeId).toBe('EMP-A-001');
+    expect(response.body.data.fullName).toBe('Test Employee');
+    expect(response.body.data.companyId).toBe('A');
+    expect(response.body.data.employmentStatus).toBe('ACTIVE');
+    expect(response.body.data.workSchedule).toEqual({
+      startTime: '09:00',
+      endTime: '17:00',
+      workingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+    });
+    expect(response.body.data.timezone).toBe('Asia/Jakarta');
+    expect(response.body.data.createdAt).toBeDefined();
+    expect(response.body.data.updatedAt).toBeDefined();
+  });
+
+  it('should return 401 if no token is provided', async () => {
+    const response = await request(app)
+      .get('/api/employees/EMP-A-001');
+
+    expect(response.status).toBe(401);
+    expect(response.body.message).toContain('Missing or malformed Authorization header');
+  });
+
+  it('should return 403 if admin is from another company', async () => {
+    const tokenB = generateTestToken({ companyId: 'B', role: 'ADMIN_HR' });
+
+    const response = await request(app)
+      .get('/api/employees/EMP-A-001')
+      .set('Authorization', `Bearer ${tokenB}`);
+
+    expect(response.status).toBe(403);
+    expect(response.body.message).toContain('Access denied');
+    expect(employeeRepository.findByEmployeeId).not.toHaveBeenCalled();
+  });
+
+  it('should return 404 if employee is not found', async () => {
+    vi.mocked(employeeRepository.findByEmployeeId).mockResolvedValue(null);
+
+    const response = await request(app)
+      .get('/api/employees/EMP-NONEXISTENT')
+      .set('Authorization', `Bearer ${validToken}`);
+
+    expect(response.status).toBe(404);
+    expect(response.body.message).toContain('not found');
+  });
+
+  it('should call findByEmployeeId with the correct company context', async () => {
+    // @ts-ignore
+    vi.mocked(employeeRepository.findByEmployeeId).mockResolvedValue(mockEmployee);
+
+    await request(app)
+      .get('/api/employees/EMP-A-001')
+      .set('Authorization', `Bearer ${validToken}`);
+
+    // Verifies tenant isolation: the service's COMPANY_ID ('A') is passed, not from the URL
+    expect(employeeRepository.findByEmployeeId).toHaveBeenCalledWith('A', 'EMP-A-001');
+  });
+});

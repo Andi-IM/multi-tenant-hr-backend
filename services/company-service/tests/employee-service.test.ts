@@ -7,6 +7,7 @@ vi.mock('../src/repositories/employee.repository.js', () => ({
   employeeRepository: {
     create: vi.fn(),
     updateByEmployeeId: vi.fn(),
+    findByEmployeeId: vi.fn(),
   },
 }));
 
@@ -268,5 +269,43 @@ describe('EmployeeService', () => {
     await expect(
       service.updateEmployee('EMP-A-001', { fullName: 'Test' }, 'A'),
     ).rejects.toThrow('Connection refused');
+  });
+
+  // ──────────────────────────────────────────────
+  // getEmployeeById tests
+  // ──────────────────────────────────────────────
+
+  it('should return employee when found by employeeId', async () => {
+    // @ts-ignore
+    vi.mocked(employeeRepository.findByEmployeeId).mockResolvedValue(mockExistingEmployee);
+
+    const result = await service.getEmployeeById('EMP-A-001', 'A');
+
+    expect(result).toEqual(mockExistingEmployee);
+    expect(employeeRepository.findByEmployeeId).toHaveBeenCalledWith('A', 'EMP-A-001');
+  });
+
+  it('should throw 404 when employee is not found by employeeId', async () => {
+    vi.mocked(employeeRepository.findByEmployeeId).mockResolvedValue(null);
+
+    await expect(
+      service.getEmployeeById('EMP-GHOST', 'A'),
+    ).rejects.toThrow(AppError);
+
+    await expect(
+      service.getEmployeeById('EMP-GHOST', 'A'),
+    ).rejects.toMatchObject({
+      statusCode: 404,
+      message: 'Employee with ID "EMP-GHOST" not found',
+    });
+  });
+
+  it('should re-throw unexpected database errors during getById', async () => {
+    const dbError = new Error('Read timeout');
+    vi.mocked(employeeRepository.findByEmployeeId).mockRejectedValue(dbError);
+
+    await expect(
+      service.getEmployeeById('EMP-A-001', 'A'),
+    ).rejects.toThrow('Read timeout');
   });
 });

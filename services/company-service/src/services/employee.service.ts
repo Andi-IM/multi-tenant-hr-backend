@@ -126,6 +126,33 @@ export class EmployeeService {
 
     return updated;
   }
+
+  /**
+   * Retrieve a single employee's details by their business-level employeeId.
+   *
+   * Data isolation is enforced by querying only the tenant database
+   * associated with the service's companyId — no cross-company lookup is possible.
+   *
+   * @param employeeId - Business-level employee identifier (from URL param)
+   * @param serviceCompanyId - The company identifier this service manages (from env)
+   * @returns Employee document
+   * @throws AppError(404) if employee not found in this company's database
+   */
+  async getEmployeeById(
+    employeeId: string,
+    serviceCompanyId: string,
+  ): Promise<IEmployeeDocument> {
+    const employee = await employeeRepository.findByEmployeeId(
+      serviceCompanyId,
+      employeeId,
+    );
+
+    if (!employee) {
+      throw AppError.notFound(`Employee with ID "${employeeId}" not found`);
+    }
+
+    return employee;
+  }
 }
 
 /** Singleton instance */
