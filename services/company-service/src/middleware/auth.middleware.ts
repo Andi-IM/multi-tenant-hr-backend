@@ -65,3 +65,26 @@ export function authorizeCompany(
 
   next();
 }
+
+/**
+ * Middleware: Authorize System Actor Access
+ *
+ * Ensures the authenticated user has the 'SYSTEM_ACTOR' role.
+ *
+ * Returns 403 if the user's role is not 'SYSTEM_ACTOR'.
+ */
+export function authorizeSystemActor(
+  req: AuthenticatedRequest,
+  _res: Response,
+  next: NextFunction,
+): void {
+  if (!req.user) {
+    throw AppError.unauthorized('Authentication required');
+  }
+
+  if (req.user.role !== 'SYSTEM_ACTOR') {
+    throw AppError.forbidden('Access denied: System Actor role required');
+  }
+
+  next();
+}

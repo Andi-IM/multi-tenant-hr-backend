@@ -3,7 +3,7 @@ import { type Request } from 'express';
 /**
  * Roles available in the system RBAC model.
  */
-export type UserRole = 'ADMIN_HR' | 'EMPLOYEE' | 'APPROVER';
+export type UserRole = 'ADMIN_HR' | 'EMPLOYEE' | 'APPROVER' | 'SYSTEM_ACTOR';
 
 /**
  * JWT token payload structure.

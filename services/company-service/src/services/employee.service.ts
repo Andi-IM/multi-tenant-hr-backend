@@ -262,6 +262,54 @@ export class EmployeeService {
 
     return updated;
   }
+
+  /**
+   * Internal Service-to-Service: Verify employee active status (REQ-V1).
+   *
+   * 1. Find the employee by employeeId in the tenant DB (REQ-V4).
+   * 2. If not found, throw AppError(404).
+   * 3. If found but status is not ACTIVE, throw AppError(403) with "Inactive" message.
+   * 4. If ACTIVE, return required data (REQ-V2).
+   *
+   * @param employeeId - Business-level employee identifier (from path)
+   * @param serviceCompanyId - The company identifier this service manages (from JWT/env)
+   * @returns Filtered employee data required for attendance calculation
+   */
+  async verifyEmployeeStatus(
+    employeeId: string,
+    serviceCompanyId: string,
+  ): Promise<{
+    employmentStatus: string;
+    workSchedule: {
+      startTime: string;
+      endTime: string;
+      workingDays: string[];
+    };
+    timezone: string;
+  }> {
+    const employee = await employeeRepository.findByEmployeeId(
+      serviceCompanyId,
+      employeeId,
+    );
+
+    if (!employee) {
+      throw AppError.notFound(`Employee with ID "${employeeId}" not found`);
+    }
+
+    if (employee.status !== 'ACTIVE') {
+      throw AppError.forbidden('Employee is Inactive');
+    }
+
+    return {
+      employmentStatus: employee.status,
+      workSchedule: {
+        startTime: employee.workSchedule.shiftStart,
+        endTime: employee.workSchedule.shiftEnd,
+        workingDays: employee.workSchedule.workingDays,
+      },
+      timezone: employee.timezone,
+    };
+  }
 }
 
 /** Singleton instance */

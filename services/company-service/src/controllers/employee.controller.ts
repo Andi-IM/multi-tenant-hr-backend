@@ -213,6 +213,36 @@ export class EmployeeController {
       next(error);
     }
   }
+
+  /**
+   * Internal Service-to-Service: GET /api/v1/internal/employees/:employeeId/status
+   *
+   * Verifies the active status and retrieves schedule data for an employee.
+   * This endpoint is intended only for call by other microservices (e.g. Attendance Service).
+   *
+   * @returns 200 OK with employee status and schedule details
+   * @throws 403 Forbidden if employee is Inactive
+   * @throws 404 Not Found if employee does not exist
+   */
+  async verifyStatus(
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const { employeeId } = req.params;
+      // In a real multi-tenant scenario, we might also extract companyId from headers or JWT
+      // For now, using the service's own COMPANY_ID
+      const data = await employeeService.verifyEmployeeStatus(employeeId as string, COMPANY_ID);
+
+      res.status(200).json({
+        status: 'success',
+        data,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 /** Singleton instance */
