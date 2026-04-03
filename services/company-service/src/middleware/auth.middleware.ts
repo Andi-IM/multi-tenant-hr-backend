@@ -21,7 +21,7 @@ const COMPANY_ID = process.env.COMPANY_ID || 'A';
 export function authenticateToken(
   req: AuthenticatedRequest,
   _res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): void {
   const authHeader = req.headers.authorization;
 
@@ -51,7 +51,7 @@ export function authenticateToken(
 export function authorizeCompany(
   req: AuthenticatedRequest,
   _res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): void {
   if (!req.user) {
     throw AppError.unauthorized('Authentication required');
@@ -59,7 +59,7 @@ export function authorizeCompany(
 
   if (req.user.companyId !== COMPANY_ID) {
     throw AppError.forbidden(
-      `Access denied: You are not authorized to perform actions on Company ${COMPANY_ID} service`,
+      `Access denied: You are not authorized to perform actions on Company ${COMPANY_ID} service`
     );
   }
 
@@ -76,7 +76,7 @@ export function authorizeCompany(
 export function authorizeSystemActor(
   req: AuthenticatedRequest,
   _res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): void {
   if (!req.user) {
     throw AppError.unauthorized('Authentication required');

@@ -21,7 +21,7 @@ describe('authenticateToken middleware', () => {
 
     expect(() => authenticateToken(req, mockRes, next)).toThrow(AppError);
     expect(() => authenticateToken(req, mockRes, next)).toThrow(
-      'Missing or malformed Authorization header',
+      'Missing or malformed Authorization header'
     );
     expect(next).not.toHaveBeenCalled();
   });
@@ -31,7 +31,7 @@ describe('authenticateToken middleware', () => {
     const next = vi.fn();
 
     expect(() => authenticateToken(req, mockRes, next)).toThrow(
-      'Missing or malformed Authorization header',
+      'Missing or malformed Authorization header'
     );
   });
 
@@ -41,9 +41,7 @@ describe('authenticateToken middleware', () => {
     });
     const next = vi.fn();
 
-    expect(() => authenticateToken(req, mockRes, next)).toThrow(
-      'Invalid or expired token',
-    );
+    expect(() => authenticateToken(req, mockRes, next)).toThrow('Invalid or expired token');
   });
 
   it('should attach user to req and call next() when token is valid', () => {
@@ -68,9 +66,7 @@ describe('authorizeCompany middleware', () => {
     const next = vi.fn();
 
     expect(() => authorizeCompany(req, mockRes, next)).toThrow(AppError);
-    expect(() => authorizeCompany(req, mockRes, next)).toThrow(
-      'Authentication required',
-    );
+    expect(() => authorizeCompany(req, mockRes, next)).toThrow('Authentication required');
   });
 
   it('should throw 403 when user companyId does not match service COMPANY_ID', () => {

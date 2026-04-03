@@ -25,7 +25,15 @@ const options: swaggerJsdoc.Options = {
       schemas: {
         Employee: {
           type: 'object',
-          required: ['employeeId', 'fullName', 'companyId', 'joinDate', 'employmentStatus', 'workSchedule', 'timezone'],
+          required: [
+            'employeeId',
+            'fullName',
+            'companyId',
+            'joinDate',
+            'employmentStatus',
+            'workSchedule',
+            'timezone',
+          ],
           properties: {
             employeeId: { type: 'string', example: 'EMP-A-001' },
             fullName: { type: 'string', example: 'John Doe' },

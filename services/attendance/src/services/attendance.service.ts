@@ -26,7 +26,11 @@ export class AttendanceService {
   /**
    * Check if employee is active and get schedule from Company Service
    */
-  async verifyEmployeeStatus(employeeId: string, companyId: string, token: string): Promise<EmployeeStatusResponse['data']> {
+  async verifyEmployeeStatus(
+    employeeId: string,
+    companyId: string,
+    token: string
+  ): Promise<EmployeeStatusResponse['data']> {
     try {
       const response = await axios.get<EmployeeStatusResponse>(
         `${this.companyServiceUrl}/api/v1/internal/employees/${employeeId}/status`,
@@ -58,7 +62,11 @@ export class AttendanceService {
   /**
    * Process employee check-in
    */
-  async checkIn(employeeId: string, companyId: string, token: string): Promise<{ alreadyRecorded: boolean; attendance?: IAttendance }> {
+  async checkIn(
+    employeeId: string,
+    companyId: string,
+    token: string
+  ): Promise<{ alreadyRecorded: boolean; attendance?: IAttendance }> {
     // 1. Get employee status and schedule
     const employeeData = await this.verifyEmployeeStatus(employeeId, companyId, token);
     const { workSchedule, timezone } = employeeData;
@@ -101,7 +109,11 @@ export class AttendanceService {
   /**
    * Calculate if the check-in is on-time or late with 15-minute grace period
    */
-  private calculateStatus(checkInTime: DateTime, startTimeStr: string, _timezone: string): 'On-Time' | 'Late' {
+  private calculateStatus(
+    checkInTime: DateTime,
+    startTimeStr: string,
+    _timezone: string
+  ): 'On-Time' | 'Late' {
     const [hours, minutes] = startTimeStr.split(':').map(Number);
     const scheduledStartTime = checkInTime.set({
       hour: hours,

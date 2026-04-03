@@ -22,11 +22,7 @@ export class EmployeeController {
    *
    * @returns 201 Created with the new employee data
    */
-  async create(
-    req: AuthenticatedRequest,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> {
+  async create(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const employee = await employeeService.createEmployee(req.body, COMPANY_ID);
 
@@ -63,14 +59,14 @@ export class EmployeeController {
    *
    * @returns 200 OK with the updated employee data
    */
-  async update(
-    req: AuthenticatedRequest,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> {
+  async update(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { employeeId } = req.params;
-      const employee = await employeeService.updateEmployee(employeeId as string, req.body, COMPANY_ID);
+      const employee = await employeeService.updateEmployee(
+        employeeId as string,
+        req.body,
+        COMPANY_ID
+      );
 
       res.status(200).json({
         status: 'success',
@@ -104,11 +100,7 @@ export class EmployeeController {
    *
    * @returns 200 OK with the employee data
    */
-  async getById(
-    req: AuthenticatedRequest,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> {
+  async getById(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { employeeId } = req.params;
       const employee = await employeeService.getEmployeeById(employeeId as string, COMPANY_ID);
@@ -142,11 +134,7 @@ export class EmployeeController {
    *
    * Retrieves a paginated list of employees.
    */
-  async list(
-    req: AuthenticatedRequest,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> {
+  async list(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       // query is already validated by middleware, we can safely cast
       const query = req.query as unknown as ListEmployeesQuery;
@@ -185,11 +173,7 @@ export class EmployeeController {
    *
    * @returns 200 OK with confirmation and the deactivated employee data
    */
-  async deactivate(
-    req: AuthenticatedRequest,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> {
+  async deactivate(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { employeeId } = req.params;
       const employee = await employeeService.deactivateEmployee(employeeId as string, COMPANY_ID);
@@ -224,11 +208,7 @@ export class EmployeeController {
    * @throws 403 Forbidden if employee is Inactive
    * @throws 404 Not Found if employee does not exist
    */
-  async verifyStatus(
-    req: AuthenticatedRequest,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> {
+  async verifyStatus(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { employeeId } = req.params;
       // In a real multi-tenant scenario, we might also extract companyId from headers or JWT

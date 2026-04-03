@@ -10,9 +10,9 @@ export default defineConfig({
       reportsDirectory: './coverage',
       include: ['src/**/*.ts'],
       exclude: [
-        'src/index.ts',        // Entry point (just starts server)
-        'src/types/**',         // Type definitions only
-        'src/config/**',        // Environment configuration
+        'src/index.ts', // Entry point (just starts server)
+        'src/types/**', // Type definitions only
+        'src/config/**', // Environment configuration
       ],
     },
   },

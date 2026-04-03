@@ -31,12 +31,12 @@ export class EmployeeRepository {
    */
   async findActiveEmployeeForInternal(
     companyId: string,
-    employeeId: string,
+    employeeId: string
   ): Promise<Pick<IEmployee, 'status' | 'workSchedule' | 'timezone'> | null> {
     const TenantModel = getEmployeeModel(companyId);
     return TenantModel.findOne(
       { employeeId },
-      { status: 1, workSchedule: 1, timezone: 1, _id: 0 },
+      { status: 1, workSchedule: 1, timezone: 1, _id: 0 }
     ).lean();
   }
 
@@ -57,13 +57,13 @@ export class EmployeeRepository {
   async updateByEmployeeId(
     companyId: string,
     employeeId: string,
-    data: Partial<IEmployee>,
+    data: Partial<IEmployee>
   ): Promise<IEmployeeDocument | null> {
     const TenantModel = getEmployeeModel(companyId);
     return TenantModel.findOneAndUpdate(
       { employeeId },
       { $set: data },
-      { new: true, runValidators: true },
+      { new: true, runValidators: true }
     );
   }
 
@@ -76,10 +76,10 @@ export class EmployeeRepository {
     filter: Record<string, unknown>,
     sort: Record<string, 1 | -1>,
     skip: number,
-    limit: number,
+    limit: number
   ): Promise<{ data: IEmployeeDocument[]; total: number }> {
     const TenantModel = getEmployeeModel(companyId);
-    
+
     const [data, total] = await Promise.all([
       TenantModel.find(filter).sort(sort).skip(skip).limit(limit).exec(),
       TenantModel.countDocuments(filter).exec(),

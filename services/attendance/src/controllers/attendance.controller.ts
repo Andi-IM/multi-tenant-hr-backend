@@ -26,7 +26,11 @@ export class AttendanceController {
       const token = authHeader.split(' ')[1];
 
       // 3. Process check-in
-      const { alreadyRecorded, attendance } = await attendanceService.checkIn(employeeId, companyId, token);
+      const { alreadyRecorded, attendance } = await attendanceService.checkIn(
+        employeeId,
+        companyId,
+        token
+      );
 
       // 4. Handle idempotency (Return 200 OK if already recorded)
       if (alreadyRecorded) {
@@ -46,9 +50,11 @@ export class AttendanceController {
     } catch (error: unknown) {
       // 6. Handle specific errors
       if (error instanceof Error && error.message.includes('Forbidden: Employee is Inactive')) {
-        return res.status(403).json({ status: 'error', message: 'Forbidden: Employee is Inactive' });
+        return res
+          .status(403)
+          .json({ status: 'error', message: 'Forbidden: Employee is Inactive' });
       }
-      
+
       // Pass other errors to global error handler
       next(error);
     }

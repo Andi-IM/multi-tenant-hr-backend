@@ -1,6 +1,10 @@
 import { AppError } from '../errors/app-error.js';
 import { employeeRepository } from '../repositories/employee.repository.js';
-import type { CreateEmployeeInput, UpdateEmployeeInput, ListEmployeesQuery } from '../validators/employee.validator.js';
+import type {
+  CreateEmployeeInput,
+  UpdateEmployeeInput,
+  ListEmployeesQuery,
+} from '../validators/employee.validator.js';
 import type { IEmployee, IEmployeeDocument } from '../models/employee.model.js';
 
 export class EmployeeService {
@@ -19,13 +23,13 @@ export class EmployeeService {
    */
   async createEmployee(
     input: CreateEmployeeInput,
-    serviceCompanyId: string,
+    serviceCompanyId: string
   ): Promise<IEmployeeDocument> {
     // Validate that the request targets this service's company
     // (Requirement: Admin dari Perusahaan B tidak dapat membuat data karyawan untuk Perusahaan A)
     if (input.companyId !== serviceCompanyId) {
       throw AppError.forbidden(
-        `Cannot create employee for company "${input.companyId}" on Company ${serviceCompanyId} service`,
+        `Cannot create employee for company "${input.companyId}" on Company ${serviceCompanyId} service`
       );
     }
 
@@ -37,21 +41,26 @@ export class EmployeeService {
         fullName: input.fullName,
         companyId: input.companyId,
         joinDate: new Date(input.joinDate),
-        status: input.employmentStatus,       // API: employmentStatus → DB: status
+        status: input.employmentStatus, // API: employmentStatus → DB: status
         timezone: input.timezone,
         workSchedule: {
-          shiftStart: input.workSchedule.startTime,   // API: startTime → DB: shiftStart
-          shiftEnd: input.workSchedule.endTime,        // API: endTime → DB: shiftEnd
+          shiftStart: input.workSchedule.startTime, // API: startTime → DB: shiftStart
+          shiftEnd: input.workSchedule.endTime, // API: endTime → DB: shiftEnd
           workingDays: input.workSchedule.workingDays,
         },
       });
 
       return employee;
     } catch (error: unknown) {
-      if (error && typeof error === 'object' && 'code' in error && error.code === 11000 && 'keyPattern' in error && (error as { keyPattern: { employeeId?: unknown } }).keyPattern.employeeId) {
-        throw AppError.conflict(
-          `Employee with ID "${input.employeeId}" already exists`
-        );
+      if (
+        error &&
+        typeof error === 'object' &&
+        'code' in error &&
+        error.code === 11000 &&
+        'keyPattern' in error &&
+        (error as { keyPattern: { employeeId?: unknown } }).keyPattern.employeeId
+      ) {
+        throw AppError.conflict(`Employee with ID "${input.employeeId}" already exists`);
       }
       throw error;
     }
@@ -74,7 +83,7 @@ export class EmployeeService {
   async updateEmployee(
     employeeId: string,
     input: UpdateEmployeeInput,
-    serviceCompanyId: string,
+    serviceCompanyId: string
   ): Promise<IEmployeeDocument> {
     // Build the database update payload with proper field mapping
     const updateData: Partial<IEmployee> = {};
@@ -117,7 +126,7 @@ export class EmployeeService {
     const updated = await employeeRepository.updateByEmployeeId(
       serviceCompanyId,
       employeeId,
-      updateData,
+      updateData
     );
 
     if (!updated) {
@@ -138,14 +147,8 @@ export class EmployeeService {
    * @returns Employee document
    * @throws AppError(404) if employee not found in this company's database
    */
-  async getEmployeeById(
-    employeeId: string,
-    serviceCompanyId: string,
-  ): Promise<IEmployeeDocument> {
-    const employee = await employeeRepository.findByEmployeeId(
-      serviceCompanyId,
-      employeeId,
-    );
+  async getEmployeeById(employeeId: string, serviceCompanyId: string): Promise<IEmployeeDocument> {
+    const employee = await employeeRepository.findByEmployeeId(serviceCompanyId, employeeId);
 
     if (!employee) {
       throw AppError.notFound(`Employee with ID "${employeeId}" not found`);
@@ -166,10 +169,13 @@ export class EmployeeService {
    */
   async listEmployees(
     query: ListEmployeesQuery,
-    serviceCompanyId: string,
-  ): Promise<{ data: IEmployeeDocument[]; meta: { total: number; page: number; limit: number; totalPages: number } }> {
+    serviceCompanyId: string
+  ): Promise<{
+    data: IEmployeeDocument[];
+    meta: { total: number; page: number; limit: number; totalPages: number };
+  }> {
     const filter: Record<string, string> = {};
-    
+
     if (query.employmentStatus) {
       filter.status = query.employmentStatus; // API domain to DB schema naming
     }
@@ -185,7 +191,7 @@ export class EmployeeService {
       filter,
       sort,
       skip,
-      query.limit,
+      query.limit
     );
 
     return {
@@ -218,13 +224,10 @@ export class EmployeeService {
    */
   async deactivateEmployee(
     employeeId: string,
-    serviceCompanyId: string,
+    serviceCompanyId: string
   ): Promise<IEmployeeDocument> {
     // First verify the employee exists and check current status
-    const employee = await employeeRepository.findByEmployeeId(
-      serviceCompanyId,
-      employeeId,
-    );
+    const employee = await employeeRepository.findByEmployeeId(serviceCompanyId, employeeId);
 
     if (!employee) {
       throw AppError.notFound(`Employee with ID "${employeeId}" not found`);
@@ -248,11 +251,10 @@ export class EmployeeService {
     // For now, we proceed with deactivation directly.
 
     // For audit trail (REQ-D3), set deactivationDate
-    const updated = await employeeRepository.updateByEmployeeId(
-      serviceCompanyId,
-      employeeId,
-      { status: 'INACTIVE', deactivationDate: new Date() },
-    );
+    const updated = await employeeRepository.updateByEmployeeId(serviceCompanyId, employeeId, {
+      status: 'INACTIVE',
+      deactivationDate: new Date(),
+    });
 
     // This should not happen since we just verified the employee exists,
     // but guard defensively.
@@ -277,7 +279,7 @@ export class EmployeeService {
    */
   async verifyEmployeeStatus(
     employeeId: string,
-    serviceCompanyId: string,
+    serviceCompanyId: string
   ): Promise<{
     employmentStatus: string;
     workSchedule: {
@@ -290,7 +292,7 @@ export class EmployeeService {
     // Optimized: Uses specialized lean repository query with projection (REQ-V5)
     const employee = await employeeRepository.findActiveEmployeeForInternal(
       serviceCompanyId,
-      employeeId,
+      employeeId
     );
 
     if (!employee) {

@@ -8,11 +8,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-change-me';
 /**
  * Middleware: Authenticate JWT Token
  */
-export function authenticateToken(
-  req: Request,
-  _res: Response,
-  next: NextFunction,
-): void {
+export function authenticateToken(req: Request, _res: Response, next: NextFunction): void {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -33,11 +29,7 @@ export function authenticateToken(
 /**
  * Middleware: Authorize System Actor Access
  */
-export function authorizeSystemActor(
-  req: Request,
-  _res: Response,
-  next: NextFunction,
-): void {
+export function authorizeSystemActor(req: Request, _res: Response, next: NextFunction): void {
   const authenticatedReq = req as AuthenticatedRequest;
   if (!authenticatedReq.user) {
     throw AppError.unauthorized('Authentication required');

@@ -11,7 +11,8 @@ export const getTenantConnection = (companyId: string): Connection => {
 
   // Ensure there's a base connection first
   if (mongoose.connection.readyState !== 1 && mongoose.connection.readyState !== 2) {
-    const defaultUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/attendance_service_default';
+    const defaultUri =
+      process.env.MONGODB_URI || 'mongodb://localhost:27017/attendance_service_default';
     mongoose.connect(defaultUri);
   }
 

@@ -57,7 +57,7 @@ router.get(
   '/employees/:employeeId/status',
   authenticateToken,
   authorizeSystemActor,
-  (req, res, next) => employeeController.verifyStatus(req as AuthenticatedRequest, res, next),
+  (req, res, next) => employeeController.verifyStatus(req as AuthenticatedRequest, res, next)
 );
 
 export default router;

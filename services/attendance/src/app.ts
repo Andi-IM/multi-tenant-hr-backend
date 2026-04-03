@@ -1,4 +1,9 @@
-import express, { type Application, type Request, type Response, type ErrorRequestHandler } from 'express';
+import express, {
+  type Application,
+  type Request,
+  type Response,
+  type ErrorRequestHandler,
+} from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';

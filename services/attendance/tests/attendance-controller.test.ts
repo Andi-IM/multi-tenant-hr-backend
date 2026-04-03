@@ -131,7 +131,7 @@ describe('AttendanceController', () => {
 
     it('should return 403 when employee is inactive', async () => {
       vi.mocked(attendanceService.checkIn).mockRejectedValue(
-        new Error('Forbidden: Employee is Inactive'),
+        new Error('Forbidden: Employee is Inactive')
       );
 
       const req = createMockReq({
@@ -182,7 +182,7 @@ describe('AttendanceController', () => {
       expect(attendanceService.checkIn).toHaveBeenCalledWith(
         'EMP-001',
         'company-A',
-        'my-secret-token',
+        'my-secret-token'
       );
     });
   });

@@ -2,7 +2,11 @@ import { Router } from 'express';
 import { employeeController } from '../controllers/employee.controller.js';
 import { authenticateToken, authorizeCompany } from '../middleware/auth.middleware.js';
 import { validate, validateQuery } from '../middleware/validate.middleware.js';
-import { createEmployeeSchema, updateEmployeeSchema, listEmployeesQuerySchema } from '../validators/employee.validator.js';
+import {
+  createEmployeeSchema,
+  updateEmployeeSchema,
+  listEmployeesQuerySchema,
+} from '../validators/employee.validator.js';
 import type { AuthenticatedRequest } from '../types/auth.types.js';
 
 const router = Router();
@@ -57,7 +61,7 @@ router.post(
   authenticateToken,
   authorizeCompany,
   validate(createEmployeeSchema),
-  (req, res, next) => employeeController.create(req as AuthenticatedRequest, res, next),
+  (req, res, next) => employeeController.create(req as AuthenticatedRequest, res, next)
 );
 
 /**
@@ -141,7 +145,7 @@ router.patch(
   authenticateToken,
   authorizeCompany,
   validate(updateEmployeeSchema),
-  (req, res, next) => employeeController.update(req as AuthenticatedRequest, res, next),
+  (req, res, next) => employeeController.update(req as AuthenticatedRequest, res, next)
 );
 
 /**
@@ -189,11 +193,8 @@ router.patch(
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get(
-  '/:employeeId',
-  authenticateToken,
-  authorizeCompany,
-  (req, res, next) => employeeController.getById(req as AuthenticatedRequest, res, next),
+router.get('/:employeeId', authenticateToken, authorizeCompany, (req, res, next) =>
+  employeeController.getById(req as AuthenticatedRequest, res, next)
 );
 
 /**
@@ -281,7 +282,7 @@ router.get(
   authenticateToken,
   authorizeCompany,
   validateQuery(listEmployeesQuerySchema),
-  (req, res, next) => employeeController.list(req as AuthenticatedRequest, res, next),
+  (req, res, next) => employeeController.list(req as AuthenticatedRequest, res, next)
 );
 
 /**
@@ -342,11 +343,8 @@ router.get(
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.patch(
-  '/:employeeId/deactivate',
-  authenticateToken,
-  authorizeCompany,
-  (req, res, next) => employeeController.deactivate(req as AuthenticatedRequest, res, next),
+router.patch('/:employeeId/deactivate', authenticateToken, authorizeCompany, (req, res, next) =>
+  employeeController.deactivate(req as AuthenticatedRequest, res, next)
 );
 
 export default router;

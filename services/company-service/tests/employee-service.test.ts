@@ -24,7 +24,15 @@ describe('EmployeeService', () => {
     workSchedule: {
       startTime: '09:00',
       endTime: '17:00',
-      workingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] as ('Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday')[],
+      workingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] as (
+        | 'Monday'
+        | 'Tuesday'
+        | 'Wednesday'
+        | 'Thursday'
+        | 'Friday'
+        | 'Saturday'
+        | 'Sunday'
+      )[],
     },
     timezone: 'Asia/Jakarta',
   };
@@ -61,21 +69,20 @@ describe('EmployeeService', () => {
     const result = await service.createEmployee(validInput, 'A');
 
     expect(result).toEqual(mockResult);
-    expect(employeeRepository.create).toHaveBeenCalledWith('A', expect.objectContaining({
-      employeeId: 'EMP-A-001',
-      fullName: 'Test Employee',
-      companyId: 'A',
-    }));
+    expect(employeeRepository.create).toHaveBeenCalledWith(
+      'A',
+      expect.objectContaining({
+        employeeId: 'EMP-A-001',
+        fullName: 'Test Employee',
+        companyId: 'A',
+      })
+    );
   });
 
   it('should throw 403 when companyId does not match service company', async () => {
-    await expect(
-      service.createEmployee(validInput, 'B'),
-    ).rejects.toThrow(AppError);
+    await expect(service.createEmployee(validInput, 'B')).rejects.toThrow(AppError);
 
-    await expect(
-      service.createEmployee(validInput, 'B'),
-    ).rejects.toMatchObject({
+    await expect(service.createEmployee(validInput, 'B')).rejects.toMatchObject({
       statusCode: 403,
     });
 
@@ -89,13 +96,9 @@ describe('EmployeeService', () => {
 
     vi.mocked(employeeRepository.create).mockRejectedValue(duplicateError);
 
-    await expect(
-      service.createEmployee(validInput, 'A'),
-    ).rejects.toThrow(AppError);
+    await expect(service.createEmployee(validInput, 'A')).rejects.toThrow(AppError);
 
-    await expect(
-      service.createEmployee(validInput, 'A'),
-    ).rejects.toMatchObject({
+    await expect(service.createEmployee(validInput, 'A')).rejects.toMatchObject({
       statusCode: 409,
     });
   });
@@ -105,9 +108,7 @@ describe('EmployeeService', () => {
 
     vi.mocked(employeeRepository.create).mockRejectedValue(genericError);
 
-    await expect(
-      service.createEmployee(validInput, 'A'),
-    ).rejects.toThrow('Connection timeout');
+    await expect(service.createEmployee(validInput, 'A')).rejects.toThrow('Connection timeout');
   });
 
   it('should re-throw 11000 errors that are not employeeId duplicates', async () => {
@@ -117,9 +118,7 @@ describe('EmployeeService', () => {
 
     vi.mocked(employeeRepository.create).mockRejectedValue(otherDuplicateError);
 
-    await expect(
-      service.createEmployee(validInput, 'A'),
-    ).rejects.toThrow('E11000 duplicate key');
+    await expect(service.createEmployee(validInput, 'A')).rejects.toThrow('E11000 duplicate key');
   });
 
   // ──────────────────────────────────────────────
@@ -152,22 +151,20 @@ describe('EmployeeService', () => {
     const result = await service.updateEmployee('EMP-A-001', updateInput, 'A');
 
     expect(result).toEqual(mockExistingEmployee);
-    expect(employeeRepository.updateByEmployeeId).toHaveBeenCalledWith(
-      'A',
-      'EMP-A-001',
-      { fullName: 'Updated Name' },
-    );
+    expect(employeeRepository.updateByEmployeeId).toHaveBeenCalledWith('A', 'EMP-A-001', {
+      fullName: 'Updated Name',
+    });
   });
 
   it('should throw 404 when employee is not found', async () => {
     vi.mocked(employeeRepository.updateByEmployeeId).mockResolvedValue(null);
 
-    await expect(
-      service.updateEmployee('EMP-NONE', { fullName: 'Ghost' }, 'A'),
-    ).rejects.toThrow(AppError);
+    await expect(service.updateEmployee('EMP-NONE', { fullName: 'Ghost' }, 'A')).rejects.toThrow(
+      AppError
+    );
 
     await expect(
-      service.updateEmployee('EMP-NONE', { fullName: 'Ghost' }, 'A'),
+      service.updateEmployee('EMP-NONE', { fullName: 'Ghost' }, 'A')
     ).rejects.toMatchObject({
       statusCode: 404,
       message: 'Employee with ID "EMP-NONE" not found',
@@ -185,11 +182,9 @@ describe('EmployeeService', () => {
 
     await service.updateEmployee('EMP-A-001', updateInput, 'A');
 
-    expect(employeeRepository.updateByEmployeeId).toHaveBeenCalledWith(
-      'A',
-      'EMP-A-001',
-      { status: 'INACTIVE' },
-    );
+    expect(employeeRepository.updateByEmployeeId).toHaveBeenCalledWith('A', 'EMP-A-001', {
+      status: 'INACTIVE',
+    });
   });
 
   it('should map workSchedule fields using dot notation for partial nested updates', async () => {
@@ -205,20 +200,24 @@ describe('EmployeeService', () => {
 
     await service.updateEmployee('EMP-A-001', updateInput, 'A');
 
-    expect(employeeRepository.updateByEmployeeId).toHaveBeenCalledWith(
-      'A',
-      'EMP-A-001',
-      {
-        'workSchedule.shiftStart': '08:00',
-        'workSchedule.shiftEnd': '16:00',
-      },
-    );
+    expect(employeeRepository.updateByEmployeeId).toHaveBeenCalledWith('A', 'EMP-A-001', {
+      'workSchedule.shiftStart': '08:00',
+      'workSchedule.shiftEnd': '16:00',
+    });
   });
 
   it('should handle workSchedule with only workingDays update', async () => {
     const updateInput = {
       workSchedule: {
-        workingDays: ['Monday', 'Tuesday', 'Wednesday'] as ('Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday')[],
+        workingDays: ['Monday', 'Tuesday', 'Wednesday'] as (
+          | 'Monday'
+          | 'Tuesday'
+          | 'Wednesday'
+          | 'Thursday'
+          | 'Friday'
+          | 'Saturday'
+          | 'Sunday'
+        )[],
       },
     };
 
@@ -227,13 +226,9 @@ describe('EmployeeService', () => {
 
     await service.updateEmployee('EMP-A-001', updateInput, 'A');
 
-    expect(employeeRepository.updateByEmployeeId).toHaveBeenCalledWith(
-      'A',
-      'EMP-A-001',
-      {
-        'workSchedule.workingDays': ['Monday', 'Tuesday', 'Wednesday'],
-      },
-    );
+    expect(employeeRepository.updateByEmployeeId).toHaveBeenCalledWith('A', 'EMP-A-001', {
+      'workSchedule.workingDays': ['Monday', 'Tuesday', 'Wednesday'],
+    });
   });
 
   it('should handle multiple fields updated at once', async () => {
@@ -252,24 +247,20 @@ describe('EmployeeService', () => {
 
     await service.updateEmployee('EMP-A-001', updateInput, 'A');
 
-    expect(employeeRepository.updateByEmployeeId).toHaveBeenCalledWith(
-      'A',
-      'EMP-A-001',
-      {
-        fullName: 'New Name',
-        status: 'INACTIVE',
-        timezone: 'America/New_York',
-      },
-    );
+    expect(employeeRepository.updateByEmployeeId).toHaveBeenCalledWith('A', 'EMP-A-001', {
+      fullName: 'New Name',
+      status: 'INACTIVE',
+      timezone: 'America/New_York',
+    });
   });
 
   it('should re-throw unexpected database errors during update', async () => {
     const dbError = new Error('Connection refused');
     vi.mocked(employeeRepository.updateByEmployeeId).mockRejectedValue(dbError);
 
-    await expect(
-      service.updateEmployee('EMP-A-001', { fullName: 'Test' }, 'A'),
-    ).rejects.toThrow('Connection refused');
+    await expect(service.updateEmployee('EMP-A-001', { fullName: 'Test' }, 'A')).rejects.toThrow(
+      'Connection refused'
+    );
   });
 
   // ──────────────────────────────────────────────
@@ -289,13 +280,9 @@ describe('EmployeeService', () => {
   it('should throw 404 when employee is not found by employeeId', async () => {
     vi.mocked(employeeRepository.findByEmployeeId).mockResolvedValue(null);
 
-    await expect(
-      service.getEmployeeById('EMP-GHOST', 'A'),
-    ).rejects.toThrow(AppError);
+    await expect(service.getEmployeeById('EMP-GHOST', 'A')).rejects.toThrow(AppError);
 
-    await expect(
-      service.getEmployeeById('EMP-GHOST', 'A'),
-    ).rejects.toMatchObject({
+    await expect(service.getEmployeeById('EMP-GHOST', 'A')).rejects.toMatchObject({
       statusCode: 404,
       message: 'Employee with ID "EMP-GHOST" not found',
     });
@@ -305,9 +292,7 @@ describe('EmployeeService', () => {
     const dbError = new Error('Read timeout');
     vi.mocked(employeeRepository.findByEmployeeId).mockRejectedValue(dbError);
 
-    await expect(
-      service.getEmployeeById('EMP-A-001', 'A'),
-    ).rejects.toThrow('Read timeout');
+    await expect(service.getEmployeeById('EMP-A-001', 'A')).rejects.toThrow('Read timeout');
   });
 
   // ──────────────────────────────────────────────
@@ -335,7 +320,7 @@ describe('EmployeeService', () => {
       {},
       { joinDate: -1 },
       0, // skip
-      10, // limit
+      10 // limit
     );
 
     expect(result.data).toHaveLength(1);
@@ -369,7 +354,7 @@ describe('EmployeeService', () => {
       { status: 'ACTIVE' },
       { fullName: 1 },
       40, // skip: (3 - 1) * 20
-      20, // limit
+      20 // limit
     );
 
     expect(result.meta.totalPages).toBe(3); // 50 / 20 = 2.5 -> ceil -> 3

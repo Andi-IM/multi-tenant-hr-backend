@@ -15,7 +15,7 @@ const workScheduleSchema = z.object({
     .array(
       z.enum(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], {
         message: 'Each working day must be a valid day name (e.g., "Monday")',
-      }),
+      })
     )
     .min(1, 'workingDays must contain at least one day')
     .max(7, 'workingDays cannot exceed 7 days'),
@@ -34,18 +34,16 @@ const workScheduleSchema = z.object({
  * - timezone: valid IANA timezone string
  */
 export const createEmployeeSchema = z.object({
-  employeeId: z
-    .string({ message: 'employeeId is required' })
-    .min(1, 'employeeId cannot be empty'),
+  employeeId: z.string({ message: 'employeeId is required' }).min(1, 'employeeId cannot be empty'),
   fullName: z
     .string({ message: 'fullName is required' })
     .min(2, 'fullName must be at least 2 characters'),
-  companyId: z
-    .string({ message: 'companyId is required' })
-    .min(1, 'companyId cannot be empty'),
+  companyId: z.string({ message: 'companyId is required' }).min(1, 'companyId cannot be empty'),
   joinDate: z
     .string({ message: 'joinDate is required' })
-    .datetime({ message: 'joinDate must be a valid ISO 8601 date string (e.g., "2025-01-15T00:00:00.000Z")' }),
+    .datetime({
+      message: 'joinDate must be a valid ISO 8601 date string (e.g., "2025-01-15T00:00:00.000Z")',
+    }),
   employmentStatus: z.enum(['ACTIVE', 'INACTIVE'], {
     message: 'employmentStatus must be either "ACTIVE" or "INACTIVE"',
   }),
@@ -62,7 +60,7 @@ export const createEmployeeSchema = z.object({
           return false;
         }
       },
-      { message: 'timezone must be a valid IANA timezone (e.g., "Asia/Jakarta")' },
+      { message: 'timezone must be a valid IANA timezone (e.g., "Asia/Jakarta")' }
     ),
 });
 
@@ -87,7 +85,7 @@ const updateWorkScheduleSchema = z.object({
     .array(
       z.enum(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], {
         message: 'Each working day must be a valid day name (e.g., "Monday")',
-      }),
+      })
     )
     .min(1, 'workingDays must contain at least one day')
     .max(7, 'workingDays cannot exceed 7 days')
@@ -106,10 +104,7 @@ const updateWorkScheduleSchema = z.object({
  */
 export const updateEmployeeSchema = z
   .object({
-    fullName: z
-      .string()
-      .min(2, 'fullName must be at least 2 characters')
-      .optional(),
+    fullName: z.string().min(2, 'fullName must be at least 2 characters').optional(),
     employmentStatus: z
       .enum(['ACTIVE', 'INACTIVE'], {
         message: 'employmentStatus must be either "ACTIVE" or "INACTIVE"',
@@ -128,15 +123,14 @@ export const updateEmployeeSchema = z
             return false;
           }
         },
-        { message: 'timezone must be a valid IANA timezone (e.g., "Asia/Jakarta")' },
+        { message: 'timezone must be a valid IANA timezone (e.g., "Asia/Jakarta")' }
       )
       .optional(),
   })
   .strict()
-  .refine(
-    (data) => Object.keys(data).length > 0,
-    { message: 'Request body must contain at least one field to update' },
-  );
+  .refine((data) => Object.keys(data).length > 0, {
+    message: 'Request body must contain at least one field to update',
+  });
 
 /**
  * TypeScript type inferred from the update Zod schema.

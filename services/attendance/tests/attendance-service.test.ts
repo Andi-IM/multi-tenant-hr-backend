@@ -63,7 +63,7 @@ describe('AttendanceService', () => {
             Authorization: 'Bearer token-123',
             'X-Company-ID': 'company-A',
           },
-        }),
+        })
       );
     });
 
@@ -76,7 +76,7 @@ describe('AttendanceService', () => {
       });
 
       await expect(
-        service.verifyEmployeeStatus('EMP-001', 'company-A', 'token-123'),
+        service.verifyEmployeeStatus('EMP-001', 'company-A', 'token-123')
       ).rejects.toThrow('Employee is not active');
     });
 
@@ -86,7 +86,7 @@ describe('AttendanceService', () => {
       });
 
       await expect(
-        service.verifyEmployeeStatus('EMP-001', 'company-A', 'token-123'),
+        service.verifyEmployeeStatus('EMP-001', 'company-A', 'token-123')
       ).rejects.toThrow('Employee is not active');
     });
 
@@ -102,7 +102,7 @@ describe('AttendanceService', () => {
       vi.mocked(axios.get).mockRejectedValue(axiosError);
 
       await expect(
-        service.verifyEmployeeStatus('EMP-001', 'company-A', 'token-123'),
+        service.verifyEmployeeStatus('EMP-001', 'company-A', 'token-123')
       ).rejects.toThrow('Forbidden: Employee is Inactive');
     });
 
@@ -117,7 +117,7 @@ describe('AttendanceService', () => {
       vi.mocked(axios.get).mockRejectedValue(axiosError);
 
       await expect(
-        service.verifyEmployeeStatus('EMP-001', 'company-A', 'token-123'),
+        service.verifyEmployeeStatus('EMP-001', 'company-A', 'token-123')
       ).rejects.toThrow('Employee not found');
     });
 
@@ -125,7 +125,7 @@ describe('AttendanceService', () => {
       vi.mocked(axios.get).mockRejectedValue(new Error('Connection timeout'));
 
       await expect(
-        service.verifyEmployeeStatus('EMP-001', 'company-A', 'token-123'),
+        service.verifyEmployeeStatus('EMP-001', 'company-A', 'token-123')
       ).rejects.toThrow('Failed to verify employee status: Connection timeout');
     });
   });
@@ -197,10 +197,7 @@ describe('AttendanceService', () => {
 
     it('should calculate On-Time status when within grace period', async () => {
       // Set check-in time to exactly 09:10 (within 15-min grace period of 09:00)
-      const checkInTime = DateTime.fromObject(
-        { hour: 9, minute: 10 },
-        { zone: 'Asia/Jakarta' },
-      );
+      const checkInTime = DateTime.fromObject({ hour: 9, minute: 10 }, { zone: 'Asia/Jakarta' });
       vi.spyOn(DateTime, 'now').mockReturnValue(checkInTime);
 
       mockFindOne.mockResolvedValue(null);
@@ -213,10 +210,7 @@ describe('AttendanceService', () => {
 
     it('should calculate Late status when past grace period', async () => {
       // Set check-in time to 09:20 (past 15-min grace period of 09:00)
-      const checkInTime = DateTime.fromObject(
-        { hour: 9, minute: 20 },
-        { zone: 'Asia/Jakarta' },
-      );
+      const checkInTime = DateTime.fromObject({ hour: 9, minute: 20 }, { zone: 'Asia/Jakarta' });
       vi.spyOn(DateTime, 'now').mockReturnValue(checkInTime);
 
       mockFindOne.mockResolvedValue(null);
@@ -228,10 +222,7 @@ describe('AttendanceService', () => {
     });
 
     it('should calculate On-Time status at exactly the grace period boundary (09:15)', async () => {
-      const checkInTime = DateTime.fromObject(
-        { hour: 9, minute: 15 },
-        { zone: 'Asia/Jakarta' },
-      );
+      const checkInTime = DateTime.fromObject({ hour: 9, minute: 15 }, { zone: 'Asia/Jakarta' });
       vi.spyOn(DateTime, 'now').mockReturnValue(checkInTime);
 
       mockFindOne.mockResolvedValue(null);
@@ -245,9 +236,9 @@ describe('AttendanceService', () => {
     it('should propagate verifyEmployeeStatus errors', async () => {
       vi.mocked(axios.get).mockRejectedValue(new Error('Service unavailable'));
 
-      await expect(
-        service.checkIn('EMP-001', 'company-A', 'token-123'),
-      ).rejects.toThrow('Failed to verify employee status');
+      await expect(service.checkIn('EMP-001', 'company-A', 'token-123')).rejects.toThrow(
+        'Failed to verify employee status'
+      );
     });
   });
 });

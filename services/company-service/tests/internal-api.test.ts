@@ -50,7 +50,13 @@ describe('GET /api/v1/internal/employees/:employeeId/status', () => {
     expect(response.body.data.employmentStatus).toBe('ACTIVE');
     expect(response.body.data.workSchedule.startTime).toBe('09:00');
     expect(response.body.data.workSchedule.endTime).toBe('17:00');
-    expect(response.body.data.workSchedule.workingDays).toEqual(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']);
+    expect(response.body.data.workSchedule.workingDays).toEqual([
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+    ]);
     expect(response.body.data.timezone).toBe('Asia/Jakarta');
   });
 
@@ -88,8 +94,7 @@ describe('GET /api/v1/internal/employees/:employeeId/status', () => {
   });
 
   it('should return 401 Unauthorized if no token is provided', async () => {
-    const response = await request(app)
-      .get(`/api/v1/internal/employees/${employeeId}/status`);
+    const response = await request(app).get(`/api/v1/internal/employees/${employeeId}/status`);
 
     expect(response.status).toBe(401);
     expect(response.body.message).toContain('Missing or malformed Authorization header');

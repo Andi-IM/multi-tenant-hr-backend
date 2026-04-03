@@ -1,9 +1,13 @@
-import express, { type Application, type Request, type Response, type ErrorRequestHandler } from 'express';
+import express, {
+  type Application,
+  type Request,
+  type Response,
+  type ErrorRequestHandler,
+} from 'express';
 import routes from './routes/index.js';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger.config.js';
 import { errorHandler } from './middleware/error.middleware.js';
-
 
 /**
  * Express Application Configuration

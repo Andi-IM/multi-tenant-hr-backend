@@ -4,12 +4,7 @@ import { AppError } from '../errors/app-error.js';
 /**
  * Global Error Handler Middleware
  */
-export function errorHandler(
-  err: Error,
-  _req: Request,
-  res: Response,
-  _next: NextFunction
-): void {
+export function errorHandler(err: Error, _req: Request, res: Response, _next: NextFunction): void {
   // If it's a known AppError, return it
   if (err instanceof AppError) {
     res.status(err.statusCode).json({
@@ -23,8 +18,9 @@ export function errorHandler(
   console.error('Unhandled Error:', err);
   res.status(500).json({
     status: 'error',
-    message: process.env.NODE_ENV === 'production' 
-      ? 'Internal server error' 
-      : err.message || 'Something went wrong',
+    message:
+      process.env.NODE_ENV === 'production'
+        ? 'Internal server error'
+        : err.message || 'Something went wrong',
   });
 }

@@ -3,7 +3,6 @@ import request from 'supertest';
 import app from '../src/app.js';
 import { generateTestToken } from './helpers/generate-token.js';
 import { employeeRepository } from '../src/repositories/employee.repository.js';
-import { AppError } from '../src/errors/app-error.js';
 
 // Mock the employee repository to avoid real database calls during unit tests
 vi.mock('../src/repositories/employee.repository.js', () => ({
@@ -54,7 +53,7 @@ describe('POST /api/employees', () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    
+
     // @ts-ignore
     vi.mocked(employeeRepository.create).mockResolvedValue(mockCreatedEmployee);
 
@@ -70,9 +69,7 @@ describe('POST /api/employees', () => {
   });
 
   it('should return 401 if no token is provided', async () => {
-    const response = await request(app)
-      .post('/api/employees')
-      .send(validPayload);
+    const response = await request(app).post('/api/employees').send(validPayload);
 
     expect(response.status).toBe(401);
     expect(response.body.message).toContain('Missing or malformed Authorization header');
@@ -108,7 +105,6 @@ describe('POST /api/employees', () => {
     expect(employeeRepository.create).not.toHaveBeenCalled();
   });
 
-
   it('should return 400 for validation error (missing required fields)', async () => {
     const invalidPayload = { ...validPayload };
     // @ts-ignore
@@ -141,7 +137,7 @@ describe('POST /api/employees', () => {
     const duplicateError: any = new Error('Duplicate key');
     duplicateError.code = 11000;
     duplicateError.keyPattern = { employeeId: 1 };
-    
+
     vi.mocked(employeeRepository.create).mockRejectedValue(duplicateError);
 
     const response = await request(app)
@@ -202,7 +198,11 @@ describe('PATCH /api/employees/:employeeId', () => {
   it('should return 200 when updating workSchedule partially', async () => {
     const updatedMock = {
       ...mockUpdatedEmployee,
-      workSchedule: { shiftStart: '08:00', shiftEnd: '16:00', workingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] },
+      workSchedule: {
+        shiftStart: '08:00',
+        shiftEnd: '16:00',
+        workingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+      },
     };
 
     // @ts-ignore
@@ -368,8 +368,7 @@ describe('GET /api/employees/:employeeId', () => {
   });
 
   it('should return 401 if no token is provided', async () => {
-    const response = await request(app)
-      .get('/api/employees/EMP-A-001');
+    const response = await request(app).get('/api/employees/EMP-A-001');
 
     expect(response.status).toBe(401);
     expect(response.body.message).toContain('Missing or malformed Authorization header');
@@ -402,9 +401,7 @@ describe('GET /api/employees/:employeeId', () => {
     // @ts-ignore
     vi.mocked(employeeRepository.findByEmployeeId).mockResolvedValue(mockEmployee);
 
-    await request(app)
-      .get('/api/employees/EMP-A-001')
-      .set('Authorization', `Bearer ${validToken}`);
+    await request(app).get('/api/employees/EMP-A-001').set('Authorization', `Bearer ${validToken}`);
 
     // Verifies tenant isolation: the service's COMPANY_ID ('A') is passed, not from the URL
     expect(employeeRepository.findByEmployeeId).toHaveBeenCalledWith('A', 'EMP-A-001');
@@ -456,14 +453,14 @@ describe('GET /api/employees', () => {
       limit: 10,
       totalPages: 1,
     });
-    
+
     // Verify arguments passed to repository enforces tenant isolation ('A')
     expect(employeeRepository.list).toHaveBeenCalledWith(
       'A',
       { status: 'ACTIVE' },
       { joinDate: -1 }, // Default sort
       0, // skip
-      10, // limit
+      10 // limit
     );
   });
 

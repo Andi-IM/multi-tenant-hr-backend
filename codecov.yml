@@ -8,8 +8,8 @@ coverage:
     # Project-level: checks overall coverage against previous commit
     project:
       default:
-        target: auto        # Compare against coverage of the previous push
-        threshold: 5%       # Allow up to 5% drop before marking as failed
+        target: auto # Compare against coverage of the previous push
+        threshold: 5% # Allow up to 5% drop before marking as failed
         if_ci_failed: error
 
     # Patch check is disabled — only useful in PR workflows
@@ -23,14 +23,14 @@ flags:
       - services/company-service/src/
     carryforward: true
 
-comment: false              # No PR comments needed for solo workflow
+comment: false # No PR comments needed for solo workflow
 
 ignore:
-  - "**/*.test.ts"
-  - "**/*.spec.ts"
-  - "**/tests/**"
-  - "**/dist/**"
-  - "**/node_modules/**"
-  - "services/company-service/src/index.ts"
-  - "services/company-service/src/types/**"
-  - "services/company-service/src/config/**"
+  - '**/*.test.ts'
+  - '**/*.spec.ts'
+  - '**/tests/**'
+  - '**/dist/**'
+  - '**/node_modules/**'
+  - 'services/company-service/src/index.ts'
+  - 'services/company-service/src/types/**'
+  - 'services/company-service/src/config/**'

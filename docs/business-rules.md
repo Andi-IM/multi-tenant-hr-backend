@@ -28,7 +28,7 @@ This governs the creation and approval workflows for absences.
 >   - **Approver/Admin Role**: Can view all requests, approve/reject/postpone requests.
 >   - The system verifies the user's role from the token before allowing approval actions.
 > - **Overlapping Dates**: The system rejects the request with a `400 Bad Request` ("Dates already requested") if an employee submits a `startDate` and `endDate` range that overlaps with another request document currently in a **Pending** or **Approved state**.
-> - **Invalid Date Input**: 
+> - **Invalid Date Input**:
 >   - `startDate` must not be in the past.
 >   - `endDate` must be greater than or equal to `startDate`.
 >   - System rejects invalid date input with `400 Bad Request`.
@@ -48,7 +48,7 @@ This prevents duplicate requests caused by network failures or accidental resubm
 
 > - **Check-in Idempotency**: If the system receives a check-in request on the same date for the same `employeeId`, the system will safely handle the duplicate submission and will not create a new record. It will return `200 OK` HTTP status (as if successful) to maintain data integrity.
 > - **Leave Request Idempotency**: If the system receives a duplicate leave request (same employeeId, same startDate, same endDate, same type) within a short time window, the system will return `200 OK` without creating a duplicate record.
-> - **Approval Idempotency**: If an *Approver* attempts to approve, reject, or postpone a document that is *already* in an **Approved**, **Rejected**, or **Postponed** state, the system will safely handle the execution without causing a system error (returning HTTP 200/204 or an informative message) and will not corrupt historical data.
+> - **Approval Idempotency**: If an _Approver_ attempts to approve, reject, or postpone a document that is _already_ in an **Approved**, **Rejected**, or **Postponed** state, the system will safely handle the execution without causing a system error (returning HTTP 200/204 or an informative message) and will not corrupt historical data.
 
 # 5. Absence Logic
 

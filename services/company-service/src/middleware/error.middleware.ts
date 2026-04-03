@@ -9,12 +9,7 @@ import { AppError } from '../errors/app-error.js';
  * returned as-is; unexpected errors get a generic 500 response to
  * avoid leaking implementation details.
  */
-export function errorHandler(
-  err: Error,
-  _req: Request,
-  res: Response,
-  _next: NextFunction,
-): void {
+export function errorHandler(err: Error, _req: Request, res: Response, _next: NextFunction): void {
   // Log error for observability (non-sensitive)
   console.error(`[ERROR] ${err.message}`);
 
