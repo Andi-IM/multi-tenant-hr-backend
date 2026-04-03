@@ -30,6 +30,25 @@ export class EmployeeRepository {
     const TenantModel = getEmployeeModel(companyId);
     return TenantModel.findById(id);
   }
+
+  /**
+   * Update an employee by their business-level employeeId.
+   * Uses $set for partial updates — only provided fields are modified.
+   *
+   * @returns Updated document, or null if not found.
+   */
+  async updateByEmployeeId(
+    companyId: string,
+    employeeId: string,
+    data: Partial<IEmployee>,
+  ): Promise<IEmployeeDocument | null> {
+    const TenantModel = getEmployeeModel(companyId);
+    return TenantModel.findOneAndUpdate(
+      { employeeId },
+      { $set: data },
+      { new: true, runValidators: true },
+    );
+  }
 }
 
 /** Singleton instance */

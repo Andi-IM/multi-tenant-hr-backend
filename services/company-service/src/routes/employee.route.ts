@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { employeeController } from '../controllers/employee.controller.js';
 import { authenticateToken, authorizeCompany } from '../middleware/auth.middleware.js';
 import { validate } from '../middleware/validate.middleware.js';
-import { createEmployeeSchema } from '../validators/employee.validator.js';
+import { createEmployeeSchema, updateEmployeeSchema } from '../validators/employee.validator.js';
 import type { AuthenticatedRequest } from '../types/auth.types.js';
 
 const router = Router();
@@ -58,6 +58,90 @@ router.post(
   authorizeCompany as any,
   validate(createEmployeeSchema),
   (req, res, next) => employeeController.create(req as AuthenticatedRequest, res, next),
+);
+
+/**
+ * @openapi
+ * /api/employees/{employeeId}:
+ *   patch:
+ *     summary: Update an employee's data
+ *     description: Partially updates an existing employee's profile or work details. Only the provided fields are modified. Immutable fields (employeeId, companyId, joinDate) are not accepted.
+ *     tags: [Employees]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: employeeId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The business-level employee identifier (e.g., "EMP-A-001")
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               fullName:
+ *                 type: string
+ *                 example: Jane Doe Updated
+ *               employmentStatus:
+ *                 type: string
+ *                 enum: [ACTIVE, INACTIVE]
+ *               workSchedule:
+ *                 type: object
+ *                 properties:
+ *                   startTime:
+ *                     type: string
+ *                     example: "08:00"
+ *                   endTime:
+ *                     type: string
+ *                     example: "16:00"
+ *                   workingDays:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *                     example: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+ *               timezone:
+ *                 type: string
+ *                 example: Asia/Jakarta
+ *     responses:
+ *       200:
+ *         description: Employee updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status: { type: string, example: success }
+ *                 message: { type: string, example: Employee updated successfully }
+ *                 data: { $ref: '#/components/schemas/Employee' }
+ *       400:
+ *         description: Validation error (invalid fields or empty body)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Forbidden - cross-company access attempt
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Employee not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.patch(
+  '/:employeeId',
+  authenticateToken as any,
+  authorizeCompany as any,
+  validate(updateEmployeeSchema),
+  (req, res, next) => employeeController.update(req as AuthenticatedRequest, res, next),
 );
 
 export default router;

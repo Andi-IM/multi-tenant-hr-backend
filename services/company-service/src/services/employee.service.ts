@@ -1,7 +1,7 @@
 import { AppError } from '../errors/app-error.js';
 import { employeeRepository } from '../repositories/employee.repository.js';
-import type { CreateEmployeeInput } from '../validators/employee.validator.js';
-import type { IEmployeeDocument } from '../models/employee.model.js';
+import type { CreateEmployeeInput, UpdateEmployeeInput } from '../validators/employee.validator.js';
+import type { IEmployee, IEmployeeDocument } from '../models/employee.model.js';
 
 export class EmployeeService {
   /**
@@ -55,6 +55,76 @@ export class EmployeeService {
       }
       throw error;
     }
+  }
+
+  /**
+   * Update an existing employee's data (partial update / PATCH semantics).
+   *
+   * Maps API field names to database field names before persistence:
+   * - employmentStatus → status
+   * - workSchedule.startTime → workSchedule.shiftStart
+   * - workSchedule.endTime → workSchedule.shiftEnd
+   *
+   * @param employeeId - Business-level employee identifier (from URL param)
+   * @param input - Validated partial update body (UpdateEmployeeInput)
+   * @param serviceCompanyId - The company identifier this service manages (from env)
+   * @returns Updated Employee document
+   * @throws AppError(404) if employee not found in this company's database
+   */
+  async updateEmployee(
+    employeeId: string,
+    input: UpdateEmployeeInput,
+    serviceCompanyId: string,
+  ): Promise<IEmployeeDocument> {
+    // Build the database update payload with proper field mapping
+    const updateData: Partial<IEmployee> = {};
+
+    if (input.fullName !== undefined) {
+      updateData.fullName = input.fullName;
+    }
+
+    if (input.employmentStatus !== undefined) {
+      updateData.status = input.employmentStatus; // API: employmentStatus → DB: status
+    }
+
+    if (input.timezone !== undefined) {
+      updateData.timezone = input.timezone;
+    }
+
+    // Handle nested workSchedule mapping
+    // Uses MongoDB dot notation for partial nested updates
+    if (input.workSchedule !== undefined) {
+      const scheduleUpdate: Record<string, any> = {};
+
+      if (input.workSchedule.startTime !== undefined) {
+        scheduleUpdate['workSchedule.shiftStart'] = input.workSchedule.startTime;
+      }
+      if (input.workSchedule.endTime !== undefined) {
+        scheduleUpdate['workSchedule.shiftEnd'] = input.workSchedule.endTime;
+      }
+      if (input.workSchedule.workingDays !== undefined) {
+        scheduleUpdate['workSchedule.workingDays'] = input.workSchedule.workingDays;
+      }
+
+      // Merge dot-notation fields into the update payload
+      Object.assign(updateData, scheduleUpdate);
+    }
+
+    // TODO: If workSchedule or timezone changed, consider emitting an event
+    // for Attendance Service synchronization (REQ-U4). Currently, the Attendance
+    // Service fetches the latest data via synchronous API call, so no push is needed.
+
+    const updated = await employeeRepository.updateByEmployeeId(
+      serviceCompanyId,
+      employeeId,
+      updateData,
+    );
+
+    if (!updated) {
+      throw AppError.notFound(`Employee with ID "${employeeId}" not found`);
+    }
+
+    return updated;
   }
 }
 

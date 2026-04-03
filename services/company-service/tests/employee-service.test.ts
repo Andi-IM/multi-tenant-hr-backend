@@ -6,6 +6,7 @@ import { AppError } from '../src/errors/app-error.js';
 vi.mock('../src/repositories/employee.repository.js', () => ({
   employeeRepository: {
     create: vi.fn(),
+    updateByEmployeeId: vi.fn(),
   },
 }));
 
@@ -21,7 +22,7 @@ describe('EmployeeService', () => {
     workSchedule: {
       startTime: '09:00',
       endTime: '17:00',
-      workingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+      workingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] as ('Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday')[],
     },
     timezone: 'Asia/Jakarta',
   };
@@ -29,6 +30,10 @@ describe('EmployeeService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
+
+  // ──────────────────────────────────────────────
+  // createEmployee tests (existing)
+  // ──────────────────────────────────────────────
 
   it('should create an employee successfully', async () => {
     const mockResult = {
@@ -113,5 +118,155 @@ describe('EmployeeService', () => {
     await expect(
       service.createEmployee(validInput, 'A'),
     ).rejects.toThrow('E11000 duplicate key');
+  });
+
+  // ──────────────────────────────────────────────
+  // updateEmployee tests
+  // ──────────────────────────────────────────────
+
+  const mockExistingEmployee = {
+    _id: 'mock-id',
+    employeeId: 'EMP-A-001',
+    fullName: 'Updated Name',
+    companyId: 'A',
+    joinDate: new Date('2025-01-15T00:00:00.000Z'),
+    status: 'ACTIVE',
+    workSchedule: {
+      shiftStart: '09:00',
+      shiftEnd: '17:00',
+      workingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+    },
+    timezone: 'Asia/Jakarta',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  it('should update an employee with partial data successfully', async () => {
+    const updateInput = { fullName: 'Updated Name' };
+
+    // @ts-ignore
+    vi.mocked(employeeRepository.updateByEmployeeId).mockResolvedValue(mockExistingEmployee);
+
+    const result = await service.updateEmployee('EMP-A-001', updateInput, 'A');
+
+    expect(result).toEqual(mockExistingEmployee);
+    expect(employeeRepository.updateByEmployeeId).toHaveBeenCalledWith(
+      'A',
+      'EMP-A-001',
+      { fullName: 'Updated Name' },
+    );
+  });
+
+  it('should throw 404 when employee is not found', async () => {
+    vi.mocked(employeeRepository.updateByEmployeeId).mockResolvedValue(null);
+
+    await expect(
+      service.updateEmployee('EMP-NONE', { fullName: 'Ghost' }, 'A'),
+    ).rejects.toThrow(AppError);
+
+    await expect(
+      service.updateEmployee('EMP-NONE', { fullName: 'Ghost' }, 'A'),
+    ).rejects.toMatchObject({
+      statusCode: 404,
+      message: 'Employee with ID "EMP-NONE" not found',
+    });
+  });
+
+  it('should map employmentStatus to status in the DB payload', async () => {
+    const updateInput = { employmentStatus: 'INACTIVE' as const };
+
+    // @ts-ignore
+    vi.mocked(employeeRepository.updateByEmployeeId).mockResolvedValue({
+      ...mockExistingEmployee,
+      status: 'INACTIVE',
+    });
+
+    await service.updateEmployee('EMP-A-001', updateInput, 'A');
+
+    expect(employeeRepository.updateByEmployeeId).toHaveBeenCalledWith(
+      'A',
+      'EMP-A-001',
+      { status: 'INACTIVE' },
+    );
+  });
+
+  it('should map workSchedule fields using dot notation for partial nested updates', async () => {
+    const updateInput = {
+      workSchedule: {
+        startTime: '08:00',
+        endTime: '16:00',
+      },
+    };
+
+    // @ts-ignore
+    vi.mocked(employeeRepository.updateByEmployeeId).mockResolvedValue(mockExistingEmployee);
+
+    await service.updateEmployee('EMP-A-001', updateInput, 'A');
+
+    expect(employeeRepository.updateByEmployeeId).toHaveBeenCalledWith(
+      'A',
+      'EMP-A-001',
+      {
+        'workSchedule.shiftStart': '08:00',
+        'workSchedule.shiftEnd': '16:00',
+      },
+    );
+  });
+
+  it('should handle workSchedule with only workingDays update', async () => {
+    const updateInput = {
+      workSchedule: {
+        workingDays: ['Monday', 'Tuesday', 'Wednesday'] as ('Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday')[],
+      },
+    };
+
+    // @ts-ignore
+    vi.mocked(employeeRepository.updateByEmployeeId).mockResolvedValue(mockExistingEmployee);
+
+    await service.updateEmployee('EMP-A-001', updateInput, 'A');
+
+    expect(employeeRepository.updateByEmployeeId).toHaveBeenCalledWith(
+      'A',
+      'EMP-A-001',
+      {
+        'workSchedule.workingDays': ['Monday', 'Tuesday', 'Wednesday'],
+      },
+    );
+  });
+
+  it('should handle multiple fields updated at once', async () => {
+    const updateInput = {
+      fullName: 'New Name',
+      employmentStatus: 'INACTIVE' as const,
+      timezone: 'America/New_York',
+    };
+
+    // @ts-ignore
+    vi.mocked(employeeRepository.updateByEmployeeId).mockResolvedValue({
+      ...mockExistingEmployee,
+      ...updateInput,
+      status: 'INACTIVE',
+    });
+
+    await service.updateEmployee('EMP-A-001', updateInput, 'A');
+
+    expect(employeeRepository.updateByEmployeeId).toHaveBeenCalledWith(
+      'A',
+      'EMP-A-001',
+      {
+        fullName: 'New Name',
+        status: 'INACTIVE',
+        timezone: 'America/New_York',
+      },
+    );
+  });
+
+  it('should re-throw unexpected database errors during update', async () => {
+    const dbError = new Error('Connection refused');
+    vi.mocked(employeeRepository.updateByEmployeeId).mockRejectedValue(dbError);
+
+    await expect(
+      service.updateEmployee('EMP-A-001', { fullName: 'Test' }, 'A'),
+    ).rejects.toThrow('Connection refused');
   });
 });

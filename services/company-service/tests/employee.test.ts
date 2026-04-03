@@ -10,6 +10,7 @@ vi.mock('../src/repositories/employee.repository.js', () => ({
   employeeRepository: {
     create: vi.fn(),
     findByEmployeeId: vi.fn(),
+    updateByEmployeeId: vi.fn(),
   },
 }));
 
@@ -149,5 +150,165 @@ describe('POST /api/employees', () => {
 
     expect(response.status).toBe(409);
     expect(response.body.message).toContain('already exists');
+  });
+});
+
+// ──────────────────────────────────────────────────────
+// PATCH /api/employees/:employeeId — Integration Tests
+// ──────────────────────────────────────────────────────
+
+describe('PATCH /api/employees/:employeeId', () => {
+  const validToken = generateTestToken({ companyId: 'A', role: 'ADMIN_HR' });
+
+  const mockUpdatedEmployee = {
+    _id: 'mock-id',
+    employeeId: 'EMP-A-001',
+    fullName: 'Updated Employee Name',
+    companyId: 'A',
+    joinDate: new Date('2025-01-15T00:00:00.000Z'),
+    status: 'ACTIVE',
+    workSchedule: {
+      shiftStart: '09:00',
+      shiftEnd: '17:00',
+      workingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+    },
+    timezone: 'Asia/Jakarta',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should return 200 and update employee with valid partial data', async () => {
+    // @ts-ignore
+    vi.mocked(employeeRepository.updateByEmployeeId).mockResolvedValue(mockUpdatedEmployee);
+
+    const response = await request(app)
+      .patch('/api/employees/EMP-A-001')
+      .set('Authorization', `Bearer ${validToken}`)
+      .send({ fullName: 'Updated Employee Name' });
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe('success');
+    expect(response.body.message).toBe('Employee updated successfully');
+    expect(response.body.data.fullName).toBe('Updated Employee Name');
+    expect(response.body.data.employeeId).toBe('EMP-A-001');
+    expect(response.body.data.workSchedule.startTime).toBe('09:00');
+  });
+
+  it('should return 200 when updating workSchedule partially', async () => {
+    const updatedMock = {
+      ...mockUpdatedEmployee,
+      workSchedule: { shiftStart: '08:00', shiftEnd: '16:00', workingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] },
+    };
+
+    // @ts-ignore
+    vi.mocked(employeeRepository.updateByEmployeeId).mockResolvedValue(updatedMock);
+
+    const response = await request(app)
+      .patch('/api/employees/EMP-A-001')
+      .set('Authorization', `Bearer ${validToken}`)
+      .send({ workSchedule: { startTime: '08:00', endTime: '16:00' } });
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.workSchedule.startTime).toBe('08:00');
+    expect(response.body.data.workSchedule.endTime).toBe('16:00');
+  });
+
+  it('should return 401 if no token is provided', async () => {
+    const response = await request(app)
+      .patch('/api/employees/EMP-A-001')
+      .send({ fullName: 'No Auth' });
+
+    expect(response.status).toBe(401);
+    expect(response.body.message).toContain('Missing or malformed Authorization header');
+  });
+
+  it('should return 403 if admin is from another company', async () => {
+    const tokenB = generateTestToken({ companyId: 'B', role: 'ADMIN_HR' });
+
+    const response = await request(app)
+      .patch('/api/employees/EMP-A-001')
+      .set('Authorization', `Bearer ${tokenB}`)
+      .send({ fullName: 'Cross Company Update' });
+
+    expect(response.status).toBe(403);
+    expect(response.body.message).toContain('Access denied');
+    expect(employeeRepository.updateByEmployeeId).not.toHaveBeenCalled();
+  });
+
+  it('should return 404 if employee is not found', async () => {
+    vi.mocked(employeeRepository.updateByEmployeeId).mockResolvedValue(null);
+
+    const response = await request(app)
+      .patch('/api/employees/EMP-NONEXISTENT')
+      .set('Authorization', `Bearer ${validToken}`)
+      .send({ fullName: 'Ghost Employee' });
+
+    expect(response.status).toBe(404);
+    expect(response.body.message).toContain('not found');
+  });
+
+  it('should return 400 for invalid time format in workSchedule', async () => {
+    const response = await request(app)
+      .patch('/api/employees/EMP-A-001')
+      .set('Authorization', `Bearer ${validToken}`)
+      .send({ workSchedule: { startTime: '25:00' } });
+
+    expect(response.status).toBe(400);
+    expect(response.body.errors).toBeDefined();
+  });
+
+  it('should return 400 for empty request body', async () => {
+    const response = await request(app)
+      .patch('/api/employees/EMP-A-001')
+      .set('Authorization', `Bearer ${validToken}`)
+      .send({});
+
+    expect(response.status).toBe(400);
+    expect(response.body.errors).toBeDefined();
+  });
+
+  it('should return 400 when sending immutable/unknown fields (strict mode)', async () => {
+    const response = await request(app)
+      .patch('/api/employees/EMP-A-001')
+      .set('Authorization', `Bearer ${validToken}`)
+      .send({ employeeId: 'EMP-X-999', fullName: 'Valid Name' });
+
+    expect(response.status).toBe(400);
+    // Zod strict mode rejects unrecognized keys
+    expect(response.body.errors).toBeDefined();
+  });
+
+  it('should return 400 when sending companyId (disallowed for update)', async () => {
+    const response = await request(app)
+      .patch('/api/employees/EMP-A-001')
+      .set('Authorization', `Bearer ${validToken}`)
+      .send({ companyId: 'A', fullName: 'Valid Name' });
+
+    expect(response.status).toBe(400);
+    expect(response.body.errors).toBeDefined();
+  });
+
+  it('should return 400 for invalid employmentStatus enum value', async () => {
+    const response = await request(app)
+      .patch('/api/employees/EMP-A-001')
+      .set('Authorization', `Bearer ${validToken}`)
+      .send({ employmentStatus: 'TERMINATED' });
+
+    expect(response.status).toBe(400);
+    expect(response.body.errors).toBeDefined();
+  });
+
+  it('should return 400 for invalid timezone', async () => {
+    const response = await request(app)
+      .patch('/api/employees/EMP-A-001')
+      .set('Authorization', `Bearer ${validToken}`)
+      .send({ timezone: 'Invalid/Timezone' });
+
+    expect(response.status).toBe(400);
+    expect(response.body.errors).toBeDefined();
   });
 });
