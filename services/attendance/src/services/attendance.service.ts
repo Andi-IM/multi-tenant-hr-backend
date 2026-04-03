@@ -1,20 +1,24 @@
 import axios, { isAxiosError } from 'axios';
 import { DateTime } from 'luxon';
+import { z } from 'zod';
 import { getTenantConnection } from '../config/database.js';
 import { getAttendanceModel, type IAttendance } from '../models/attendance.model.js';
 
-interface EmployeeStatusResponse {
-  status: string;
-  data: {
-    employmentStatus: string;
-    workSchedule: {
-      startTime: string;
-      endTime: string;
-      workingDays: string[];
-    };
-    timezone: string;
-  };
-}
+// Zod schema for internal employee status verification
+const employeeStatusResponseSchema = z.object({
+  status: z.string(),
+  data: z.object({
+    employmentStatus: z.string(),
+    workSchedule: z.object({
+      startTime: z.string(),
+      endTime: z.string(),
+      workingDays: z.array(z.string()),
+    }),
+    timezone: z.string(),
+  }),
+});
+
+type EmployeeStatusResponse = z.infer<typeof employeeStatusResponseSchema>;
 
 export class AttendanceService {
   private companyServiceUrl: string;
@@ -32,7 +36,7 @@ export class AttendanceService {
     token: string
   ): Promise<EmployeeStatusResponse['data']> {
     try {
-      const response = await axios.get<EmployeeStatusResponse>(
+      const response = await axios.get<unknown>(
         `${this.companyServiceUrl}/api/v1/internal/employees/${employeeId}/status`,
         {
           headers: {
@@ -42,11 +46,20 @@ export class AttendanceService {
         }
       );
 
-      if (response.data.status !== 'success' || response.data.data.employmentStatus !== 'ACTIVE') {
+      // Validate response structure using Zod
+      const result = employeeStatusResponseSchema.safeParse(response.data);
+
+      if (!result.success) {
+        throw new Error(`Invalid response format from Company Service: ${result.error.message}`);
+      }
+
+      const { status, data } = result.data;
+
+      if (status !== 'success' || data.employmentStatus !== 'ACTIVE') {
         throw new Error('Employee is not active');
       }
 
-      return response.data.data;
+      return data;
     } catch (error: unknown) {
       if (isAxiosError(error) && error.response?.status === 403) {
         throw new Error('Forbidden: Employee is Inactive', { cause: error });
@@ -114,13 +127,26 @@ export class AttendanceService {
     startTimeStr: string,
     _timezone: string
   ): 'On-Time' | 'Late' {
+    if (!startTimeStr || !startTimeStr.includes(':')) {
+      throw new Error(`Invalid start time format: ${startTimeStr}`);
+    }
+
     const [hours, minutes] = startTimeStr.split(':').map(Number);
+
+    if (isNaN(hours) || isNaN(minutes)) {
+      throw new Error(`Invalid hours or minutes in start time: ${startTimeStr}`);
+    }
+
     const scheduledStartTime = checkInTime.set({
-      hour: hours,
-      minute: minutes,
+      hour: hours as number,
+      minute: minutes as number,
       second: 0,
       millisecond: 0,
     });
+
+    if (!scheduledStartTime.isValid) {
+      throw new Error(`Failed to create a valid scheduled start time from: ${startTimeStr}`);
+    }
 
     // 15 minutes grace period
     const gracePeriodEnd = scheduledStartTime.plus({ minutes: 15 });

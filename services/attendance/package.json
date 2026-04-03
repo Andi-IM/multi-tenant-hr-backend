@@ -10,7 +10,9 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "keywords": [],
   "author": "",
@@ -25,10 +27,14 @@
     "luxon": "^3.5.0",
     "mongoose": "^9.3.3",
     "morgan": "^1.10.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@jaga-id/eslint-config": "workspace:*",
+    "@jaga-id/prettier-config": "workspace:*",
     "@pact-foundation/pact": "^16.3.0",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.6",
@@ -38,9 +44,12 @@
     "@types/morgan": "^1.9.9",
     "@types/node": "^25.5.0",
     "@types/supertest": "^7.2.0",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
     "eslint": "^10.1.0",
     "globals": "^17.4.0",
     "nodemon": "^3.1.14",
+    "prettier": "^3.8.1",
     "supertest": "^7.2.2",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",

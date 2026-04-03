@@ -1,85 +1,58 @@
 services:
-  # MongoDB Replica Set
   mongodb:
     image: mongo:7.0
     container_name: mongodb
     ports:
       - '27017:27017'
-    command: ['--replSet', 'rs0', '--bind_ip_all']
     volumes:
       - mongodb_data:/data/db
     healthcheck:
-      test: echo "try { rs.status() } catch (err) { rs.initiate() }" | mongosh --port 27017 --quiet
+      test: ['CMD', 'mongosh', '--eval', "db.adminCommand('ping')"]
       interval: 10s
-      timeout: 10s
+      timeout: 5s
       retries: 5
-      start_period: 40s
+      start_period: 30s
 
-  # Temporary container to initiate the replica set
-  mongodb-setup:
-    image: mongo:7.0
-    container_name: mongodb-setup
-    depends_on:
-      mongodb:
-        condition: service_healthy
-    entrypoint:
-      [
-        'bash',
-        '-c',
-        'sleep 5 && mongosh --host mongodb:27017 --eval ''rs.initiate({_id: "rs0", members: [{_id: 0, host: "mongodb:27017"}]})'' || true',
-      ]
-
-  # Shared Container Definition for Company Services (Without build block to prevent race condition)
-  x-company-service: &company-template
-    image: hr-company-api:latest
-    depends_on:
-      mongodb:
-        condition: service_healthy
-
-  # Company A Service
   company-a:
-    <<: *company-template
-    build:
-      context: .
-      dockerfile: services/company-service/Dockerfile
+    image: hr-company-api:latest
     container_name: company-a
     ports:
       - '3001:3001'
     environment:
       - NODE_ENV=production
       - PORT=3001
-      - DATABASE_URL=mongodb://mongodb:27017/company_a_db?replicaSet=rs0
+      - DATABASE_URL=mongodb://mongodb:27017/company_a_db
       - COMPANY_ID=A
-
-  # Company B Service
-  company-b:
-    <<: *company-template
-    container_name: company-b
     depends_on:
       mongodb:
         condition: service_healthy
-      company-a:
-        condition: service_started
+
+  company-b:
+    image: hr-company-api:latest
+    container_name: company-b
     ports:
       - '3002:3002'
     environment:
       - NODE_ENV=production
       - PORT=3002
-      - DATABASE_URL=mongodb://mongodb:27017/company_b_db?replicaSet=rs0
+      - DATABASE_URL=mongodb://mongodb:27017/company_b_db
       - COMPANY_ID=B
+    depends_on:
+      mongodb:
+        condition: service_healthy
 
-  # Attendance Service
   attendance:
     build:
       context: .
       dockerfile: services/attendance/Dockerfile
+    image: hr-attendance:latest
     container_name: attendance
     ports:
       - '3003:3003'
     environment:
       - NODE_ENV=production
       - PORT=3003
-      - DATABASE_URL=mongodb://mongodb:27017/attendance_db?replicaSet=rs0
+      - DATABASE_URL=mongodb://mongodb:27017/attendance_db
     depends_on:
       mongodb:
         condition: service_healthy

@@ -39,11 +39,9 @@ export const createEmployeeSchema = z.object({
     .string({ message: 'fullName is required' })
     .min(2, 'fullName must be at least 2 characters'),
   companyId: z.string({ message: 'companyId is required' }).min(1, 'companyId cannot be empty'),
-  joinDate: z
-    .string({ message: 'joinDate is required' })
-    .datetime({
-      message: 'joinDate must be a valid ISO 8601 date string (e.g., "2025-01-15T00:00:00.000Z")',
-    }),
+  joinDate: z.string({ message: 'joinDate is required' }).datetime({
+    message: 'joinDate must be a valid ISO 8601 date string (e.g., "2025-01-15T00:00:00.000Z")',
+  }),
   employmentStatus: z.enum(['ACTIVE', 'INACTIVE'], {
     message: 'employmentStatus must be either "ACTIVE" or "INACTIVE"',
   }),
