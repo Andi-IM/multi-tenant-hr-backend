@@ -39,7 +39,7 @@ describe('POST /api/employees', () => {
   it('should return 201 and create an employee successfully', async () => {
     // Mock the created employee returned by Mongoose
     const mockCreatedEmployee = {
-      id: 'mock-id',
+      _id: { toString: () => 'mock-id' },
       employeeId: validPayload.employeeId,
       fullName: validPayload.fullName,
       companyId: validPayload.companyId,

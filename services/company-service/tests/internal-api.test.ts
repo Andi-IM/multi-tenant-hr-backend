@@ -7,7 +7,7 @@ import { employeeRepository } from '../src/repositories/employee.repository.js';
 // Mock the employee repository to avoid real database calls during unit tests
 vi.mock('../src/repositories/employee.repository.js', () => ({
   employeeRepository: {
-    findByEmployeeId: vi.fn(),
+    findActiveEmployeeForInternal: vi.fn(),
   },
 }));
 
@@ -39,7 +39,7 @@ describe('GET /api/v1/internal/employees/:employeeId/status', () => {
 
   it('should return 200 and employee status details for SYSTEM_ACTOR', async () => {
     // @ts-ignore
-    vi.mocked(employeeRepository.findByEmployeeId).mockResolvedValue(mockEmployee);
+    vi.mocked(employeeRepository.findActiveEmployeeForInternal).mockResolvedValue(mockEmployee);
 
     const response = await request(app)
       .get(`/api/v1/internal/employees/${employeeId}/status`)
@@ -57,7 +57,7 @@ describe('GET /api/v1/internal/employees/:employeeId/status', () => {
   it('should return 403 Forbidden if employee is INACTIVE', async () => {
     const inactiveEmployee = { ...mockEmployee, status: 'INACTIVE' };
     // @ts-ignore
-    vi.mocked(employeeRepository.findByEmployeeId).mockResolvedValue(inactiveEmployee);
+    vi.mocked(employeeRepository.findActiveEmployeeForInternal).mockResolvedValue(inactiveEmployee);
 
     const response = await request(app)
       .get(`/api/v1/internal/employees/${employeeId}/status`)
@@ -68,7 +68,7 @@ describe('GET /api/v1/internal/employees/:employeeId/status', () => {
   });
 
   it('should return 404 Not Found if employee does not exist', async () => {
-    vi.mocked(employeeRepository.findByEmployeeId).mockResolvedValue(null);
+    vi.mocked(employeeRepository.findActiveEmployeeForInternal).mockResolvedValue(null);
 
     const response = await request(app)
       .get(`/api/v1/internal/employees/NON-EXISTENT/status`)

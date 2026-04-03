@@ -24,6 +24,23 @@ export class EmployeeRepository {
   }
 
   /**
+   * Specialized lean query for internal service-to-service status verification.
+   * Optimized for low latency:
+   * 1. Uses .lean() to return plain JS objects (skips Mongoose document hydration).
+   * 2. Uses projection to fetch only required fields.
+   */
+  async findActiveEmployeeForInternal(
+    companyId: string,
+    employeeId: string,
+  ): Promise<Pick<IEmployee, 'status' | 'workSchedule' | 'timezone'> | null> {
+    const TenantModel = getEmployeeModel(companyId);
+    return TenantModel.findOne(
+      { employeeId },
+      { status: 1, workSchedule: 1, timezone: 1, _id: 0 },
+    ).lean();
+  }
+
+  /**
    * Find an employee by their internal MongoDB ObjectId.
    */
   async findById(companyId: string, id: string): Promise<IEmployeeDocument | null> {

@@ -287,7 +287,8 @@ export class EmployeeService {
     };
     timezone: string;
   }> {
-    const employee = await employeeRepository.findByEmployeeId(
+    // Optimized: Uses specialized lean repository query with projection (REQ-V5)
+    const employee = await employeeRepository.findActiveEmployeeForInternal(
       serviceCompanyId,
       employeeId,
     );
