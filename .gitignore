@@ -31,3 +31,6 @@ pnpm-debug.log*
 *.db
 *.sqlite
 prisma/migrations
+
+# Test Coverage
+coverage

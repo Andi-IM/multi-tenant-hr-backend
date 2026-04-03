@@ -1,5 +1,8 @@
 # Jaga ID Technical Test
 
+[![CI — Build, Test & Coverage](https://github.com/Andi-IM/multi-tenant-hr-backend/actions/workflows/ci.yml/badge.svg)](https://github.com/Andi-IM/multi-tenant-hr-backend/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/Andi-IM/multi-tenant-hr-backend/graph/badge.svg)](https://codecov.io/gh/Andi-IM/multi-tenant-hr-backend)
+
 This repository implements a microservices architecture managed as a monorepo.
 
 ## Project Structure
