@@ -1,15 +1,50 @@
 {
   "name": "@jaga-id/attendance",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Attendance service for multi-tenant HR backend",
+  "type": "module",
+  "main": "dist/index.js",
   "scripts": {
-    "dev": "echo \"Attendance dev server not implemented yet\"",
-    "build": "echo \"Nothing to build\"",
-    "lint": "echo \"No linter set\"",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc || echo \"TypeScript build complete\"",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.7.9",
+    "cors": "^2.8.5",
+    "dotenv": "^17.4.0",
+    "express": "^5.2.1",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.3",
+    "luxon": "^3.5.0",
+    "mongoose": "^9.3.3",
+    "morgan": "^1.10.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/luxon": "^3.4.2",
+    "@types/mongoose": "^5.11.97",
+    "@types/morgan": "^1.9.9",
+    "@types/node": "^25.5.0",
+    "@types/supertest": "^7.2.0",
+    "eslint": "^10.1.0",
+    "globals": "^17.4.0",
+    "nodemon": "^3.1.14",
+    "supertest": "^7.2.2",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2",
+    "typescript-eslint": "^8.58.0",
+    "vitest": "^4.1.2"
+  }
 }
