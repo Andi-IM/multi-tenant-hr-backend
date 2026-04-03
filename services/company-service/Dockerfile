@@ -1,5 +1,5 @@
 # This Dockerfile is designed to be built from the root of the monorepo
-# Usage: docker build -t attendance -f services/attendance/Dockerfile .
+# Usage: docker build -t company-service -f services/company-service/Dockerfile .
 
 # Base image with pnpm
 FROM node:20-alpine AS base
@@ -12,7 +12,7 @@ RUN npm install -g turbo
 FROM base AS pruner
 WORKDIR /app
 COPY . .
-RUN turbo prune @jaga-id/attendance --docker
+RUN turbo prune @jaga-id/company-service --docker
 
 # Installer stage
 FROM base AS installer
@@ -28,26 +28,27 @@ WORKDIR /app
 COPY --from=installer /app/ .
 COPY --from=pruner /app/out/full/ .
 COPY turbo.json turbo.json
-RUN turbo build --filter=@jaga-id/attendance
+RUN turbo build --filter=@jaga-id/company-service
 
-# Runner stage
+# Runner stage — use a fresh npm install for clean, flat node_modules
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
-ENV SERVICE_NAME=attendance
+ENV SERVICE_NAME=company-service
 
 # Don't run production as root
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nodejs
+
+# Copy package.json and built code
+COPY --from=builder --chown=nodejs:nodejs /app/services/company-service/package.json .
+COPY --from=builder --chown=nodejs:nodejs /app/services/company-service/dist ./dist
+
+# Install production dependencies cleanly (flat node_modules, no symlinks)
+RUN npm install --omit=dev
+
 USER nodejs
 
-COPY --from=builder /app/services/attendance/package.json .
-# Attendance is plain JS, copy src instead of dist
-COPY --from=builder --chown=nodejs:nodejs /app/services/attendance/src ./src
-COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
-# Use wildcard to avoid failing if there are no local node_modules due to hoisting
-COPY --from=builder --chown=nodejs:nodejs /app/services/attendance/node_module[s] ./services/attendance/node_modules
+EXPOSE 3001
 
-EXPOSE 3003
-
-CMD ["node", "src/app.js"]
+CMD ["node", "dist/index.js"]

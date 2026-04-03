@@ -1,6 +1,3 @@
-# This Dockerfile is designed to be built from the root of the monorepo
-# Usage: docker build -t attendance -f services/attendance/Dockerfile .
-
 # Base image with pnpm
 FROM node:20-alpine AS base
 ENV PNPM_HOME="/pnpm"
@@ -10,9 +7,10 @@ RUN npm install -g turbo
 
 # Pruning stage
 FROM base AS pruner
+ARG SERVICE_NAME
 WORKDIR /app
 COPY . .
-RUN turbo prune @jaga-id/attendance --docker
+RUN turbo prune @jaga-id/${SERVICE_NAME} --docker
 
 # Installer stage
 FROM base AS installer
@@ -24,30 +22,33 @@ RUN pnpm install --frozen-lockfile
 
 # Builder stage
 FROM base AS builder
+ARG SERVICE_NAME
 WORKDIR /app
 COPY --from=installer /app/ .
 COPY --from=pruner /app/out/full/ .
 COPY turbo.json turbo.json
-RUN turbo build --filter=@jaga-id/attendance
+RUN turbo build --filter=@jaga-id/${SERVICE_NAME}
 
 # Runner stage
 FROM node:20-alpine AS runner
 WORKDIR /app
+ARG SERVICE_NAME
 ENV NODE_ENV=production
-ENV SERVICE_NAME=attendance
 
 # Don't run production as root
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nodejs
 USER nodejs
 
-COPY --from=builder /app/services/attendance/package.json .
-# Attendance is plain JS, copy src instead of dist
-COPY --from=builder --chown=nodejs:nodejs /app/services/attendance/src ./src
+COPY --from=builder /app/services/${SERVICE_NAME}/package.json .
+
+# Automatically leverage output traces to reduce image size
+# https://nextjs.org/docs/advanced-features/output-file-tracing
+COPY --from=builder --chown=nodejs:nodejs /app/services/${SERVICE_NAME}/dist ./dist
 COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
-# Use wildcard to avoid failing if there are no local node_modules due to hoisting
-COPY --from=builder --chown=nodejs:nodejs /app/services/attendance/node_module[s] ./services/attendance/node_modules
+COPY --from=builder --chown=nodejs:nodejs /app/services/${SERVICE_NAME}/node_modules ./services/${SERVICE_NAME}/node_modules
 
-EXPOSE 3003
+# Default port
+EXPOSE 3000
 
-CMD ["node", "src/app.js"]
+CMD ["node", "dist/index.js"]

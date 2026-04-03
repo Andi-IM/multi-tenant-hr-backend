@@ -4,22 +4,23 @@ This repository implements a microservices architecture managed as a monorepo.
 
 ## Project Structure
 
-The codebase is organized into workspaces using **pnpm** and coordinated using **Turborepo**:
+The codebase is organized into workspaces using **pnpm** and coordinated using **Turborepo**. We use a shared-container deployment strategy for identical business services:
 
-*   `services/*`: Contains deployable microservices (e.g., `company-a`, `company-b`, `attendance`).
+*   `services/*`: Contains deployable microservices (e.g., `company-service`, `attendance`).
 *   `packages/*`: Contains shared configurations and libraries (e.g., TS config, ESLint config) to ensure consistency across services.
 
 ## Documentation & Design
 
 For a deep dive into our architectural decisions and data isolation strategies, refer to:
-- [**ARCHITECTURE.md**](./ARCHITECTURE.md): Explains the Layered Architecture, Dynamic Mongoose Multi-tenancy, and Rationale.
+- [**docs/architecture.md**](./docs/architecture.md): Explains the Layered Architecture, Dynamic Mongoose Multi-tenancy, Containerization Strategy, and Rationale.
 - [**SRS.md**](./SRS.md): Software Requirements Specification.
 
 ## API Documentation (Swagger)
 
 Each service provides interactive Swagger UI documentation for testing and exploring the API.
 
--   **Company A Service**: [http://localhost:3001/api-docs](http://localhost:3001/api-docs)
+-   **Company A (Mapped Service):** [http://localhost:3001/api-docs](http://localhost:3001/api-docs)
+-   **Company B (Mapped Service):** [http://localhost:3002/api-docs](http://localhost:3002/api-docs)
 -   **Attendance Service**: (Coming soon)
 
 > [!NOTE]
@@ -47,11 +48,27 @@ Ensure you have the following installed on your machine:
 
 ## Running the Project
 
-You can run commands from the root directory that apply to all workspaces.
+### Using Docker Compose (Recommended)
 
-### Development Mode
+The easiest way to run the entire backend system (including MongoDB with Replica Set) is via Docker Compose.
 
-To start all microservices simultaneously in development mode (with hot-reloading if supported by the service):
+```bash
+docker compose up -d --build
+```
+This single command will:
+1. Build optimized images for all services using `turbo prune`.
+2. Start MongoDB and automatically initialize its Replica Set.
+3. Start the `company-a` instance (Port 3001) and `company-b` instance (Port 3002) using the shared `company-service` image.
+4. Start the `attendance` service (Port 3003).
+
+To view logs:
+```bash
+docker compose logs -f
+```
+
+### Local Development Mode
+
+To start all microservices simultaneously without Docker (requires a local MongoDB running):
 
 ```bash
 pnpm run dev

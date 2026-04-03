@@ -5,7 +5,7 @@
 This project follows a **Microservices Architecture** managed as a **Monorepo** using `pnpm` and `Turborepo`.
 
 ### Layered Architecture (Service Level)
-Each microservice (e.g., `company-a`) implements a strict **Layered Architecture** to separate concerns:
+Each microservice (e.g., `company-service`) implements a strict **Layered Architecture** to separate concerns:
 
 1.  **Routes Layer**: Defines API endpoints and attaches middleware for authentication, authorization, and validation.
 2.  **Controller Layer**: Orchestrates the request (Thin Controller), extracting data and handing off execution.
@@ -60,3 +60,53 @@ Initially, the project used Prisma. We transitioned to **Mongoose** to fulfill t
 -   **Challenge**: Validating employee data across services (e.g., Attendance calling Company Service) creates a dependency.
 -   **Trade-off**: Using synchronous REST calls provides **Strong Consistency** but risks **Availability** if the target service is down.
 -   **Mitigation**: Eventual consistency can be tolerated for non-critical lookups through caching (e.g., Redis) or an event-driven architecture to ensure High Availability during service interruptions.
+
+## 8. Containerization & Deployment Strategy
+
+To simplify the architecture and minimize build overhead, we utilize a **Shared Container Image** strategy for identical business services.
+
+### Single Image, Multiple Tenants
+Since the business logic for all Company Services (`company-a` and `company-b`) is identical as requested by SRS, deploying separate codebases is redundant. 
+Instead, we:
+1. **Build a single Docker image** (`hr-company-api`) originating from the `company-service` source code using a multi-stage `turbo prune` process.
+2. **Run multiple containers** from this shared image via Docker Compose.
+3. **Differentiate tenant behavior** purely through environment variables mapping:
+   - Container A: `COMPANY_ID=A`, `DATABASE_URL=...company_a_db`
+   - Container B: `COMPANY_ID=B`, `DATABASE_URL=...company_b_db`
+
+### Benefits
+- **Zero Code Duplication**: Eliminated the redundant `services/company-b` folder.
+- **Faster Build Times**: Turborepo only builds the API once.
+- **Improved Maintainability**: Bug fixes and features written for the core application immediately apply to all tenant containers without synchronization overhead.
+
+### Future-Proofing: Handling Tenant Divergence
+In accordance with the flexibility expected in the SRS, it is possible that business rules for individual companies will slowly diverge in the future. We will handle this using a tiered strategy:
+1. **Low Divergence (Feature Flags)**: Differences in simple thresholds or on/off features will be handled via tenant configuration (Environment Variables or DB Config table).
+2. **Medium Divergence (Strategy Pattern)**: Differences in processing logic (e.g., different payroll formulas) will be handled via the Strategy Pattern injected at runtime based on the `COMPANY_ID` context.
+3. **High Divergence (Service Forking)**: If a company's data model and entire business flow change fundamentally, we will fork `services/company-service` into a standalone bounded context (e.g., `services/company-b-custom`) and deploy it as a separate independent image within the monorepo structure. This guarantees the architecture remains robust without creating unmaintainable "spaghetti code."
+
+## 9. Database Topology: Logical vs Physical Isolation
+
+A common misconception of the "Database per Service" microservice principle is that each service requires its own dedicated database **server**. In practice, the principle refers to **logical isolation** (separate databases), not necessarily **physical isolation** (separate instances).
+
+### Current Architecture: Single Instance, Multiple Databases
+We deploy a single MongoDB instance (Replica Set) that hosts multiple logically separated databases:
+- `company_a_db` — owned exclusively by the Company A container.
+- `company_b_db` — owned exclusively by the Company B container.
+- `attendance_db` — owned exclusively by the Attendance service.
+
+Each service connects only to its designated database via the `DATABASE_URL` environment variable. Cross-service data access is strictly prohibited at the database level and is enforced through inter-service REST API calls (REQ-FUNC-02).
+
+### Why This Is Sufficient
+1. **Data Ownership Is Enforced**: No service can query another service's database. The Attendance service validates employee identity through an API call to the Company service, never by directly reading `company_a_db`.
+2. **Resource Efficiency**: Running separate MongoDB instances for each service would triple memory, CPU, and storage overhead without proportional benefit at the current scale.
+3. **Operational Simplicity**: A single Replica Set is easier to monitor, backup, and maintain than three independent clusters.
+
+### When to Consider Physical Separation
+Physical database separation (dedicated instances per service) becomes justified when:
+- **Divergent scaling requirements**: e.g., Attendance handles 10,000 writes/sec while Company handles 10 reads/sec.
+- **Regulatory/compliance mandates**: e.g., financial data must be physically isolated from HR data.
+- **Fault isolation requirements**: e.g., an Attendance DB crash must not affect the Company service's availability.
+- **Different storage engines or configurations**: e.g., one service needs time-series collections while another needs sharding.
+
+Until these conditions arise, the current topology follows the **YAGNI (You Aren't Gonna Need It)** principle — avoiding premature complexity while maintaining clean service boundaries.
