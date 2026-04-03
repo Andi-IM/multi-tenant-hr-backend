@@ -89,6 +89,24 @@ describe('POST /api/employees', () => {
     expect(response.body.message).toContain('Access denied');
   });
 
+  it('should return 403 if token matches but body companyId targets another company', async () => {
+    // Token is Company A (matches service), but body says Company C
+    const crossCompanyPayload = { ...validPayload, companyId: 'C' };
+
+    // @ts-ignore
+    vi.mocked(employeeRepository.create).mockResolvedValue({});
+
+    const response = await request(app)
+      .post('/api/employees')
+      .set('Authorization', `Bearer ${validToken}`)
+      .send(crossCompanyPayload);
+
+    expect(response.status).toBe(403);
+    expect(response.body.message).toContain('Cannot create employee for company');
+    expect(employeeRepository.create).not.toHaveBeenCalled();
+  });
+
+
   it('should return 400 for validation error (missing required fields)', async () => {
     const invalidPayload = { ...validPayload };
     // @ts-ignore
