@@ -125,3 +125,20 @@ Physical database separation (dedicated instances per service) becomes justified
 - **Different storage engines or configurations**: e.g., one service needs time-series collections while another needs sharding.
 
 Until these conditions arise, the current topology follows the **YAGNI (You Aren't Gonna Need It)** principle — avoiding premature complexity while maintaining clean service boundaries.
+
+## 10. Testing Strategy
+
+To ensure high reliability and to maintain the independent testability of our microservices, we employ a sophisticated multi-tiered testing strategy:
+
+### 10.1. Contract Testing (Pact)
+
+- **Challenge**: The Attendance Service relies heavily on the Company Service for employee validation, relying on synchronous cross-service APIs. Traditional End-to-End (E2E) tests for these interactions require complex, brittle environments (standing up both services and their databases).
+- **Solution**: We implemented **Consumer-Driven Contract Testing** using **Pact**.
+  - The Attendance Service (Consumer) defines expected HTTP interactions and boundaries in isolation, which generates a _Pact JSON contract_.
+  - The Company Service (Provider) verifies its actual API responses against this generated contract during its independent CI pipeline.
+  - This eliminates brittle E2E paths, providing integration safety while allowing both services to evolve and be tested rapidly in isolation.
+
+### 10.2. "No-Domino-Effect" Unit & Integration Testing
+
+- We enforce strict isolation in behavior-driven unit testing (via Vitest/Jest). The standard approach separates the architecture into verifiable segments without overlapping: Controllers mock Services, and Services mock Repositories.
+- Supported by Codecov inside GitHub Actions, checking for coverage targets on every commit. This ensures stable production code while preventing localized failures from cascading through test suites.

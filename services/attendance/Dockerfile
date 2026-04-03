@@ -30,7 +30,7 @@ COPY --from=pruner /app/out/full/ .
 COPY turbo.json turbo.json
 RUN turbo build --filter=@jaga-id/attendance
 
-# Runner stage
+# Runner stage — use a fresh npm install for clean, flat node_modules
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
@@ -39,15 +39,16 @@ ENV SERVICE_NAME=attendance
 # Don't run production as root
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nodejs
-USER nodejs
 
-COPY --from=builder /app/services/attendance/package.json .
-# Attendance is plain JS, copy src instead of dist
-COPY --from=builder --chown=nodejs:nodejs /app/services/attendance/src ./src
-COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
-# Use wildcard to avoid failing if there are no local node_modules due to hoisting
-COPY --from=builder --chown=nodejs:nodejs /app/services/attendance/node_module[s] ./services/attendance/node_modules
+# Copy package.json and built code
+COPY --from=builder --chown=nodejs:nodejs /app/services/attendance/package.json .
+COPY --from=builder --chown=nodejs:nodejs /app/services/attendance/dist ./dist
+
+# Install production dependencies cleanly (flat node_modules, no symlinks)
+RUN npm install --omit=dev
+
+USER nodejs
 
 EXPOSE 3003
 
-CMD ["node", "src/app.js"]
+CMD ["node", "dist/index.js"]

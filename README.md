@@ -90,11 +90,24 @@ To build all services and shared packages:
 pnpm run build
 ```
 
-### Linting and Testing
+### Formatting, Linting, and Testing
 
-To run the linter and tests across the entire monorepo:
+To format the codebase cleanly according to Prettier standards:
+
+```bash
+pnpm run format
+```
+
+To run the linter (ESLint) across the entire monorepo:
 
 ```bash
 pnpm run lint
+```
+
+To execute unit and contract tests (using Vitest and Pact) across all workspaces:
+
+```bash
 pnpm run test
 ```
+
+> **Testing Note:** We use **Pact** for consumer-driven contract testing between the Attendance and Company services, avoiding brittle End-to-End tests. We also use **Codecov** in our GitHub Actions CI pipeline to strictly enforce a "No-Domino-Effect" unit testing strategy. Run `pnpm run test:coverage` to generate local coverage reports.

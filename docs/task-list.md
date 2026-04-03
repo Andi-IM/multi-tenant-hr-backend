@@ -6,7 +6,7 @@ Tugas di bawah ini dirancang dengan prinsip **Layered Architecture** dan praktik
 
 **Fokus Utama:** Mendefinisikan batasan sistem dan aturan bisnis yang tidak tertulis, serta menyiapkan kerangka kode dasar.
 
-**Task 1: Mendokumentasikan Aturan Bisnis & Asumsi (Business Rules Document)**
+**✅ Task 1: Mendokumentasikan Aturan Bisnis & Asumsi (Business Rules Document)**
 
 - **Deskripsi:** Buat satu dokumen (misal: `ARCHITECTURE.md` atau `README.md`) yang menjabarkan logika kehadiran (kapan dihitung _late_, _on-time_, apakah ada toleransi waktu, dan bagaimana penanganan absen yang lupa _check-out_). Jabarkan juga strategi _idempotency_ untuk mencegah duplikasi absensi.
 - **Acceptance Criteria (AC):**
@@ -14,14 +14,14 @@ Tugas di bawah ini dirancang dengan prinsip **Layered Architecture** dan praktik
   - Dokumen memuat logika penentuan absen (hari kerja vs libur, persetujuan cuti).
   - Dokumen memuat penjelasan strategi _idempotency_ (misalnya menggunakan _unique constraints_ pada database atau validasi di _Service Layer_).
 
-**Task 2: Merancang Skema Database & Strategi Indexing MongoDB**
+**✅ Task 2: Merancang Skema Database & Strategi Indexing MongoDB**
 
 - **Deskripsi:** Rancang skema MongoDB (menggunakan Mongoose) untuk Karyawan, Kehadiran, dan Cuti. Definisikan field wajib. Rancang _Index_ pada _field_ yang sering dikueri (seperti ID Karyawan, tanggal absensi, status _approval_) untuk menghindari _full collection scan_.
 - **Acceptance Criteria (AC):**
   - Terdapat diagram skema atau file definisi model awal.
   - Daftar _index_ database terdokumentasi dan terjustifikasi (misal: _compound index_ untuk `employeeId` dan `date`).
 
-**Task 3: Inisialisasi Proyek (Layered Architecture Scaffold)**
+**✅ Task 3: Inisialisasi Proyek (Layered Architecture Scaffold)**
 
 - **Deskripsi:** Buat repositori (_monorepo_ atau _multi-repo_) untuk ketiga layanan (Company A Service, Company B Service, Attendance Service). Terapkan **Layered Architecture** dengan memisahkan kode ke dalam _Routes_ (rute), _Controllers_ (orkestrasi tipis), _Services_ (logika bisnis), dan _Repositories/Operations_ (akses database).
 - **Acceptance Criteria (AC):**
@@ -33,14 +33,14 @@ Tugas di bawah ini dirancang dengan prinsip **Layered Architecture** dan praktik
 
 **Fokus Utama:** Membangun _source of truth_ data karyawan yang terisolasi dan sistem keamanan dasar.
 
-**Task 4: Implementasi Autentikasi & Role-Based Access Control (RBAC)**
+**✅ Task 4: Implementasi Autentikasi & Role-Based Access Control (RBAC)**
 
 - **Deskripsi:** Implementasikan middleware autentikasi, sangat direkomendasikan menggunakan JWT untuk arsitektur terdistribusi/mikroservis. Buat pemisahan _role_ (Karyawan, Approver/Admin, dan Service-to-Service).
 - **Acceptance Criteria (AC):**
   - _Endpoint_ yang dilindungi mengembalikan error `401 Unauthorized` jika token tidak ada/salah.
   - Aksi spesifik (seperti menyetujui cuti) mengembalikan error `403 Forbidden` jika diakses oleh _role_ karyawan biasa.
 
-**Task 5: Implementasi CRUD Company A & Company B Service**
+**✅ Task 5: Implementasi CRUD Company A & Company B Service**
 
 - **Deskripsi:** Buat API untuk operasi Create, Update, Retrieve, List, dan Deactivate data karyawan di masing-masing layanan. Terapkan isolasi ketat di mana data Perusahaan A tidak bisa diakses dari rute Perusahaan B.
 - **Acceptance Criteria (AC):**
@@ -52,7 +52,7 @@ Tugas di bawah ini dirancang dengan prinsip **Layered Architecture** dan praktik
 
 **Fokus Utama:** Membangun logika kehadiran dan memvalidasi identitas karyawan dari layanan terpisah.
 
-**Task 6: Komunikasi Lintas Layanan (Service-to-Service Validation)**
+**🚧 Task 6: Komunikasi Lintas Layanan (Service-to-Service Validation)**
 
 - **Deskripsi:** Terapkan logika di _Attendance Service_ untuk mengambil/memvalidasi data karyawan melalui API _Company Service_ yang relevan menggunakan HTTP request (misalnya `fetch` atau `axios`). _Attendance Service_ **tidak boleh** menyimpan data karyawan ini sebagai sumber utama.
 - **Acceptance Criteria (AC):**
