@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { employeeController } from '../controllers/employee.controller.js';
 import { authenticateToken, authorizeCompany } from '../middleware/auth.middleware.js';
-import { validate } from '../middleware/validate.middleware.js';
-import { createEmployeeSchema, updateEmployeeSchema } from '../validators/employee.validator.js';
+import { validate, validateQuery } from '../middleware/validate.middleware.js';
+import { createEmployeeSchema, updateEmployeeSchema, listEmployeesQuerySchema } from '../validators/employee.validator.js';
 import type { AuthenticatedRequest } from '../types/auth.types.js';
 
 const router = Router();
@@ -194,6 +194,94 @@ router.get(
   authenticateToken as any,
   authorizeCompany as any,
   (req, res, next) => employeeController.getById(req as unknown as AuthenticatedRequest, res, next),
+);
+
+/**
+ * @openapi
+ * /api/employees:
+ *   get:
+ *     summary: List employees
+ *     description: Retrieves a paginated list of employees for the authenticated admin's company. Supports optionally filtering by employment status, and sorting by name or join date. Data isolation is strictly enforced.
+ *     tags: [Employees]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of items per page (maximum 100)
+ *       - in: query
+ *         name: employmentStatus
+ *         schema:
+ *           type: string
+ *           enum: [ACTIVE, INACTIVE]
+ *         description: Filter employees by their active status
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           enum: [fullName, joinDate]
+ *           default: joinDate
+ *         description: Field to sort by
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: desc
+ *         description: Sort direction
+ *     responses:
+ *       200:
+ *         description: A paginated list of employees
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status: { type: string, example: success }
+ *                 data:
+ *                   type: array
+ *                   items: { $ref: '#/components/schemas/Employee' }
+ *                 meta:
+ *                   type: object
+ *                   properties:
+ *                     total: { type: integer, example: 50 }
+ *                     page: { type: integer, example: 1 }
+ *                     limit: { type: integer, example: 10 }
+ *                     totalPages: { type: integer, example: 5 }
+ *       400:
+ *         description: Validation error on query parameters
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized - missing or invalid token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Forbidden
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get(
+  '/',
+  authenticateToken as any,
+  authorizeCompany as any,
+  validateQuery(listEmployeesQuerySchema),
+  (req, res, next) => employeeController.list(req as unknown as AuthenticatedRequest, res, next),
 );
 
 export default router;

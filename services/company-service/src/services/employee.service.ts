@@ -1,6 +1,6 @@
 import { AppError } from '../errors/app-error.js';
 import { employeeRepository } from '../repositories/employee.repository.js';
-import type { CreateEmployeeInput, UpdateEmployeeInput } from '../validators/employee.validator.js';
+import type { CreateEmployeeInput, UpdateEmployeeInput, ListEmployeesQuery } from '../validators/employee.validator.js';
 import type { IEmployee, IEmployeeDocument } from '../models/employee.model.js';
 
 export class EmployeeService {
@@ -152,6 +152,51 @@ export class EmployeeService {
     }
 
     return employee;
+  }
+
+  /**
+   * Retrieve a paginated list of employees for a specific company.
+   *
+   * Data isolation is guaranteed because the query only goes to the tenant
+   * database identified by the serviceCompanyId.
+   *
+   * @param query - Validated query parameters
+   * @param serviceCompanyId - The company identifier this service manages
+   * @returns Paginated result list
+   */
+  async listEmployees(
+    query: ListEmployeesQuery,
+    serviceCompanyId: string,
+  ): Promise<{ data: IEmployeeDocument[]; meta: { total: number; page: number; limit: number; totalPages: number } }> {
+    const filter: Record<string, any> = {};
+    
+    if (query.employmentStatus) {
+      filter.status = query.employmentStatus; // API domain to DB schema naming
+    }
+
+    const sort: Record<string, 1 | -1> = {
+      [query.sortBy]: query.sortOrder === 'asc' ? 1 : -1,
+    };
+
+    const skip = (query.page - 1) * query.limit;
+
+    const { data, total } = await employeeRepository.list(
+      serviceCompanyId,
+      filter,
+      sort,
+      skip,
+      query.limit,
+    );
+
+    return {
+      data,
+      meta: {
+        total,
+        page: query.page,
+        limit: query.limit,
+        totalPages: Math.ceil(total / query.limit),
+      },
+    };
   }
 }
 

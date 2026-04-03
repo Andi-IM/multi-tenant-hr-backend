@@ -142,3 +142,48 @@ export const updateEmployeeSchema = z
  * TypeScript type inferred from the update Zod schema.
  */
 export type UpdateEmployeeInput = z.infer<typeof updateEmployeeSchema>;
+
+/**
+ * Zod schema for the List Employees query parameters.
+ *
+ * Supports:
+ * - Pagination: page (default 1) and limit (default 10, max 100)
+ * - Filtering: employmentStatus (ACTIVE | INACTIVE)
+ * - Sorting: sortBy (fullName | joinDate) and sortOrder (asc | desc)
+ *
+ * Uses z.coerce for automatic string → number conversion since
+ * query parameters are always received as strings.
+ */
+export const listEmployeesQuerySchema = z.object({
+  page: z.coerce
+    .number()
+    .int('page must be an integer')
+    .min(1, 'page must be at least 1')
+    .default(1),
+  limit: z.coerce
+    .number()
+    .int('limit must be an integer')
+    .min(1, 'limit must be at least 1')
+    .max(100, 'limit cannot exceed 100')
+    .default(10),
+  employmentStatus: z
+    .enum(['ACTIVE', 'INACTIVE'], {
+      message: 'employmentStatus must be "ACTIVE" or "INACTIVE"',
+    })
+    .optional(),
+  sortBy: z
+    .enum(['fullName', 'joinDate'], {
+      message: 'sortBy must be "fullName" or "joinDate"',
+    })
+    .default('joinDate'),
+  sortOrder: z
+    .enum(['asc', 'desc'], {
+      message: 'sortOrder must be "asc" or "desc"',
+    })
+    .default('desc'),
+});
+
+/**
+ * TypeScript type inferred from the list query schema.
+ */
+export type ListEmployeesQuery = z.infer<typeof listEmployeesQuerySchema>;

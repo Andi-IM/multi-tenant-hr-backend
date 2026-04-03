@@ -49,6 +49,27 @@ export class EmployeeRepository {
       { new: true, runValidators: true },
     );
   }
+
+  /**
+   * Mongoose powered list query supporting pagination, filtering by exact match,
+   * and sorting. Retrieves total counts in parallel.
+   */
+  async list(
+    companyId: string,
+    filter: Record<string, any>,
+    sort: Record<string, 1 | -1>,
+    skip: number,
+    limit: number,
+  ): Promise<{ data: IEmployeeDocument[]; total: number }> {
+    const TenantModel = getEmployeeModel(companyId);
+    
+    const [data, total] = await Promise.all([
+      TenantModel.find(filter).sort(sort).skip(skip).limit(limit).exec(),
+      TenantModel.countDocuments(filter).exec(),
+    ]);
+
+    return { data, total };
+  }
 }
 
 /** Singleton instance */

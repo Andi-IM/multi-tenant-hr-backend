@@ -8,6 +8,7 @@ vi.mock('../src/repositories/employee.repository.js', () => ({
     create: vi.fn(),
     updateByEmployeeId: vi.fn(),
     findByEmployeeId: vi.fn(),
+    list: vi.fn(),
   },
 }));
 
@@ -307,5 +308,70 @@ describe('EmployeeService', () => {
     await expect(
       service.getEmployeeById('EMP-A-001', 'A'),
     ).rejects.toThrow('Read timeout');
+  });
+
+  // ──────────────────────────────────────────────
+  // listEmployees tests
+  // ──────────────────────────────────────────────
+
+  it('should apply defaults and return paginated list', async () => {
+    // @ts-ignore
+    vi.mocked(employeeRepository.list).mockResolvedValue({
+      data: [mockExistingEmployee] as any[],
+      total: 1,
+    });
+
+    const query = {
+      page: 1,
+      limit: 10,
+      sortBy: 'joinDate',
+      sortOrder: 'desc',
+    } as any;
+
+    const result = await service.listEmployees(query, 'A');
+
+    expect(employeeRepository.list).toHaveBeenCalledWith(
+      'A',
+      {},
+      { joinDate: -1 },
+      0, // skip
+      10, // limit
+    );
+
+    expect(result.data).toHaveLength(1);
+    expect(result.meta).toEqual({
+      total: 1,
+      page: 1,
+      limit: 10,
+      totalPages: 1,
+    });
+  });
+
+  it('should map employmentStatus to DB status and calculate correct skip', async () => {
+    // @ts-ignore
+    vi.mocked(employeeRepository.list).mockResolvedValue({
+      data: [],
+      total: 50,
+    });
+
+    const query = {
+      page: 3,
+      limit: 20,
+      sortBy: 'fullName',
+      sortOrder: 'asc',
+      employmentStatus: 'ACTIVE',
+    } as any;
+
+    const result = await service.listEmployees(query, 'A');
+
+    expect(employeeRepository.list).toHaveBeenCalledWith(
+      'A',
+      { status: 'ACTIVE' },
+      { fullName: 1 },
+      40, // skip: (3 - 1) * 20
+      20, // limit
+    );
+
+    expect(result.meta.totalPages).toBe(3); // 50 / 20 = 2.5 -> ceil -> 3
   });
 });

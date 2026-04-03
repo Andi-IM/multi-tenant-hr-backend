@@ -135,6 +135,46 @@ export class EmployeeController {
       next(error);
     }
   }
+
+  /**
+   * GET /api/employees
+   *
+   * Retrieves a paginated list of employees.
+   */
+  async list(
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      // query is already validated by middleware, we can safely cast
+      const query = req.query as any;
+      const result = await employeeService.listEmployees(query, COMPANY_ID);
+
+      res.status(200).json({
+        status: 'success',
+        data: result.data.map((employee: any) => ({
+          id: employee._id,
+          employeeId: employee.employeeId,
+          fullName: employee.fullName,
+          companyId: employee.companyId,
+          joinDate: employee.joinDate,
+          employmentStatus: employee.status,
+          workSchedule: {
+            startTime: employee.workSchedule.shiftStart,
+            endTime: employee.workSchedule.shiftEnd,
+            workingDays: employee.workSchedule.workingDays,
+          },
+          timezone: employee.timezone,
+          createdAt: employee.createdAt,
+          updatedAt: employee.updatedAt,
+        })),
+        meta: result.meta,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 /** Singleton instance */

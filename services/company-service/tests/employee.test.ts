@@ -11,6 +11,7 @@ vi.mock('../src/repositories/employee.repository.js', () => ({
     create: vi.fn(),
     findByEmployeeId: vi.fn(),
     updateByEmployeeId: vi.fn(),
+    list: vi.fn(),
   },
 }));
 
@@ -407,5 +408,75 @@ describe('GET /api/employees/:employeeId', () => {
 
     // Verifies tenant isolation: the service's COMPANY_ID ('A') is passed, not from the URL
     expect(employeeRepository.findByEmployeeId).toHaveBeenCalledWith('A', 'EMP-A-001');
+  });
+});
+
+// ──────────────────────────────────────────────────────
+// GET /api/employees — Integration Tests
+// ──────────────────────────────────────────────────────
+
+describe('GET /api/employees', () => {
+  const validToken = generateTestToken({ companyId: 'A', role: 'ADMIN_HR' });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should return 200 and a paginated list of employees', async () => {
+    const mockEmployee = {
+      _id: 'mock-id',
+      employeeId: 'EMP-A-001',
+      fullName: 'Test Employee 1',
+      companyId: 'A',
+      joinDate: new Date('2025-01-15T00:00:00.000Z'),
+      status: 'ACTIVE',
+      workSchedule: { shiftStart: '09:00', shiftEnd: '17:00', workingDays: [] },
+      timezone: 'Asia/Jakarta',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    // @ts-ignore
+    vi.mocked(employeeRepository.list).mockResolvedValue({
+      data: [mockEmployee] as any[],
+      total: 1,
+    });
+
+    const response = await request(app)
+      .get('/api/employees?page=1&limit=10&employmentStatus=ACTIVE')
+      .set('Authorization', `Bearer ${validToken}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe('success');
+    expect(response.body.data).toHaveLength(1);
+    expect(response.body.data[0].employeeId).toBe('EMP-A-001');
+    expect(response.body.meta).toEqual({
+      total: 1,
+      page: 1,
+      limit: 10,
+      totalPages: 1,
+    });
+    
+    // Verify arguments passed to repository enforces tenant isolation ('A')
+    expect(employeeRepository.list).toHaveBeenCalledWith(
+      'A',
+      { status: 'ACTIVE' },
+      { joinDate: -1 }, // Default sort
+      0, // skip
+      10, // limit
+    );
+  });
+
+  it('should return 400 if pagination parameters are invalid', async () => {
+    const response = await request(app)
+      .get('/api/employees?page=-1&limit=150&sortBy=invalidField')
+      .set('Authorization', `Bearer ${validToken}`);
+
+    expect(response.status).toBe(400);
+    expect(response.body.errors).toBeDefined();
+    expect(response.body.message).toBe('Query validation failed');
+    expect(response.body.errors.some((e: any) => e.field === 'page')).toBe(true);
+    expect(response.body.errors.some((e: any) => e.field === 'limit')).toBe(true);
+    expect(response.body.errors.some((e: any) => e.field === 'sortBy')).toBe(true);
   });
 });
