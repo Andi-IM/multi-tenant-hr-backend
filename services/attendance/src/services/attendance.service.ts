@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import axios, { isAxiosError } from 'axios';
 import { DateTime } from 'luxon';
 import { z } from 'zod';
@@ -117,6 +118,49 @@ export class AttendanceService {
     await newAttendance.save();
 
     return { alreadyRecorded: false, attendance: newAttendance };
+  }
+
+  /**
+   * Process employee check-out
+   */
+  async checkOut(
+    employeeId: string,
+    companyId: string,
+    token: string
+  ): Promise<{ alreadyRecorded: boolean; attendance: IAttendance }> {
+    // 1. Get employee status and schedule (timezone is crucial)
+    const employeeData = await this.verifyEmployeeStatus(employeeId, companyId, token);
+    const { timezone } = employeeData;
+
+    // 2. Get current time in employee's timezone
+    const now = DateTime.now().setZone(timezone);
+    const todayDate = now.startOf('day').toJSDate();
+
+    // 3. Connect to tenant DB and get model
+    const connection = getTenantConnection(companyId);
+    const Attendance = getAttendanceModel(connection);
+
+    // 4. Find the attendance record for today
+    const attendance = await Attendance.findOne({
+      employeeId,
+      date: todayDate,
+    });
+
+    // 5. If no check-in found, throw 404
+    if (!attendance) {
+      throw new Error('Check-in record not found for today');
+    }
+
+    // 6. Handle Idempotency (if already checked out, just return success)
+    if (attendance.checkOut) {
+      return { alreadyRecorded: true, attendance };
+    }
+
+    // 7. Update check-out time
+    attendance.checkOut = now.toJSDate();
+    await attendance.save();
+
+    return { alreadyRecorded: false, attendance };
   }
 
   /**

@@ -31,7 +31,11 @@ const options: swaggerJsdoc.Options = {
             date: { type: 'string', format: 'date', example: '2025-01-15' },
             checkIn: { type: 'string', format: 'date-time', example: '2025-01-15T08:55:00.000Z' },
             checkOut: { type: 'string', format: 'date-time', example: '2025-01-15T17:05:00.000Z' },
-            status: { type: 'string', enum: ['PRESENT', 'ABSENT', 'LATE'], example: 'PRESENT' },
+            status: {
+              type: 'string',
+              enum: ['On-Time', 'Late', 'Absent', 'Incomplete'],
+              example: 'On-Time',
+            },
           },
         },
         Error: {
@@ -50,10 +54,10 @@ const options: swaggerJsdoc.Options = {
     ],
   },
   apis: [
-    './src/routes/*.ts',
-    './src/controllers/*.ts',
-    './dist/routes/*.js',
-    './dist/controllers/*.js',
+    '**/src/routes/*.ts',
+    '**/src/controllers/*.ts',
+    '**/dist/routes/*.js',
+    '**/dist/controllers/*.js',
   ],
 };
 

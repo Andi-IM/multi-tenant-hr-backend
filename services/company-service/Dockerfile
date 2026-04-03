@@ -23,6 +23,14 @@ COPY --from=pruner /app/out/full/ .
 COPY turbo.json turbo.json
 RUN turbo build --filter=@jaga-id/company-service
 
+# Use pnpm to install only production dependencies in a separate stage
+FROM base AS prod-installer
+WORKDIR /app
+COPY --from=pruner /app/out/json/ .
+COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+# Use shamefully-hoist to flatten node_modules, making it easier to copy and run
+RUN pnpm install --prod --frozen-lockfile --shamefully-hoist
+
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
@@ -30,12 +38,17 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nodejs
 
-COPY --from=builder --chown=nodejs:nodejs /app/services/company-service/package.json .
-COPY --from=builder --chown=nodejs:nodejs /app/services/company-service/dist ./dist
-RUN npm install --omit=dev
+# Copy node_modules from the prod-installer stage
+COPY --from=prod-installer --chown=nodejs:nodejs /app/node_modules ./node_modules
+
+# Copy the build artifacts from the builder stage
+# We copy them into the service directory to maintain the structure
+COPY --from=builder --chown=nodejs:nodejs /app/services/company-service/package.json ./services/company-service/package.json
+COPY --from=builder --chown=nodejs:nodejs /app/services/company-service/dist ./services/company-service/dist
 
 USER nodejs
 
-EXPOSE 3000
+EXPOSE 3001
 
-CMD ["node", "dist/index.js"]
+# Run from the root but pointing to the service's dist
+CMD ["node", "services/company-service/dist/index.js"]

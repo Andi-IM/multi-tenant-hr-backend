@@ -6,6 +6,7 @@ import { AttendanceController } from '../src/controllers/attendance.controller.j
 vi.mock('../src/services/attendance.service.js', () => ({
   attendanceService: {
     checkIn: vi.fn(),
+    checkOut: vi.fn(),
   },
 }));
 
@@ -184,6 +185,114 @@ describe('AttendanceController', () => {
         'company-A',
         'my-secret-token'
       );
+    });
+  });
+
+  // ──────────────────────────────────────────────
+  // checkOut tests
+  // ──────────────────────────────────────────────
+
+  describe('checkOut', () => {
+    it('should return 200 on successful check-out', async () => {
+      const mockAttendance = {
+        employeeId: 'EMP-001',
+        companyId: 'company-A',
+        date: new Date(),
+        checkIn: new Date(),
+        checkOut: new Date(),
+        status: 'On-Time',
+      };
+
+      vi.mocked(attendanceService.checkOut).mockResolvedValue({
+        alreadyRecorded: false,
+        attendance: mockAttendance as any,
+      });
+
+      const req = createMockReq({
+        user: { id: 'EMP-001', companyId: 'company-A', role: 'EMPLOYEE' },
+        headers: { authorization: 'Bearer valid-token-123' },
+      });
+      const res = createMockRes();
+
+      await controller.checkOut(req, res, mockNext);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({
+        status: 'success',
+        message: 'Check-out successful',
+        data: mockAttendance,
+      });
+    });
+
+    it('should return 200 when check-out already recorded (idempotency)', async () => {
+      const mockAttendance = {
+        employeeId: 'EMP-001',
+        companyId: 'company-A',
+        date: new Date(),
+        checkIn: new Date(),
+        checkOut: new Date(),
+        status: 'On-Time',
+      };
+
+      vi.mocked(attendanceService.checkOut).mockResolvedValue({
+        alreadyRecorded: true,
+        attendance: mockAttendance as any,
+      });
+
+      const req = createMockReq({
+        user: { id: 'EMP-001', companyId: 'company-A', role: 'EMPLOYEE' },
+        headers: { authorization: 'Bearer valid-token-123' },
+      });
+      const res = createMockRes();
+
+      await controller.checkOut(req, res, mockNext);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({
+        status: 'success',
+        message: 'Check-out already recorded for today',
+        data: mockAttendance,
+      });
+    });
+
+    it('should return 404 when check-in record not found', async () => {
+      vi.mocked(attendanceService.checkOut).mockRejectedValue(
+        new Error('Check-in record not found for today')
+      );
+
+      const req = createMockReq({
+        user: { id: 'EMP-001', companyId: 'company-A', role: 'EMPLOYEE' },
+        headers: { authorization: 'Bearer valid-token-123' },
+      });
+      const res = createMockRes();
+
+      await controller.checkOut(req, res, mockNext);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith({
+        status: 'error',
+        message: 'Check-in record not found for today',
+      });
+    });
+
+    it('should return 403 when employee is inactive', async () => {
+      vi.mocked(attendanceService.checkOut).mockRejectedValue(
+        new Error('Forbidden: Employee is Inactive')
+      );
+
+      const req = createMockReq({
+        user: { id: 'EMP-001', companyId: 'company-A', role: 'EMPLOYEE' },
+        headers: { authorization: 'Bearer valid-token-123' },
+      });
+      const res = createMockRes();
+
+      await controller.checkOut(req, res, mockNext);
+
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.json).toHaveBeenCalledWith({
+        status: 'error',
+        message: 'Forbidden: Employee is Inactive',
+      });
     });
   });
 });
