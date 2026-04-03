@@ -1,6 +1,7 @@
 import { type Response, type NextFunction } from 'express';
 import { employeeService } from '../services/employee.service.js';
 import type { AuthenticatedRequest } from '../types/auth.types.js';
+import type { ListEmployeesQuery } from '../validators/employee.validator.js';
 
 const COMPANY_ID = process.env.COMPANY_ID || 'A';
 
@@ -33,7 +34,7 @@ export class EmployeeController {
         status: 'success',
         message: 'Employee created successfully',
         data: {
-          id: (employee as any)._id,
+          id: employee._id.toString(),
           employeeId: employee.employeeId,
           fullName: employee.fullName,
           companyId: employee.companyId,
@@ -75,7 +76,7 @@ export class EmployeeController {
         status: 'success',
         message: 'Employee updated successfully',
         data: {
-          id: (employee as any)._id,
+          id: employee._id.toString(),
           employeeId: employee.employeeId,
           fullName: employee.fullName,
           companyId: employee.companyId,
@@ -115,7 +116,7 @@ export class EmployeeController {
       res.status(200).json({
         status: 'success',
         data: {
-          id: (employee as any)._id,
+          id: employee._id.toString(),
           employeeId: employee.employeeId,
           fullName: employee.fullName,
           companyId: employee.companyId,
@@ -148,12 +149,12 @@ export class EmployeeController {
   ): Promise<void> {
     try {
       // query is already validated by middleware, we can safely cast
-      const query = req.query as any;
+      const query = req.query as unknown as ListEmployeesQuery;
       const result = await employeeService.listEmployees(query, COMPANY_ID);
 
       res.status(200).json({
         status: 'success',
-        data: result.data.map((employee: any) => ({
+        data: result.data.map((employee) => ({
           id: employee._id,
           employeeId: employee.employeeId,
           fullName: employee.fullName,
@@ -170,6 +171,43 @@ export class EmployeeController {
           updatedAt: employee.updatedAt,
         })),
         meta: result.meta,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * PATCH /api/employees/:employeeId/deactivate
+   *
+   * Deactivates an employee (soft delete).
+   * No request body is needed — the action is implicit from the URL.
+   *
+   * @returns 200 OK with confirmation and the deactivated employee data
+   */
+  async deactivate(
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const { employeeId } = req.params;
+      const employee = await employeeService.deactivateEmployee(employeeId as string, COMPANY_ID);
+
+      res.status(200).json({
+        status: 'success',
+        message: 'Employee deactivated successfully',
+        data: {
+          id: employee._id.toString(),
+          employeeId: employee.employeeId,
+          fullName: employee.fullName,
+          companyId: employee.companyId,
+          joinDate: employee.joinDate,
+          employmentStatus: employee.status,
+          timezone: employee.timezone,
+          updatedAt: employee.updatedAt,
+          deactivationDate: employee.deactivationDate,
+        },
       });
     } catch (error) {
       next(error);

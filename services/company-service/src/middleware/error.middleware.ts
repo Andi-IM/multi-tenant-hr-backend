@@ -27,7 +27,7 @@ export function errorHandler(
   }
 
   // Prisma unique constraint violation (P2002)
-  if ((err as any).code === 'P2002') {
+  if ((err as { code?: string }).code === 'P2002') {
     res.status(409).json({
       status: 'error',
       message: 'A record with this identifier already exists',

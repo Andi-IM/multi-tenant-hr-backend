@@ -8,6 +8,7 @@ export interface IWorkSchedule {
 }
 
 export interface IEmployee {
+  _id: import('mongoose').Types.ObjectId;
   employeeId: string;
   fullName: string;
   companyId: string;
@@ -17,6 +18,7 @@ export interface IEmployee {
   timezone: string;
   createdAt: Date;
   updatedAt: Date;
+  deactivationDate?: Date;
 }
 
 // Extending mongoose Document for fully typed query results
@@ -33,7 +35,8 @@ export const EmployeeSchema: Schema<IEmployeeDocument> = new Schema({
     shiftEnd: { type: String, required: true },
     workingDays: [{ type: String, required: true }]
   },
-  timezone: { type: String, required: true }
+  timezone: { type: String, required: true },
+  deactivationDate: { type: Date, required: false }
 }, {
   timestamps: true
 });

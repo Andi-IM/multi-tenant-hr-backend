@@ -54,8 +54,8 @@ const router = Router();
  */
 router.post(
   '/',
-  authenticateToken as any,
-  authorizeCompany as any,
+  authenticateToken,
+  authorizeCompany,
   validate(createEmployeeSchema),
   (req, res, next) => employeeController.create(req as AuthenticatedRequest, res, next),
 );
@@ -138,8 +138,8 @@ router.post(
  */
 router.patch(
   '/:employeeId',
-  authenticateToken as any,
-  authorizeCompany as any,
+  authenticateToken,
+  authorizeCompany,
   validate(updateEmployeeSchema),
   (req, res, next) => employeeController.update(req as AuthenticatedRequest, res, next),
 );
@@ -191,9 +191,9 @@ router.patch(
  */
 router.get(
   '/:employeeId',
-  authenticateToken as any,
-  authorizeCompany as any,
-  (req, res, next) => employeeController.getById(req as unknown as AuthenticatedRequest, res, next),
+  authenticateToken,
+  authorizeCompany,
+  (req, res, next) => employeeController.getById(req as AuthenticatedRequest, res, next),
 );
 
 /**
@@ -278,10 +278,75 @@ router.get(
  */
 router.get(
   '/',
-  authenticateToken as any,
-  authorizeCompany as any,
+  authenticateToken,
+  authorizeCompany,
   validateQuery(listEmployeesQuerySchema),
-  (req, res, next) => employeeController.list(req as unknown as AuthenticatedRequest, res, next),
+  (req, res, next) => employeeController.list(req as AuthenticatedRequest, res, next),
+);
+
+/**
+ * @openapi
+ * /api/employees/{employeeId}/deactivate:
+ *   patch:
+ *     summary: Deactivate an employee (soft delete)
+ *     description: Sets the employee's status to INACTIVE without deleting the document, preserving historical data for audit. No request body is needed. Returns 409 if the employee is already inactive.
+ *     tags: [Employees]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: employeeId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The business-level employee identifier (e.g., "EMP-A-001")
+ *     responses:
+ *       200:
+ *         description: Employee deactivated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status: { type: string, example: success }
+ *                 message: { type: string, example: Employee deactivated successfully }
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     employeeId: { type: string }
+ *                     fullName: { type: string }
+ *                     employmentStatus: { type: string, example: INACTIVE }
+ *                     updatedAt: { type: string, format: date-time }
+ *       401:
+ *         description: Unauthorized - missing or invalid token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Forbidden - cross-company access attempt
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Employee not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       409:
+ *         description: Employee is already inactive
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.patch(
+  '/:employeeId/deactivate',
+  authenticateToken,
+  authorizeCompany,
+  (req, res, next) => employeeController.deactivate(req as AuthenticatedRequest, res, next),
 );
 
 export default router;

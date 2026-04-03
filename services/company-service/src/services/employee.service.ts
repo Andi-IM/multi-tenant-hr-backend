@@ -47,8 +47,8 @@ export class EmployeeService {
       });
 
       return employee;
-    } catch (error: any) {
-      if (error && error.code === 11000 && error.keyPattern && error.keyPattern.employeeId) {
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'code' in error && error.code === 11000 && 'keyPattern' in error && (error as { keyPattern: { employeeId?: unknown } }).keyPattern.employeeId) {
         throw AppError.conflict(
           `Employee with ID "${input.employeeId}" already exists`
         );
@@ -94,7 +94,7 @@ export class EmployeeService {
     // Handle nested workSchedule mapping
     // Uses MongoDB dot notation for partial nested updates
     if (input.workSchedule !== undefined) {
-      const scheduleUpdate: Record<string, any> = {};
+      const scheduleUpdate: Record<string, string | string[]> = {};
 
       if (input.workSchedule.startTime !== undefined) {
         scheduleUpdate['workSchedule.shiftStart'] = input.workSchedule.startTime;
@@ -168,7 +168,7 @@ export class EmployeeService {
     query: ListEmployeesQuery,
     serviceCompanyId: string,
   ): Promise<{ data: IEmployeeDocument[]; meta: { total: number; page: number; limit: number; totalPages: number } }> {
-    const filter: Record<string, any> = {};
+    const filter: Record<string, string> = {};
     
     if (query.employmentStatus) {
       filter.status = query.employmentStatus; // API domain to DB schema naming
@@ -197,6 +197,70 @@ export class EmployeeService {
         totalPages: Math.ceil(total / query.limit),
       },
     };
+  }
+
+  /**
+   * Deactivate an employee (soft delete — REQ-D1).
+   *
+   * Sets the employee's status to INACTIVE without removing the document,
+   * preserving historical data for audit purposes. The Attendance Service
+   * performs synchronous status checks against this data, so once the status
+   * is INACTIVE here, the employee will be blocked from attendance operations (REQ-D2).
+   *
+   * Mongoose's `updatedAt` auto-timestamp serves as the deactivation date
+   * for audit trail purposes (REQ-D3).
+   *
+   * @param employeeId - Business-level employee identifier (from URL param)
+   * @param serviceCompanyId - The company identifier this service manages (from env)
+   * @returns Updated (deactivated) employee document
+   * @throws AppError(404) if employee not found
+   * @throws AppError(409) if employee is already inactive
+   */
+  async deactivateEmployee(
+    employeeId: string,
+    serviceCompanyId: string,
+  ): Promise<IEmployeeDocument> {
+    // First verify the employee exists and check current status
+    const employee = await employeeRepository.findByEmployeeId(
+      serviceCompanyId,
+      employeeId,
+    );
+
+    if (!employee) {
+      throw AppError.notFound(`Employee with ID "${employeeId}" not found`);
+    }
+
+    if (employee.status === 'INACTIVE') {
+      throw AppError.conflict(`Employee with ID "${employeeId}" is already inactive`);
+    }
+
+    // REQ-D4 (Validation of Existing Records):
+    // Before deactivating, the system should ideally check for any pending leave/absence requests
+    // for this employee in the Attendance Service.
+    // This requires cross-service communication (e.g., via an HTTP call to the Attendance Service API
+    // or by querying a shared message queue/database).
+    // As cross-service communication is not yet implemented, this check is currently skipped.
+    // Future implementation should involve:
+    // 1. Making a request to the Attendance Service to check for pending requests.
+    // 2. If pending requests exist, either:
+    //    a. Throw an AppError.conflict to prevent deactivation until requests are resolved.
+    //    b. Return a warning to the Admin (if the API design allows for warnings in 200 OK).
+    // For now, we proceed with deactivation directly.
+
+    // For audit trail (REQ-D3), set deactivationDate
+    const updated = await employeeRepository.updateByEmployeeId(
+      serviceCompanyId,
+      employeeId,
+      { status: 'INACTIVE', deactivationDate: new Date() },
+    );
+
+    // This should not happen since we just verified the employee exists,
+    // but guard defensively.
+    if (!updated) {
+      throw AppError.notFound(`Employee with ID "${employeeId}" not found`);
+    }
+
+    return updated;
   }
 }
 

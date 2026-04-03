@@ -1,4 +1,4 @@
-import express, { type Application, type Request, type Response } from 'express';
+import express, { type Application, type Request, type Response, type ErrorRequestHandler } from 'express';
 import routes from './routes/index.js';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger.config.js';
@@ -37,6 +37,6 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api', routes);
 
 // --- Global Error Handler (must be registered last) ---
-app.use(errorHandler as any);
+app.use(errorHandler as ErrorRequestHandler);
 
 export default app;

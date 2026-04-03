@@ -56,7 +56,7 @@ export class EmployeeRepository {
    */
   async list(
     companyId: string,
-    filter: Record<string, any>,
+    filter: Record<string, unknown>,
     sort: Record<string, 1 | -1>,
     skip: number,
     limit: number,

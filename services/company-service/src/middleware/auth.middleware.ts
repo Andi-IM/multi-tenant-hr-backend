@@ -1,7 +1,11 @@
-import { type Response, type NextFunction } from 'express';
+import { type Request, type Response, type NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { AppError } from '../errors/app-error.js';
-import type { AuthenticatedRequest, JwtUserPayload } from '../types/auth.types.js';
+import type { JwtUserPayload } from '../types/auth.types.js';
+
+interface AuthenticatedRequest extends Request {
+  user?: JwtUserPayload;
+}
 
 const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-change-me';
 const COMPANY_ID = process.env.COMPANY_ID || 'A';
