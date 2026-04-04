@@ -1,4 +1,3 @@
-import mongoose from 'mongoose';
 import axios, { isAxiosError } from 'axios';
 import { DateTime } from 'luxon';
 import { z } from 'zod';

@@ -5,6 +5,7 @@ import eslintConfigPrettier from 'eslint-config-prettier';
 import eslintPluginPrettier from 'eslint-plugin-prettier';
 
 export const baseConfig = [
+  js.configs.recommended,
   ...tseslint.configs.recommended,
   {
     ignores: ['dist/**', 'build/**', '.turbo/**', 'node_modules/**', 'tests/**', 'coverage/**'],
@@ -12,10 +13,8 @@ export const baseConfig = [
   {
     files: ['**/*.{js,mjs,cjs,ts}'],
     plugins: {
-      js,
       prettier: eslintPluginPrettier,
     },
-    extends: ['js/recommended'],
     rules: {
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       'no-unused-vars': 'off',

@@ -26,7 +26,9 @@
             "workSchedule": {
               "endTime": "17:00",
               "startTime": "09:00",
-              "workingDays": ["Monday"]
+              "workingDays": [
+                "Monday"
+              ]
             }
           },
           "status": "success"
