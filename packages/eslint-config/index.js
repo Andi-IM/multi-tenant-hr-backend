@@ -8,7 +8,15 @@ export const baseConfig = [
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    ignores: ['dist/**', 'build/**', '.turbo/**', 'node_modules/**', 'tests/**', 'coverage/**'],
+    ignores: [
+      'dist/**',
+      'build/**',
+      '.turbo/**',
+      'node_modules/**',
+      'tests/**',
+      'coverage/**',
+      'vitest.config.ts',
+    ],
   },
   {
     files: ['**/*.{js,mjs,cjs,ts}'],

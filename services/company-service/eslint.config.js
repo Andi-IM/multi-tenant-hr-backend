@@ -1,3 +1,8 @@
 import { createLocalConfig } from '@jaga-id/eslint-config';
 
-export default createLocalConfig(import.meta.dirname);
+export default [
+  ...createLocalConfig(import.meta.dirname),
+  {
+    ignores: ['vitest.config.ts'],
+  },
+];
