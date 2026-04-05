@@ -12,12 +12,19 @@ vi.mock('../src/repositories/employee.repository.js', () => ({
   },
 }));
 
+vi.mock('bcrypt', () => ({
+  default: {
+    hash: vi.fn(async () => 'hashed-password'),
+  },
+}));
+
 describe('EmployeeService', () => {
   const service = new EmployeeService();
 
   const validInput = {
     employeeId: 'EMP-A-001',
     fullName: 'Test Employee',
+    email: 'test.employee@company-a.com',
     companyId: 'A',
     joinDate: '2025-01-15T00:00:00.000Z',
     employmentStatus: 'active' as const,

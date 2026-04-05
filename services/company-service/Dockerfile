@@ -21,7 +21,9 @@ WORKDIR /app
 COPY --from=installer /app/ .
 COPY --from=pruner /app/out/full/ .
 COPY turbo.json turbo.json
+RUN ls -l /app/services/company-service
 RUN turbo build --filter=@jaga-id/company-service
+RUN ls -l /app/services/company-service/dist
 
 # Use pnpm to install only production dependencies in a separate stage
 FROM base AS prod-installer
@@ -51,4 +53,4 @@ USER nodejs
 EXPOSE 3001
 
 # Run from the root but pointing to the service's dist
-CMD ["node", "services/company-service/dist/index.js"]
+CMD ["node", "/app/services/company-service/dist/src/index.js"]

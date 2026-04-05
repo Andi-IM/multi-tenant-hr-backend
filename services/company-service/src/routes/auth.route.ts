@@ -13,6 +13,7 @@ const router = Router();
  *     summary: Login and get JWT token
  *     description: Public endpoint to authenticate employees. Includes rate limiting (5 attempts per 15 minutes).
  *     tags: [Auth]
+ *     security: []
  *     requestBody:
  *       required: true
  *       content:
@@ -79,6 +80,7 @@ router.post(
  *     summary: Refresh access token
  *     description: Exchange a valid refresh token for a new set of access and refresh tokens.
  *     tags: [Auth]
+ *     security: []
  *     requestBody:
  *       required: true
  *       content:

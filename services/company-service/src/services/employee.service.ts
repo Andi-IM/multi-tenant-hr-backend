@@ -1,5 +1,6 @@
 import { AppError } from '../errors/app-error.js';
 import { employeeRepository } from '../repositories/employee.repository.js';
+import bcrypt from 'bcrypt';
 import type {
   CreateEmployeeInput,
   UpdateEmployeeInput,
@@ -34,17 +35,19 @@ export class EmployeeService {
     }
 
     try {
+      const passwordHash = await bcrypt.hash(input.password, 10);
       // Direct insertion. Because of the unique index on employeeId in Mongoose,
       // a duplicate will throw an error with code 11000. This is faster than doing `findOne` first.
       const employee = await employeeRepository.create(input.companyId, {
         employeeId: input.employeeId,
         fullName: input.fullName,
+        email: input.email,
         companyId: input.companyId,
         joinDate: new Date(input.joinDate),
         status: input.employmentStatus,
         timezone: input.timezone,
         role: input.role,
-        passwordHash: input.password, // Will be hashed in repository or middleware
+        passwordHash,
         workSchedule: {
           startTime: input.workSchedule.startTime,
           endTime: input.workSchedule.endTime,

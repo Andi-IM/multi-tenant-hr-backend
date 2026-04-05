@@ -7,12 +7,14 @@ dotenv.config();
 
 async function seed() {
   const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/company_a_db';
+  const companyId = process.env.COMPANY_ID || 'A';
+  const companySlug = companyId === 'B' ? 'company-b' : 'company-a';
   console.log(`Connecting to ${uri}...`);
   await mongoose.connect(uri);
 
   const Employee = getEmployeeModel();
 
-  await Employee.deleteMany({ companyId: 'A' });
+  await Employee.deleteMany({});
 
   const passwordHash = await bcrypt.hash('password123', 10);
 
@@ -20,8 +22,8 @@ async function seed() {
     {
       employeeId: 'EMP-000',
       fullName: 'Admin HR',
-      email: 'admin@company-a.com',
-      companyId: 'A',
+      email: `admin@${companySlug}.com`,
+      companyId,
       joinDate: new Date(),
       status: 'active',
       workSchedule: {
@@ -37,8 +39,8 @@ async function seed() {
     {
       employeeId: 'EMP-001',
       fullName: 'Employee One',
-      email: 'employee1@company-a.com',
-      companyId: 'A',
+      email: `employee1@${companySlug}.com`,
+      companyId,
       joinDate: new Date(),
       status: 'active',
       workSchedule: {
@@ -54,8 +56,8 @@ async function seed() {
     {
       employeeId: 'EMP-002',
       fullName: 'Employee Two',
-      email: 'employee2@company-a.com',
-      companyId: 'A',
+      email: `employee2@${companySlug}.com`,
+      companyId,
       joinDate: new Date(),
       status: 'active',
       workSchedule: {
@@ -74,9 +76,9 @@ async function seed() {
   console.log('Employee seed data inserted successfully!');
   console.log('');
   console.log('Login credentials (for integration testing):');
-  console.log('  Admin HR:  admin@company-a.com / password123');
-  console.log('  Employee: employee1@company-a.com / password123');
-  console.log('  Employee: employee2@company-a.com / password123');
+  console.log(`  Admin HR:  admin@${companySlug}.com / password123`);
+  console.log(`  Employee: employee1@${companySlug}.com / password123`);
+  console.log(`  Employee: employee2@${companySlug}.com / password123`);
   await mongoose.disconnect();
 }
 

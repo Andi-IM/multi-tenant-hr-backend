@@ -18,6 +18,7 @@ describe('POST /api/v1/employees', () => {
   const validPayload = {
     employeeId: 'EMP-A-001',
     fullName: 'Test Employee',
+    email: 'test.employee@company-a.com',
     companyId: 'A',
     joinDate: '2025-01-15T00:00:00.000Z',
     employmentStatus: 'active',
