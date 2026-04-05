@@ -167,7 +167,9 @@ describe('PATCH /api/v1/employees/:employeeId', () => {
   });
 
   it('should return 401 if no token is provided', async () => {
-    const response = await request(app).patch(`/api/v1/employees/${employeeId}`).send(updatePayload);
+    const response = await request(app)
+      .patch(`/api/v1/employees/${employeeId}`)
+      .send(updatePayload);
 
     expect(response.status).toBe(401);
     expect(response.body.message).toBe('No token provided');
@@ -275,7 +277,12 @@ describe('GET /api/v1/employees', () => {
           companyId: 'A',
           joinDate: new Date(),
           status: 'active',
-          workSchedule: { startTime: '09:00', endTime: '17:00', toleranceMinutes: 15, workDays: [1, 2] },
+          workSchedule: {
+            startTime: '09:00',
+            endTime: '17:00',
+            toleranceMinutes: 15,
+            workDays: [1, 2],
+          },
           timezone: 'Asia/Jakarta',
           role: 'EMPLOYEE',
           createdAt: new Date(),

@@ -42,13 +42,13 @@ RUN adduser --system --uid 1001 nodejs
 COPY --from=prod-installer --chown=nodejs:nodejs /app/node_modules ./node_modules
 
 # Copy the build artifacts from the builder stage
-# We copy them into the service directory to maintain the structure
-COPY --from=builder --chown=nodejs:nodejs /app/services/attendance/package.json ./services/attendance/package.json
-COPY --from=builder --chown=nodejs:nodejs /app/services/attendance/dist ./services/attendance/dist
+# We copy them into the root workdir since we are running in a specialized container
+COPY --from=builder --chown=nodejs:nodejs /app/services/attendance/package.json ./package.json
+COPY --from=builder --chown=nodejs:nodejs /app/services/attendance/dist ./dist
 
 USER nodejs
 
 EXPOSE 3003
 
-# Run from the root but pointing to the service's dist
-CMD ["node", "services/attendance/dist/index.js"]
+# Run from the root
+CMD ["node", "dist/index.js"]
