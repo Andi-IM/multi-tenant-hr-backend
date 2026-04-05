@@ -9,26 +9,38 @@ This repository implements a microservices architecture managed as a monorepo.
 
 The codebase is organized into workspaces using **pnpm** and coordinated using **Turborepo**. We use a shared-container deployment strategy for identical business services:
 
-- `services/*`: Contains deployable microservices (e.g., `company-service`, `attendance`).
-- `packages/*`: Contains shared configurations and libraries (e.g., TS config, ESLint config) to ensure consistency across services.
+- `services/*`: Contains deployable microservices (`company-service`, `attendance`).
+- `packages/*`: Contains shared configurations and libraries (TS config, ESLint config, Prettier config) to ensure consistency across services.
 
 ## Documentation & Design
 
 For a deep dive into our architectural decisions and data isolation strategies, refer to:
 
-- [**docs/architecture.md**](./docs/architecture.md): Explains the Layered Architecture, Dynamic Mongoose Multi-tenancy, Containerization Strategy, and Rationale.
-- [**SRS.md**](./SRS.md): Software Requirements Specification.
+- [**docs/ARCHITECTURE.md**](./docs/ARCHITECTURE.md): Explains the Layered Architecture, Dynamic Mongoose Multi-tenancy, Containerization Strategy, and Rationale.
+- [**docs/srs.md**](./docs/srs.md): Software Requirements Specification.
+- [**docs/sdd.md**](./docs/sdd.md): Software Design Document.
 
-## API Documentation (Swagger)
+## API Gateway & Documentation (Swagger)
 
-Each service provides interactive Swagger UI documentation for testing and exploring the API.
+We use **Nginx** as an API Gateway to route requests to the appropriate services. Each service provides interactive Swagger UI documentation.
 
-- **Company A (Mapped Service):** [http://localhost:3001/api-docs](http://localhost:3001/api-docs)
-- **Company B (Mapped Service):** [http://localhost:3002/api-docs](http://localhost:3002/api-docs)
-- **Attendance Service**: (Coming soon)
+### Accessing via Gateway (Docker)
+
+When running via Docker Compose, all services are accessible through the API Gateway on port **80**:
+
+- **Company A API Docs:** [http://localhost/company-a/api-docs](http://localhost/company-a/api-docs)
+- **Company B API Docs:** [http://localhost/company-b/api-docs](http://localhost/company-b/api-docs)
+- **Attendance Service API Docs:** [http://localhost/attendance/api-docs](http://localhost/attendance/api-docs)
+
+### Direct Access (Local Development)
+
+If running services individually or without the gateway:
+
+- **Company Service:** [http://localhost:3001/api-docs](http://localhost:3001/api-docs) (Default)
+- **Attendance Service:** [http://localhost:3002/api-docs](http://localhost:3002/api-docs) (Default)
 
 > [!NOTE]
-> To use the Swagger UI for protected endpoints, you must obtain a valid JWT token (e.g., from a login endpoint or by running the test suite's token generator helper) and click the **Authorize** button.
+> To use the Swagger UI for protected endpoints, you must obtain a valid JWT token (e.g., from the login endpoint) and click the **Authorize** button.
 
 ## Setup & Installation
 
@@ -58,15 +70,19 @@ Ensure you have the following installed on your machine:
 The easiest way to run the entire backend system (including MongoDB with Replica Set) is via Docker Compose.
 
 ```bash
-docker compose up -d --build
+docker compose up --build
 ```
+
+> [!CAUTION]
+> **Avoid using the `-d` (detached) flag.** Running the system in the background might cause some services or the database initialization to fail silently or terminate unexpectedly without immediate visibility. Running in the foreground ensures you can monitor the startup logs and health checks in real-time.
 
 This single command will:
 
 1. Build optimized images for all services using `turbo prune`.
 2. Start MongoDB and automatically initialize its Replica Set.
-3. Start the `company-a` instance (Port 3001) and `company-b` instance (Port 3002) using the shared `company-service` image.
-4. Start the `attendance` service (Port 3003).
+3. Start the `company-a` instance and `company-b` instance using the shared `company-service` image.
+4. Start the `attendance` service.
+5. Start the **Nginx API Gateway** on port **80**.
 
 To view logs:
 

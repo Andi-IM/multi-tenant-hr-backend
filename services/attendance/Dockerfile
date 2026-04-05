@@ -48,7 +48,7 @@ COPY --from=builder --chown=nodejs:nodejs /app/services/attendance/dist ./servic
 
 USER nodejs
 
-EXPOSE 3002
+EXPOSE 3003
 
 # Run from the root but pointing to the service's dist
 CMD ["node", "services/attendance/dist/index.js"]

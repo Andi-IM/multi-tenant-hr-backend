@@ -10,8 +10,16 @@ const options: swaggerJsdoc.Options = {
     },
     servers: [
       {
+        url: '/company-a',
+        description: 'Gateway (Company A)',
+      },
+      {
+        url: '/company-b',
+        description: 'Gateway (Company B)',
+      },
+      {
         url: 'http://localhost:3001',
-        description: 'Development server',
+        description: 'Local Direct Port (3001)',
       },
     ],
     components: {
@@ -81,10 +89,12 @@ const options: swaggerJsdoc.Options = {
     ],
   },
   apis: [
-    './src/routes/*.ts',
-    './src/controllers/*.ts',
-    './dist/routes/*.js',
-    './dist/controllers/*.js',
+    '**/src/routes/*.ts',
+    '**/src/controllers/*.ts',
+    '**/*.route.js',
+    '**/*.controller.js',
+    '**/dist/routes/*.js',
+    '**/dist/controllers/*.js',
   ], // Path to the API docs
 };
 

@@ -10,8 +10,12 @@ const options: swaggerJsdoc.Options = {
     },
     servers: [
       {
+        url: '/attendance',
+        description: 'Gateway (Attendance)',
+      },
+      {
         url: 'http://localhost:3003',
-        description: 'Development server',
+        description: 'Local Direct Port (3003)',
       },
     ],
     components: {
