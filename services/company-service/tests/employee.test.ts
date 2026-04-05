@@ -439,7 +439,12 @@ describe('GET /api/employees', () => {
       companyId: 'A',
       joinDate: new Date('2025-01-15T00:00:00.000Z'),
       status: 'active',
-      workSchedule: { startTime: '09:00', endTime: '17:00', toleranceMinutes: 15, workDays: [1, 2, 3, 4, 5] },
+      workSchedule: {
+        startTime: '09:00',
+        endTime: '17:00',
+        toleranceMinutes: 15,
+        workDays: [1, 2, 3, 4, 5],
+      },
       timezone: 'Asia/Jakarta',
       role: 'EMPLOYEE',
       createdAt: new Date(),

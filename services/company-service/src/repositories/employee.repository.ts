@@ -24,6 +24,14 @@ export class EmployeeRepository {
   }
 
   /**
+   * Find an employee by their email in a specific tenant's DB.
+   */
+  async findByEmail(companyId: string, email: string): Promise<IEmployeeDocument | null> {
+    const TenantModel = getEmployeeModel();
+    return TenantModel.findOne({ email });
+  }
+
+  /**
    * Specialized lean query for internal service-to-service status verification.
    * Optimized for low latency:
    * 1. Uses .lean() to return plain JS objects (skips Mongoose document hydration).

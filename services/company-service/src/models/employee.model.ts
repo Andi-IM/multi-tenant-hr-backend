@@ -15,6 +15,7 @@ export interface IEmployee {
   _id: import('mongoose').Types.ObjectId;
   employeeId: string;
   fullName: string;
+  email: string;
   companyId: string;
   joinDate: Date;
   status: EmploymentStatus;
@@ -34,6 +35,7 @@ export const EmployeeSchema: Schema<IEmployeeDocument> = new Schema(
   {
     employeeId: { type: String, required: true, unique: true },
     fullName: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
     companyId: { type: String, required: true },
     joinDate: { type: Date, required: true },
     status: {
