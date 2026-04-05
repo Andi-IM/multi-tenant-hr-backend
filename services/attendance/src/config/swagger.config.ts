@@ -29,8 +29,16 @@ const options: swaggerJsdoc.Options = {
             employeeId: { type: 'string', example: 'EMP-A-001' },
             companyId: { type: 'string', example: 'A' },
             date: { type: 'string', format: 'date', example: '2025-01-15' },
-            checkInTime: { type: 'string', format: 'date-time', example: '2025-01-15T08:55:00.000Z' },
-            checkOutTime: { type: 'string', format: 'date-time', example: '2025-01-15T17:05:00.000Z' },
+            checkInTime: {
+              type: 'string',
+              format: 'date-time',
+              example: '2025-01-15T08:55:00.000Z',
+            },
+            checkOutTime: {
+              type: 'string',
+              format: 'date-time',
+              example: '2025-01-15T17:05:00.000Z',
+            },
             status: {
               type: 'string',
               enum: ['on-time', 'late', 'absent', 'incomplete'],

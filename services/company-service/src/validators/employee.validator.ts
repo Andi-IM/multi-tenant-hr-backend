@@ -12,10 +12,10 @@ const workScheduleSchema = z.object({
     .string({ message: 'endTime is required' })
     .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'endTime must be in HH:MM format (e.g., "17:00")'),
   toleranceMinutes: z.number().min(0).max(60).default(15),
-  workingDays: z
+  workDays: z
     .array(z.number().min(0).max(6))
-    .min(1, 'workingDays must contain at least one day')
-    .max(7, 'workingDays cannot exceed 7 days'),
+    .min(1, 'workDays must contain at least one day')
+    .max(7, 'workDays cannot exceed 7 days'),
 });
 
 /**
@@ -60,7 +60,9 @@ export const createEmployeeSchema = z.object({
   role: z.enum(['EMPLOYEE', 'ADMIN_HR'], {
     message: 'role must be "EMPLOYEE" or "ADMIN_HR"',
   }),
-  password: z.string({ message: 'password is required' }).min(8, 'password must be at least 8 characters'),
+  password: z
+    .string({ message: 'password is required' })
+    .min(8, 'password must be at least 8 characters'),
 });
 
 /**
@@ -81,10 +83,10 @@ const updateWorkScheduleSchema = z.object({
     .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'endTime must be in HH:MM format (e.g., "17:00")')
     .optional(),
   toleranceMinutes: z.number().min(0).max(60).optional(),
-  workingDays: z
+  workDays: z
     .array(z.number().min(0).max(6))
-    .min(1, 'workingDays must contain at least one day')
-    .max(7, 'workingDays cannot exceed 7 days')
+    .min(1, 'workDays must contain at least one day')
+    .max(7, 'workDays cannot exceed 7 days')
     .optional(),
 });
 

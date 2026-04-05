@@ -21,13 +21,17 @@
       "response": {
         "body": {
           "data": {
-            "employmentStatus": "ACTIVE",
+            "companyId": "comp_abc",
+            "employeeId": "emp_123",
+            "employmentStatus": "active",
+            "role": "EMPLOYEE",
             "timezone": "Asia/Jakarta",
             "workSchedule": {
               "endTime": "17:00",
               "startTime": "09:00",
-              "workingDays": [
-                "Monday"
+              "toleranceMinutes": 15,
+              "workDays": [
+                1
               ]
             }
           },
@@ -38,6 +42,30 @@
         },
         "matchingRules": {
           "body": {
+            "$.data.companyId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.data.employeeId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.data.role": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
             "$.data.timezone": {
               "combine": "AND",
               "matchers": [
@@ -62,7 +90,15 @@
                 }
               ]
             },
-            "$.data.workSchedule.workingDays": {
+            "$.data.workSchedule.toleranceMinutes": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.data.workSchedule.workDays": {
               "combine": "AND",
               "matchers": [
                 {

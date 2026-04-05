@@ -54,11 +54,15 @@ describe('Company Service - Pact Provider', () => {
 
     // @ts-ignore
     vi.mocked(employeeRepository.findActiveEmployeeForInternal).mockResolvedValue({
-      status: 'ACTIVE',
+      employeeId: 'emp_123',
+      companyId: 'comp_abc',
+      role: 'EMPLOYEE',
+      status: 'active',
       workSchedule: {
-        shiftStart: '09:00',
-        shiftEnd: '17:00',
-        workingDays: ['Monday'],
+        startTime: '09:00',
+        endTime: '17:00',
+        toleranceMinutes: 15,
+        workDays: [1],
       },
       timezone: 'Asia/Jakarta',
     });

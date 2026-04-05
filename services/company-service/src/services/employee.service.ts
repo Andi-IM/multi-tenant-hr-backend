@@ -49,7 +49,7 @@ export class EmployeeService {
           startTime: input.workSchedule.startTime,
           endTime: input.workSchedule.endTime,
           toleranceMinutes: input.workSchedule.toleranceMinutes ?? 15,
-          workDays: input.workSchedule.workingDays,
+          workDays: input.workSchedule.workDays,
         },
       });
 
@@ -117,8 +117,8 @@ export class EmployeeService {
       if (input.workSchedule.toleranceMinutes !== undefined) {
         scheduleUpdate['workSchedule.toleranceMinutes'] = input.workSchedule.toleranceMinutes;
       }
-      if (input.workSchedule.workingDays !== undefined) {
-        scheduleUpdate['workSchedule.workDays'] = input.workSchedule.workingDays;
+      if (input.workSchedule.workDays !== undefined) {
+        scheduleUpdate['workSchedule.workDays'] = input.workSchedule.workDays;
       }
 
       // Merge dot-notation fields into the update payload

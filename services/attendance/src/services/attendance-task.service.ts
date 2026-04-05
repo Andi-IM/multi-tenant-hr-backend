@@ -1,5 +1,4 @@
 import cron from 'node-cron';
-import mongoose from 'mongoose';
 import { DateTime } from 'luxon';
 import { getAttendanceModel } from '../models/attendance.model.js';
 

@@ -36,7 +36,12 @@ export const EmployeeSchema: Schema<IEmployeeDocument> = new Schema(
     fullName: { type: String, required: true },
     companyId: { type: String, required: true },
     joinDate: { type: Date, required: true },
-    status: { type: String, enum: ['active', 'inactive', 'terminated'], required: true, default: 'active' },
+    status: {
+      type: String,
+      enum: ['active', 'inactive', 'terminated'],
+      required: true,
+      default: 'active',
+    },
     workSchedule: {
       startTime: { type: String, required: true },
       endTime: { type: String, required: true },

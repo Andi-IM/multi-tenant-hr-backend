@@ -20,21 +20,16 @@ describe('EmployeeService', () => {
     fullName: 'Test Employee',
     companyId: 'A',
     joinDate: '2025-01-15T00:00:00.000Z',
-    employmentStatus: 'ACTIVE' as const,
+    employmentStatus: 'active' as const,
     workSchedule: {
       startTime: '09:00',
       endTime: '17:00',
-      workingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] as (
-        | 'Monday'
-        | 'Tuesday'
-        | 'Wednesday'
-        | 'Thursday'
-        | 'Friday'
-        | 'Saturday'
-        | 'Sunday'
-      )[],
+      toleranceMinutes: 15,
+      workDays: [1, 2, 3, 4, 5] as number[],
     },
     timezone: 'Asia/Jakarta',
+    role: 'EMPLOYEE' as const,
+    password: 'password123',
   };
 
   beforeEach(() => {
@@ -52,13 +47,15 @@ describe('EmployeeService', () => {
       fullName: validInput.fullName,
       companyId: validInput.companyId,
       joinDate: new Date(validInput.joinDate),
-      status: 'ACTIVE',
+      status: 'active',
       workSchedule: {
-        shiftStart: '09:00',
-        shiftEnd: '17:00',
-        workingDays: validInput.workSchedule.workingDays,
+        startTime: '09:00',
+        endTime: '17:00',
+        toleranceMinutes: 15,
+        workDays: validInput.workSchedule.workDays,
       },
       timezone: validInput.timezone,
+      role: 'EMPLOYEE',
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -131,13 +128,15 @@ describe('EmployeeService', () => {
     fullName: 'Updated Name',
     companyId: 'A',
     joinDate: new Date('2025-01-15T00:00:00.000Z'),
-    status: 'ACTIVE',
+    status: 'active',
     workSchedule: {
-      shiftStart: '09:00',
-      shiftEnd: '17:00',
-      workingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+      startTime: '09:00',
+      endTime: '17:00',
+      toleranceMinutes: 15,
+      workDays: [1, 2, 3, 4, 5],
     },
     timezone: 'Asia/Jakarta',
+    role: 'EMPLOYEE',
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -172,18 +171,18 @@ describe('EmployeeService', () => {
   });
 
   it('should map employmentStatus to status in the DB payload', async () => {
-    const updateInput = { employmentStatus: 'INACTIVE' as const };
+    const updateInput = { employmentStatus: 'inactive' as const };
 
     // @ts-ignore
     vi.mocked(employeeRepository.updateByEmployeeId).mockResolvedValue({
       ...mockExistingEmployee,
-      status: 'INACTIVE',
+      status: 'inactive',
     });
 
     await service.updateEmployee('EMP-A-001', updateInput, 'A');
 
     expect(employeeRepository.updateByEmployeeId).toHaveBeenCalledWith('A', 'EMP-A-001', {
-      status: 'INACTIVE',
+      status: 'inactive',
     });
   });
 
@@ -201,23 +200,15 @@ describe('EmployeeService', () => {
     await service.updateEmployee('EMP-A-001', updateInput, 'A');
 
     expect(employeeRepository.updateByEmployeeId).toHaveBeenCalledWith('A', 'EMP-A-001', {
-      'workSchedule.shiftStart': '08:00',
-      'workSchedule.shiftEnd': '16:00',
+      'workSchedule.startTime': '08:00',
+      'workSchedule.endTime': '16:00',
     });
   });
 
   it('should handle workSchedule with only workingDays update', async () => {
     const updateInput = {
       workSchedule: {
-        workingDays: ['Monday', 'Tuesday', 'Wednesday'] as (
-          | 'Monday'
-          | 'Tuesday'
-          | 'Wednesday'
-          | 'Thursday'
-          | 'Friday'
-          | 'Saturday'
-          | 'Sunday'
-        )[],
+        workDays: [1, 2, 3] as number[],
       },
     };
 
@@ -227,14 +218,14 @@ describe('EmployeeService', () => {
     await service.updateEmployee('EMP-A-001', updateInput, 'A');
 
     expect(employeeRepository.updateByEmployeeId).toHaveBeenCalledWith('A', 'EMP-A-001', {
-      'workSchedule.workingDays': ['Monday', 'Tuesday', 'Wednesday'],
+      'workSchedule.workDays': [1, 2, 3],
     });
   });
 
   it('should handle multiple fields updated at once', async () => {
     const updateInput = {
       fullName: 'New Name',
-      employmentStatus: 'INACTIVE' as const,
+      employmentStatus: 'inactive' as const,
       timezone: 'America/New_York',
     };
 
@@ -242,14 +233,14 @@ describe('EmployeeService', () => {
     vi.mocked(employeeRepository.updateByEmployeeId).mockResolvedValue({
       ...mockExistingEmployee,
       ...updateInput,
-      status: 'INACTIVE',
+      status: 'inactive',
     });
 
     await service.updateEmployee('EMP-A-001', updateInput, 'A');
 
     expect(employeeRepository.updateByEmployeeId).toHaveBeenCalledWith('A', 'EMP-A-001', {
       fullName: 'New Name',
-      status: 'INACTIVE',
+      status: 'inactive',
       timezone: 'America/New_York',
     });
   });

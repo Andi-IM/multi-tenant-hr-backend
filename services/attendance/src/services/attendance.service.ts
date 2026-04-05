@@ -1,7 +1,6 @@
 import axios, { isAxiosError } from 'axios';
 import { DateTime } from 'luxon';
 import { z } from 'zod';
-import { getDatabaseConnection } from '../config/database.js';
 import { getAttendanceModel, type IAttendance } from '../models/attendance.model.js';
 
 // Zod schema for internal employee status verification
@@ -59,7 +58,7 @@ export class AttendanceService {
 
       const { status, data } = result.data;
 
-      if (status !== 'success' || data.employmentStatus !== 'ACTIVE') {
+      if (status !== 'success' || data.employmentStatus !== 'active') {
         throw new Error('Employee is not active');
       }
 

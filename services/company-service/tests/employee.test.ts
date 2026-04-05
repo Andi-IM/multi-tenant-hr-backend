@@ -20,13 +20,16 @@ describe('POST /api/employees', () => {
     fullName: 'Test Employee',
     companyId: 'A',
     joinDate: '2025-01-15T00:00:00.000Z',
-    employmentStatus: 'ACTIVE',
+    employmentStatus: 'active',
     workSchedule: {
       startTime: '09:00',
       endTime: '17:00',
-      workingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+      toleranceMinutes: 15,
+      workDays: [1, 2, 3, 4, 5],
     },
     timezone: 'Asia/Jakarta',
+    role: 'EMPLOYEE',
+    password: 'password123',
   };
 
   const validToken = generateTestToken({ companyId: 'A', role: 'ADMIN_HR' });
@@ -43,13 +46,15 @@ describe('POST /api/employees', () => {
       fullName: validPayload.fullName,
       companyId: validPayload.companyId,
       joinDate: new Date(validPayload.joinDate),
-      status: 'ACTIVE',
+      status: 'active',
       workSchedule: {
-        shiftStart: validPayload.workSchedule.startTime,
-        shiftEnd: validPayload.workSchedule.endTime,
-        workingDays: validPayload.workSchedule.workingDays,
+        startTime: validPayload.workSchedule.startTime,
+        endTime: validPayload.workSchedule.endTime,
+        toleranceMinutes: validPayload.workSchedule.toleranceMinutes,
+        workDays: validPayload.workSchedule.workDays,
       },
       timezone: validPayload.timezone,
+      role: validPayload.role,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -163,13 +168,15 @@ describe('PATCH /api/employees/:employeeId', () => {
     fullName: 'Updated Employee Name',
     companyId: 'A',
     joinDate: new Date('2025-01-15T00:00:00.000Z'),
-    status: 'ACTIVE',
+    status: 'active',
     workSchedule: {
-      shiftStart: '09:00',
-      shiftEnd: '17:00',
-      workingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+      startTime: '09:00',
+      endTime: '17:00',
+      toleranceMinutes: 15,
+      workDays: [1, 2, 3, 4, 5],
     },
     timezone: 'Asia/Jakarta',
+    role: 'EMPLOYEE',
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -199,9 +206,10 @@ describe('PATCH /api/employees/:employeeId', () => {
     const updatedMock = {
       ...mockUpdatedEmployee,
       workSchedule: {
-        shiftStart: '08:00',
-        shiftEnd: '16:00',
-        workingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+        startTime: '08:00',
+        endTime: '16:00',
+        toleranceMinutes: 15,
+        workDays: [1, 2, 3, 4, 5],
       },
     };
 
@@ -327,13 +335,15 @@ describe('GET /api/employees/:employeeId', () => {
     fullName: 'Test Employee',
     companyId: 'A',
     joinDate: new Date('2025-01-15T00:00:00.000Z'),
-    status: 'ACTIVE',
+    status: 'active',
     workSchedule: {
-      shiftStart: '09:00',
-      shiftEnd: '17:00',
-      workingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+      startTime: '09:00',
+      endTime: '17:00',
+      toleranceMinutes: 15,
+      workDays: [1, 2, 3, 4, 5],
     },
     timezone: 'Asia/Jakarta',
+    role: 'EMPLOYEE',
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -356,13 +366,15 @@ describe('GET /api/employees/:employeeId', () => {
     expect(response.body.data.employeeId).toBe('EMP-A-001');
     expect(response.body.data.fullName).toBe('Test Employee');
     expect(response.body.data.companyId).toBe('A');
-    expect(response.body.data.employmentStatus).toBe('ACTIVE');
+    expect(response.body.data.employmentStatus).toBe('active');
     expect(response.body.data.workSchedule).toEqual({
       startTime: '09:00',
       endTime: '17:00',
-      workingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+      toleranceMinutes: 15,
+      workDays: [1, 2, 3, 4, 5],
     });
     expect(response.body.data.timezone).toBe('Asia/Jakarta');
+    expect(response.body.data.role).toBe('EMPLOYEE');
     expect(response.body.data.createdAt).toBeDefined();
     expect(response.body.data.updatedAt).toBeDefined();
   });
@@ -426,9 +438,10 @@ describe('GET /api/employees', () => {
       fullName: 'Test Employee 1',
       companyId: 'A',
       joinDate: new Date('2025-01-15T00:00:00.000Z'),
-      status: 'ACTIVE',
-      workSchedule: { shiftStart: '09:00', shiftEnd: '17:00', workingDays: [] },
+      status: 'active',
+      workSchedule: { startTime: '09:00', endTime: '17:00', toleranceMinutes: 15, workDays: [1, 2, 3, 4, 5] },
       timezone: 'Asia/Jakarta',
+      role: 'EMPLOYEE',
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -440,7 +453,7 @@ describe('GET /api/employees', () => {
     });
 
     const response = await request(app)
-      .get('/api/employees?page=1&limit=10&employmentStatus=ACTIVE')
+      .get('/api/employees?page=1&limit=10&employmentStatus=active')
       .set('Authorization', `Bearer ${validToken}`);
 
     expect(response.status).toBe(200);
@@ -457,7 +470,7 @@ describe('GET /api/employees', () => {
     // Verify arguments passed to repository enforces tenant isolation ('A')
     expect(employeeRepository.list).toHaveBeenCalledWith(
       'A',
-      { status: 'ACTIVE' },
+      { status: 'active' },
       { joinDate: -1 }, // Default sort
       0, // skip
       10 // limit

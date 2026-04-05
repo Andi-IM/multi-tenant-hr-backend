@@ -32,7 +32,10 @@ export class EmployeeRepository {
   async findActiveEmployeeForInternal(
     companyId: string,
     employeeId: string
-  ): Promise<Pick<IEmployee, 'employeeId' | 'companyId' | 'role' | 'status' | 'workSchedule' | 'timezone'> | null> {
+  ): Promise<Pick<
+    IEmployee,
+    'employeeId' | 'companyId' | 'role' | 'status' | 'workSchedule' | 'timezone'
+  > | null> {
     const TenantModel = getEmployeeModel();
     return TenantModel.findOne(
       { employeeId },

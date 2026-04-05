@@ -14,7 +14,7 @@ vi.mock('axios', async (importOriginal) => {
 });
 
 vi.mock('../src/config/database.js', () => ({
-  getTenantConnection: vi.fn(),
+  getDatabaseConnection: vi.fn(),
 }));
 
 vi.mock('../src/models/attendance.model.js', () => ({
@@ -22,7 +22,7 @@ vi.mock('../src/models/attendance.model.js', () => ({
 }));
 
 import axios from 'axios';
-import { getTenantConnection } from '../src/config/database.js';
+import { getDatabaseConnection } from '../src/config/database.js';
 import { getAttendanceModel } from '../src/models/attendance.model.js';
 
 describe('AttendanceService', () => {
@@ -31,11 +31,15 @@ describe('AttendanceService', () => {
   const mockEmployeeData = {
     status: 'success',
     data: {
-      employmentStatus: 'ACTIVE',
+      employeeId: 'emp_123',
+      companyId: 'company-A',
+      role: 'EMPLOYEE',
+      employmentStatus: 'active',
       workSchedule: {
         startTime: '09:00',
         endTime: '17:00',
-        workingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+        toleranceMinutes: 15,
+        workDays: [1, 2, 3, 4, 5],
       },
       timezone: 'Asia/Jakarta',
     },
@@ -149,8 +153,8 @@ describe('AttendanceService', () => {
       // Mock verifyEmployeeStatus to return valid data
       vi.mocked(axios.get).mockResolvedValue({ data: mockEmployeeData });
 
-      // Mock getTenantConnection
-      vi.mocked(getTenantConnection).mockReturnValue({} as any);
+      // Mock getDatabaseConnection
+      vi.mocked(getDatabaseConnection).mockReturnValue({} as any);
 
       // Mock getAttendanceModel
       vi.mocked(getAttendanceModel).mockReturnValue(MockAttendanceModel as any);
@@ -163,8 +167,16 @@ describe('AttendanceService', () => {
       const existingRecord = {
         employeeId: 'EMP-001',
         date: new Date(),
-        checkIn: new Date(),
-        status: 'On-Time',
+        checkInTime: new Date(),
+        checkOutTime: undefined,
+        status: 'on-time',
+        timezone: 'Asia/Jakarta',
+        workScheduleSnapshot: {
+          startTime: '09:00',
+          endTime: '17:00',
+          toleranceMinutes: 15,
+          workDays: [1, 2, 3, 4, 5],
+        },
       };
       mockFindOne.mockResolvedValue(existingRecord);
 
@@ -192,12 +204,13 @@ describe('AttendanceService', () => {
 
       await service.checkIn('EMP-001', 'company-A', 'token-123');
 
-      expect(getTenantConnection).toHaveBeenCalledWith('company-A');
+      // Attendance service uses MONGODB_URI from environment config
+      // No dynamic tenant connection needed
+      expect(mockFindOne).toHaveBeenCalled();
     });
 
     it('should calculate On-Time status when within grace period', async () => {
-      // Set check-in time to exactly 09:10 (within 15-min grace period of 09:00)
-      const checkInTime = DateTime.fromObject({ hour: 9, minute: 10 }, { zone: 'Asia/Jakarta' });
+      const checkInTime = DateTime.fromObject({ hour: 9, minute: 10 }, { zone: 'Asia/Jakarta' }) as DateTime;
       vi.spyOn(DateTime, 'now').mockReturnValue(checkInTime);
 
       mockFindOne.mockResolvedValue(null);
@@ -205,12 +218,11 @@ describe('AttendanceService', () => {
 
       const result = await service.checkIn('EMP-001', 'company-A', 'token-123');
 
-      expect(result.attendance?.status).toBe('On-Time');
+      expect(result.attendance?.status).toBe('on-time');
     });
 
     it('should calculate Late status when past grace period', async () => {
-      // Set check-in time to 09:20 (past 15-min grace period of 09:00)
-      const checkInTime = DateTime.fromObject({ hour: 9, minute: 20 }, { zone: 'Asia/Jakarta' });
+      const checkInTime = DateTime.fromObject({ hour: 9, minute: 20 }, { zone: 'Asia/Jakarta' }) as DateTime;
       vi.spyOn(DateTime, 'now').mockReturnValue(checkInTime);
 
       mockFindOne.mockResolvedValue(null);
@@ -218,11 +230,11 @@ describe('AttendanceService', () => {
 
       const result = await service.checkIn('EMP-001', 'company-A', 'token-123');
 
-      expect(result.attendance?.status).toBe('Late');
+      expect(result.attendance?.status).toBe('late');
     });
 
     it('should calculate On-Time status at exactly the grace period boundary (09:15)', async () => {
-      const checkInTime = DateTime.fromObject({ hour: 9, minute: 15 }, { zone: 'Asia/Jakarta' });
+      const checkInTime = DateTime.fromObject({ hour: 9, minute: 15 }, { zone: 'Asia/Jakarta' }) as DateTime;
       vi.spyOn(DateTime, 'now').mockReturnValue(checkInTime);
 
       mockFindOne.mockResolvedValue(null);
@@ -230,7 +242,7 @@ describe('AttendanceService', () => {
 
       const result = await service.checkIn('EMP-001', 'company-A', 'token-123');
 
-      expect(result.attendance?.status).toBe('On-Time');
+      expect(result.attendance?.status).toBe('on-time');
     });
 
     it('should propagate verifyEmployeeStatus errors', async () => {

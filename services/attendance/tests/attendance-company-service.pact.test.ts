@@ -37,11 +37,15 @@ describe('Attendance Service - Company Service Contract', () => {
         body: {
           status: 'success',
           data: {
-            employmentStatus: 'ACTIVE',
+            employeeId: string('emp_123'),
+            companyId: string('comp_abc'),
+            role: string('EMPLOYEE'),
+            employmentStatus: 'active',
             workSchedule: {
               startTime: like('09:00'),
               endTime: like('17:00'),
-              workingDays: eachLike('Monday'),
+              toleranceMinutes: like(15),
+              workDays: eachLike(1),
             },
             timezone: string('Asia/Jakarta'),
           },
@@ -61,8 +65,13 @@ describe('Attendance Service - Company Service Contract', () => {
 
       const result = await service.verifyEmployeeStatus(employeeId, companyId, token);
 
-      expect(result.employmentStatus).toBe('ACTIVE');
+      expect(result.employeeId).toBe('emp_123');
+      expect(result.companyId).toBe('comp_abc');
+      expect(result.role).toBe('EMPLOYEE');
+      expect(result.employmentStatus).toBe('active');
       expect(result.workSchedule.startTime).toBeDefined();
+      expect(result.workSchedule.toleranceMinutes).toBeDefined();
+      expect(result.workSchedule.workDays).toBeDefined();
       expect(result.timezone).toBeDefined();
     });
   });

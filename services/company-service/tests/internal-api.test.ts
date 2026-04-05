@@ -22,13 +22,15 @@ describe('GET /api/v1/internal/employees/:employeeId/status', () => {
     fullName: 'Test Employee',
     companyId: 'A',
     joinDate: new Date('2025-01-15T00:00:00.000Z'),
-    status: 'ACTIVE',
+    status: 'active',
     workSchedule: {
-      shiftStart: '09:00',
-      shiftEnd: '17:00',
-      workingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+      startTime: '09:00',
+      endTime: '17:00',
+      toleranceMinutes: 15,
+      workDays: [1, 2, 3, 4, 5],
     },
     timezone: 'Asia/Jakarta',
+    role: 'EMPLOYEE',
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -47,21 +49,19 @@ describe('GET /api/v1/internal/employees/:employeeId/status', () => {
 
     expect(response.status).toBe(200);
     expect(response.body.status).toBe('success');
-    expect(response.body.data.employmentStatus).toBe('ACTIVE');
+    expect(response.body.data.employeeId).toBe('EMP-A-001');
+    expect(response.body.data.companyId).toBe('A');
+    expect(response.body.data.role).toBe('EMPLOYEE');
+    expect(response.body.data.employmentStatus).toBe('active');
     expect(response.body.data.workSchedule.startTime).toBe('09:00');
     expect(response.body.data.workSchedule.endTime).toBe('17:00');
-    expect(response.body.data.workSchedule.workingDays).toEqual([
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-    ]);
+    expect(response.body.data.workSchedule.toleranceMinutes).toBe(15);
+    expect(response.body.data.workSchedule.workDays).toEqual([1, 2, 3, 4, 5]);
     expect(response.body.data.timezone).toBe('Asia/Jakarta');
   });
 
   it('should return 403 Forbidden if employee is INACTIVE', async () => {
-    const inactiveEmployee = { ...mockEmployee, status: 'INACTIVE' };
+    const inactiveEmployee = { ...mockEmployee, status: 'inactive' };
     // @ts-ignore
     vi.mocked(employeeRepository.findActiveEmployeeForInternal).mockResolvedValue(inactiveEmployee);
 
