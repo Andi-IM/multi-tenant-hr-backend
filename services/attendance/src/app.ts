@@ -9,6 +9,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import swaggerUi from 'swagger-ui-express';
 import attendanceRoutes from './routes/attendance.route.js';
+import leavePermissionRoutes from './routes/leave-permission.route.js';
 import { swaggerSpec } from './config/swagger.config.js';
 import { errorHandler } from './middleware/error.middleware.js';
 
@@ -31,6 +32,7 @@ app.get('/', (_req: Request, res: Response) => {
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.use('/api/v1/attendances', attendanceRoutes);
+app.use('/api/v1', leavePermissionRoutes);
 
 app.use(errorHandler as ErrorRequestHandler);
 

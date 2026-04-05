@@ -210,7 +210,10 @@ describe('AttendanceService', () => {
     });
 
     it('should calculate On-Time status when within grace period', async () => {
-      const checkInTime = DateTime.fromObject({ hour: 9, minute: 10 }, { zone: 'Asia/Jakarta' }) as DateTime;
+      const checkInTime = DateTime.fromObject(
+        { hour: 9, minute: 10 },
+        { zone: 'Asia/Jakarta' }
+      ) as DateTime;
       vi.spyOn(DateTime, 'now').mockReturnValue(checkInTime);
 
       mockFindOne.mockResolvedValue(null);
@@ -222,7 +225,10 @@ describe('AttendanceService', () => {
     });
 
     it('should calculate Late status when past grace period', async () => {
-      const checkInTime = DateTime.fromObject({ hour: 9, minute: 20 }, { zone: 'Asia/Jakarta' }) as DateTime;
+      const checkInTime = DateTime.fromObject(
+        { hour: 9, minute: 20 },
+        { zone: 'Asia/Jakarta' }
+      ) as DateTime;
       vi.spyOn(DateTime, 'now').mockReturnValue(checkInTime);
 
       mockFindOne.mockResolvedValue(null);
@@ -234,7 +240,10 @@ describe('AttendanceService', () => {
     });
 
     it('should calculate On-Time status at exactly the grace period boundary (09:15)', async () => {
-      const checkInTime = DateTime.fromObject({ hour: 9, minute: 15 }, { zone: 'Asia/Jakarta' }) as DateTime;
+      const checkInTime = DateTime.fromObject(
+        { hour: 9, minute: 15 },
+        { zone: 'Asia/Jakarta' }
+      ) as DateTime;
       vi.spyOn(DateTime, 'now').mockReturnValue(checkInTime);
 
       mockFindOne.mockResolvedValue(null);

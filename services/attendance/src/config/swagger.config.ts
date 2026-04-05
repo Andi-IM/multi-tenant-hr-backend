@@ -60,6 +60,50 @@ const options: swaggerJsdoc.Options = {
             },
           },
         },
+        LeavePermissionRequest: {
+          type: 'object',
+          properties: {
+            _id: { type: 'string', example: '674fabc1234567890abcdef' },
+            employeeId: { type: 'string', example: 'EMP-A-001' },
+            companyId: { type: 'string', example: 'A' },
+            type: {
+              type: 'string',
+              enum: ['leave', 'permission'],
+              example: 'leave',
+            },
+            startDate: {
+              type: 'string',
+              format: 'date',
+              example: '2026-04-10',
+            },
+            endDate: {
+              type: 'string',
+              format: 'date',
+              example: '2026-04-12',
+            },
+            reason: {
+              type: 'string',
+              example: 'Family emergency',
+            },
+            status: {
+              type: 'string',
+              enum: ['pending', 'approved', 'rejected'],
+              example: 'pending',
+            },
+            approvedBy: { type: 'string', example: null },
+            approvedAt: { type: 'string', format: 'date-time', example: null },
+            createdAt: {
+              type: 'string',
+              format: 'date-time',
+              example: '2026-04-05T10:30:00.000Z',
+            },
+            updatedAt: {
+              type: 'string',
+              format: 'date-time',
+              example: '2026-04-05T10:30:00.000Z',
+            },
+          },
+        },
         Error: {
           type: 'object',
           properties: {
