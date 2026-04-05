@@ -1,7 +1,6 @@
 import cron from 'node-cron';
 import mongoose from 'mongoose';
 import { DateTime } from 'luxon';
-import { getTenantConnection } from '../config/database.js';
 import { getAttendanceModel } from '../models/attendance.model.js';
 
 /**
@@ -21,42 +20,14 @@ export class AttendanceTaskService {
 
   /**
    * Mark attendances with missing check-out from previous days as 'Incomplete'
+   * This now runs on the single shared database.
    */
   public async markIncompleteAttendances() {
     try {
-      // 1. Get all tenant databases
-      const adminDb = mongoose.connection.useDb('admin').db;
-      if (!adminDb) {
-        console.error('[AttendanceTask] Could not access admin DB to list tenants');
-        return;
-      }
-
-      const dbs = await adminDb.admin().listDatabases();
-      const tenantDbs = dbs.databases
-        .filter((db: { name: string }) => db.name.startsWith('tenant_'))
-        .map((db: { name: string }) => db.name.replace('tenant_', ''));
-
-      console.log(`[AttendanceTask] Found ${tenantDbs.length} tenants to process`);
-
-      for (const companyId of tenantDbs) {
-        await this.processTenantIncompleteAttendances(companyId);
-      }
-    } catch (error) {
-      console.error('[AttendanceTask] Error in markIncompleteAttendances:', error);
-    }
-  }
-
-  /**
-   * Process a single tenant for incomplete attendances
-   */
-  private async processTenantIncompleteAttendances(companyId: string) {
-    try {
-      const connection = getTenantConnection(companyId);
-      const Attendance = getAttendanceModel(connection);
-
-      // Yesterday's end (in UTC, or we can just look for anything older than today)
-      // Since it's running at 00:05, anything with date < today and checkOut null is incomplete
+      const Attendance = getAttendanceModel();
       const today = DateTime.now().startOf('day').toJSDate();
+
+      console.log(`[AttendanceTask] Marking incomplete attendances before ${today.toISOString()}`);
 
       const result = await Attendance.updateMany(
         {
@@ -71,11 +42,13 @@ export class AttendanceTaskService {
 
       if (result.modifiedCount > 0) {
         console.log(
-          `[AttendanceTask] [Tenant: ${companyId}] Marked ${result.modifiedCount} attendances as Incomplete`
+          `[AttendanceTask] Marked ${result.modifiedCount} attendances as Incomplete across all tenants`
         );
+      } else {
+        console.log('[AttendanceTask] No incomplete attendances found to process');
       }
     } catch (error) {
-      console.error(`[AttendanceTask] Error processing tenant ${companyId}:`, error);
+      console.error('[AttendanceTask] Error in markIncompleteAttendances:', error);
     }
   }
 }

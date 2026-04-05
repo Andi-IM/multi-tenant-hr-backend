@@ -21,7 +21,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3001
-      - DATABASE_URL=mongodb://mongodb:27017/company_a_db
+      - MONGODB_URI=mongodb://mongodb:27017/company_a_db
       - COMPANY_ID=A
     depends_on:
       mongodb:
@@ -35,7 +35,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3002
-      - DATABASE_URL=mongodb://mongodb:27017/company_b_db
+      - MONGODB_URI=mongodb://mongodb:27017/company_b_db
       - COMPANY_ID=B
     depends_on:
       mongodb:
@@ -52,7 +52,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3003
-      - DATABASE_URL=mongodb://mongodb:27017/attendance_db
+      - MONGODB_URI=mongodb://mongodb:27017/attendance_db
     depends_on:
       mongodb:
         condition: service_healthy

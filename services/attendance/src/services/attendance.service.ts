@@ -1,7 +1,7 @@
 import axios, { isAxiosError } from 'axios';
 import { DateTime } from 'luxon';
 import { z } from 'zod';
-import { getTenantConnection } from '../config/database.js';
+import { getDatabaseConnection } from '../config/database.js';
 import { getAttendanceModel, type IAttendance } from '../models/attendance.model.js';
 
 // Zod schema for internal employee status verification
@@ -88,9 +88,8 @@ export class AttendanceService {
     const now = DateTime.now().setZone(timezone);
     const todayDate = now.startOf('day').toJSDate();
 
-    // 3. Connect to tenant DB and get model
-    const connection = getTenantConnection(companyId);
-    const Attendance = getAttendanceModel(connection);
+    // 3. Get Attendance model
+    const Attendance = getAttendanceModel();
 
     // 4. Check for existing check-in (Idempotency)
     const existingAttendance = await Attendance.findOne({
@@ -135,9 +134,8 @@ export class AttendanceService {
     const now = DateTime.now().setZone(timezone);
     const todayDate = now.startOf('day').toJSDate();
 
-    // 3. Connect to tenant DB and get model
-    const connection = getTenantConnection(companyId);
-    const Attendance = getAttendanceModel(connection);
+    // 3. Get Attendance model
+    const Attendance = getAttendanceModel();
 
     // 4. Find the attendance record for today
     const attendance = await Attendance.findOne({

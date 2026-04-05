@@ -1,11 +1,15 @@
 import { Schema, Document, Model } from 'mongoose';
-import { getTenantConnection } from '../config/database.js';
+import { getDatabaseConnection } from '../config/database.js';
 
 export interface IWorkSchedule {
-  shiftStart: string;
-  shiftEnd: string;
-  workingDays: string[];
+  startTime: string;
+  endTime: string;
+  toleranceMinutes: number;
+  workDays: number[];
 }
+
+export type EmploymentStatus = 'active' | 'inactive' | 'terminated';
+export type EmployeeRole = 'EMPLOYEE' | 'ADMIN_HR';
 
 export interface IEmployee {
   _id: import('mongoose').Types.ObjectId;
@@ -13,9 +17,11 @@ export interface IEmployee {
   fullName: string;
   companyId: string;
   joinDate: Date;
-  status: string;
+  status: EmploymentStatus;
   workSchedule: IWorkSchedule;
   timezone: string;
+  role: EmployeeRole;
+  passwordHash: string;
   createdAt: Date;
   updatedAt: Date;
   deactivationDate?: Date;
@@ -30,13 +36,16 @@ export const EmployeeSchema: Schema<IEmployeeDocument> = new Schema(
     fullName: { type: String, required: true },
     companyId: { type: String, required: true },
     joinDate: { type: Date, required: true },
-    status: { type: String, required: true, default: 'ACTIVE' },
+    status: { type: String, enum: ['active', 'inactive', 'terminated'], required: true, default: 'active' },
     workSchedule: {
-      shiftStart: { type: String, required: true },
-      shiftEnd: { type: String, required: true },
-      workingDays: [{ type: String, required: true }],
+      startTime: { type: String, required: true },
+      endTime: { type: String, required: true },
+      toleranceMinutes: { type: Number, default: 15 },
+      workDays: [{ type: Number, required: true }],
     },
     timezone: { type: String, required: true },
+    role: { type: String, enum: ['EMPLOYEE', 'ADMIN_HR'], required: true },
+    passwordHash: { type: String, required: true },
     deactivationDate: { type: Date, required: false },
   },
   {
@@ -45,13 +54,11 @@ export const EmployeeSchema: Schema<IEmployeeDocument> = new Schema(
 );
 
 /**
- * Returns the Employee model initialized over the appropriate tenant connection.
- * @param companyId The tenant identifier
+ * Returns the Employee model initialized over the database connection.
  */
-export const getEmployeeModel = (companyId: string): Model<IEmployeeDocument> => {
-  const connection = getTenantConnection(companyId);
+export const getEmployeeModel = (): Model<IEmployeeDocument> => {
+  const connection = getDatabaseConnection();
 
-  // Note: If the model is already bound to this connection, retrieve it. Otherwise construct.
   return (
     connection.models.Employee || connection.model<IEmployeeDocument>('Employee', EmployeeSchema)
   );

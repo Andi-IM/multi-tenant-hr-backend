@@ -33,13 +33,17 @@ const router = Router();
  *                 data:
  *                   type: object
  *                   properties:
- *                     employmentStatus: { type: string, example: ACTIVE }
+ *                     employeeId: { type: string, example: "EMP-A-001" }
+ *                     companyId: { type: string, example: "CompanyA" }
+ *                     role: { type: string, example: "EMPLOYEE" }
+ *                     employmentStatus: { type: string, example: "active" }
  *                     workSchedule:
  *                       type: object
  *                       properties:
  *                         startTime: { type: string, example: "08:00" }
  *                         endTime: { type: string, example: "17:00" }
- *                         workingDays: { type: array, items: { type: string }, example: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"] }
+ *                         toleranceMinutes: { type: number, example: 15 }
+ *                         workDays: { type: array, items: { type: number }, example: [1, 2, 3, 4, 5] }
  *                     timezone: { type: string, example: "Asia/Jakarta" }
  *       403:
  *         description: Forbidden - Employee is Inactive or caller is not a System Actor

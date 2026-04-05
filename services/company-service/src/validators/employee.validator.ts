@@ -11,12 +11,9 @@ const workScheduleSchema = z.object({
   endTime: z
     .string({ message: 'endTime is required' })
     .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'endTime must be in HH:MM format (e.g., "17:00")'),
+  toleranceMinutes: z.number().min(0).max(60).default(15),
   workingDays: z
-    .array(
-      z.enum(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], {
-        message: 'Each working day must be a valid day name (e.g., "Monday")',
-      })
-    )
+    .array(z.number().min(0).max(6))
     .min(1, 'workingDays must contain at least one day')
     .max(7, 'workingDays cannot exceed 7 days'),
 });
@@ -42,8 +39,8 @@ export const createEmployeeSchema = z.object({
   joinDate: z.string({ message: 'joinDate is required' }).datetime({
     message: 'joinDate must be a valid ISO 8601 date string (e.g., "2025-01-15T00:00:00.000Z")',
   }),
-  employmentStatus: z.enum(['ACTIVE', 'INACTIVE'], {
-    message: 'employmentStatus must be either "ACTIVE" or "INACTIVE"',
+  employmentStatus: z.enum(['active', 'inactive', 'terminated'], {
+    message: 'employmentStatus must be "active", "inactive", or "terminated"',
   }),
   workSchedule: workScheduleSchema,
   timezone: z
@@ -60,6 +57,10 @@ export const createEmployeeSchema = z.object({
       },
       { message: 'timezone must be a valid IANA timezone (e.g., "Asia/Jakarta")' }
     ),
+  role: z.enum(['EMPLOYEE', 'ADMIN_HR'], {
+    message: 'role must be "EMPLOYEE" or "ADMIN_HR"',
+  }),
+  password: z.string({ message: 'password is required' }).min(8, 'password must be at least 8 characters'),
 });
 
 /**
@@ -79,12 +80,9 @@ const updateWorkScheduleSchema = z.object({
     .string()
     .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'endTime must be in HH:MM format (e.g., "17:00")')
     .optional(),
+  toleranceMinutes: z.number().min(0).max(60).optional(),
   workingDays: z
-    .array(
-      z.enum(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], {
-        message: 'Each working day must be a valid day name (e.g., "Monday")',
-      })
-    )
+    .array(z.number().min(0).max(6))
     .min(1, 'workingDays must contain at least one day')
     .max(7, 'workingDays cannot exceed 7 days')
     .optional(),
@@ -104,8 +102,8 @@ export const updateEmployeeSchema = z
   .object({
     fullName: z.string().min(2, 'fullName must be at least 2 characters').optional(),
     employmentStatus: z
-      .enum(['ACTIVE', 'INACTIVE'], {
-        message: 'employmentStatus must be either "ACTIVE" or "INACTIVE"',
+      .enum(['active', 'inactive', 'terminated'], {
+        message: 'employmentStatus must be "active", "inactive", or "terminated"',
       })
       .optional(),
     workSchedule: updateWorkScheduleSchema.optional(),
@@ -124,6 +122,7 @@ export const updateEmployeeSchema = z
         { message: 'timezone must be a valid IANA timezone (e.g., "Asia/Jakarta")' }
       )
       .optional(),
+    role: z.enum(['EMPLOYEE', 'ADMIN_HR']).optional(),
   })
   .strict()
   .refine((data) => Object.keys(data).length > 0, {
@@ -159,8 +158,8 @@ export const listEmployeesQuerySchema = z.object({
     .max(100, 'limit cannot exceed 100')
     .default(10),
   employmentStatus: z
-    .enum(['ACTIVE', 'INACTIVE'], {
-      message: 'employmentStatus must be "ACTIVE" or "INACTIVE"',
+    .enum(['active', 'inactive', 'terminated'], {
+      message: 'employmentStatus must be "active", "inactive", or "terminated"',
     })
     .optional(),
   sortBy: z

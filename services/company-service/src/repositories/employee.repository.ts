@@ -10,7 +10,7 @@ export class EmployeeRepository {
    * Create a new employee record dynamically in the indicated tenant's DB.
    */
   async create(companyId: string, data: Partial<IEmployee>): Promise<IEmployeeDocument> {
-    const TenantModel = getEmployeeModel(companyId);
+    const TenantModel = getEmployeeModel();
     return TenantModel.create(data);
   }
 
@@ -19,7 +19,7 @@ export class EmployeeRepository {
    * Used for duplicate checking before creation.
    */
   async findByEmployeeId(companyId: string, employeeId: string): Promise<IEmployeeDocument | null> {
-    const TenantModel = getEmployeeModel(companyId);
+    const TenantModel = getEmployeeModel();
     return TenantModel.findOne({ employeeId });
   }
 
@@ -32,11 +32,11 @@ export class EmployeeRepository {
   async findActiveEmployeeForInternal(
     companyId: string,
     employeeId: string
-  ): Promise<Pick<IEmployee, 'status' | 'workSchedule' | 'timezone'> | null> {
-    const TenantModel = getEmployeeModel(companyId);
+  ): Promise<Pick<IEmployee, 'employeeId' | 'companyId' | 'role' | 'status' | 'workSchedule' | 'timezone'> | null> {
+    const TenantModel = getEmployeeModel();
     return TenantModel.findOne(
       { employeeId },
-      { status: 1, workSchedule: 1, timezone: 1, _id: 0 }
+      { employeeId: 1, companyId: 1, role: 1, status: 1, workSchedule: 1, timezone: 1, _id: 0 }
     ).lean();
   }
 
@@ -44,7 +44,7 @@ export class EmployeeRepository {
    * Find an employee by their internal MongoDB ObjectId.
    */
   async findById(companyId: string, id: string): Promise<IEmployeeDocument | null> {
-    const TenantModel = getEmployeeModel(companyId);
+    const TenantModel = getEmployeeModel();
     return TenantModel.findById(id);
   }
 
@@ -59,7 +59,7 @@ export class EmployeeRepository {
     employeeId: string,
     data: Partial<IEmployee>
   ): Promise<IEmployeeDocument | null> {
-    const TenantModel = getEmployeeModel(companyId);
+    const TenantModel = getEmployeeModel();
     return TenantModel.findOneAndUpdate(
       { employeeId },
       { $set: data },
@@ -78,7 +78,7 @@ export class EmployeeRepository {
     skip: number,
     limit: number
   ): Promise<{ data: IEmployeeDocument[]; total: number }> {
-    const TenantModel = getEmployeeModel(companyId);
+    const TenantModel = getEmployeeModel();
 
     const [data, total] = await Promise.all([
       TenantModel.find(filter).sort(sort).skip(skip).limit(limit).exec(),

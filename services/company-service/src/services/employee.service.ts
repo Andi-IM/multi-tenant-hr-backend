@@ -41,12 +41,15 @@ export class EmployeeService {
         fullName: input.fullName,
         companyId: input.companyId,
         joinDate: new Date(input.joinDate),
-        status: input.employmentStatus, // API: employmentStatus → DB: status
+        status: input.employmentStatus,
         timezone: input.timezone,
+        role: input.role,
+        passwordHash: input.password, // Will be hashed in repository or middleware
         workSchedule: {
-          shiftStart: input.workSchedule.startTime, // API: startTime → DB: shiftStart
-          shiftEnd: input.workSchedule.endTime, // API: endTime → DB: shiftEnd
-          workingDays: input.workSchedule.workingDays,
+          startTime: input.workSchedule.startTime,
+          endTime: input.workSchedule.endTime,
+          toleranceMinutes: input.workSchedule.toleranceMinutes ?? 15,
+          workDays: input.workSchedule.workingDays,
         },
       });
 
@@ -103,20 +106,27 @@ export class EmployeeService {
     // Handle nested workSchedule mapping
     // Uses MongoDB dot notation for partial nested updates
     if (input.workSchedule !== undefined) {
-      const scheduleUpdate: Record<string, string | string[]> = {};
+      const scheduleUpdate: Record<string, string | number | number[]> = {};
 
       if (input.workSchedule.startTime !== undefined) {
-        scheduleUpdate['workSchedule.shiftStart'] = input.workSchedule.startTime;
+        scheduleUpdate['workSchedule.startTime'] = input.workSchedule.startTime;
       }
       if (input.workSchedule.endTime !== undefined) {
-        scheduleUpdate['workSchedule.shiftEnd'] = input.workSchedule.endTime;
+        scheduleUpdate['workSchedule.endTime'] = input.workSchedule.endTime;
+      }
+      if (input.workSchedule.toleranceMinutes !== undefined) {
+        scheduleUpdate['workSchedule.toleranceMinutes'] = input.workSchedule.toleranceMinutes;
       }
       if (input.workSchedule.workingDays !== undefined) {
-        scheduleUpdate['workSchedule.workingDays'] = input.workSchedule.workingDays;
+        scheduleUpdate['workSchedule.workDays'] = input.workSchedule.workingDays;
       }
 
       // Merge dot-notation fields into the update payload
       Object.assign(updateData, scheduleUpdate);
+    }
+
+    if (input.role !== undefined) {
+      updateData.role = input.role;
     }
 
     // TODO: If workSchedule or timezone changed, consider emitting an event
@@ -233,7 +243,7 @@ export class EmployeeService {
       throw AppError.notFound(`Employee with ID "${employeeId}" not found`);
     }
 
-    if (employee.status === 'INACTIVE') {
+    if (employee.status === 'inactive') {
       throw AppError.conflict(`Employee with ID "${employeeId}" is already inactive`);
     }
 
@@ -252,7 +262,7 @@ export class EmployeeService {
 
     // For audit trail (REQ-D3), set deactivationDate
     const updated = await employeeRepository.updateByEmployeeId(serviceCompanyId, employeeId, {
-      status: 'INACTIVE',
+      status: 'inactive',
       deactivationDate: new Date(),
     });
 
@@ -281,11 +291,15 @@ export class EmployeeService {
     employeeId: string,
     serviceCompanyId: string
   ): Promise<{
+    employeeId: string;
+    companyId: string;
+    role: string;
     employmentStatus: string;
     workSchedule: {
       startTime: string;
       endTime: string;
-      workingDays: string[];
+      toleranceMinutes: number;
+      workDays: number[];
     };
     timezone: string;
   }> {
@@ -299,16 +313,20 @@ export class EmployeeService {
       throw AppError.notFound(`Employee with ID "${employeeId}" not found`);
     }
 
-    if (employee.status !== 'ACTIVE') {
+    if (employee.status !== 'active') {
       throw AppError.forbidden('Employee is Inactive');
     }
 
     return {
+      employeeId: employee.employeeId,
+      companyId: employee.companyId,
+      role: employee.role,
       employmentStatus: employee.status,
       workSchedule: {
-        startTime: employee.workSchedule.shiftStart,
-        endTime: employee.workSchedule.shiftEnd,
-        workingDays: employee.workSchedule.workingDays,
+        startTime: employee.workSchedule.startTime,
+        endTime: employee.workSchedule.endTime,
+        toleranceMinutes: employee.workSchedule.toleranceMinutes,
+        workDays: employee.workSchedule.workDays,
       },
       timezone: employee.timezone,
     };

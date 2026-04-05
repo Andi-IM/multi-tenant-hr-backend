@@ -1,4 +1,5 @@
-import { Schema, type Connection, type Model, type Document } from 'mongoose';
+import { Schema, type Model, type Document } from 'mongoose';
+import { getDatabaseConnection } from '../config/database.js';
 
 export interface IAttendance extends Document {
   employeeId: string;
@@ -30,6 +31,7 @@ const AttendanceSchema = new Schema<IAttendance>(
 // Compound index to ensure uniqueness of employeeId + date (idempotency)
 AttendanceSchema.index({ employeeId: 1, date: 1 }, { unique: true });
 
-export const getAttendanceModel = (connection: Connection): Model<IAttendance> => {
+export const getAttendanceModel = (): Model<IAttendance> => {
+  const connection = getDatabaseConnection();
   return connection.model<IAttendance>('Attendance', AttendanceSchema);
 };
