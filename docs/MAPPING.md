@@ -71,7 +71,7 @@
 
 | SRS Requirement | SDD Element | Implementation Doc |
 |-----------------|-------------|---------------------|
-| REQ-DIST-01: API Gateway | DEC-005, DEP-001 | ARCHITECTURE.md#8 |
+| REQ-DIST-01: API Gateway | DEC-005, DEP-001 | ARCHITECTURE.md#8, docker-compose.yml (nginx service) |
 | REQ-DIST-02: Sync REST Communication | DEC-001, IFC-002 | business-rules.md#2 |
 
 ### Maintainability Requirements (SRS Section 3.5.4)

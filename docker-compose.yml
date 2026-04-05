@@ -16,8 +16,8 @@ services:
   company-a:
     image: hr-company-api:latest
     container_name: company-a
-    ports:
-      - '3001:3001'
+    expose:
+      - "3001"
     environment:
       - NODE_ENV=production
       - PORT=3001
@@ -26,12 +26,18 @@ services:
     depends_on:
       mongodb:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3001/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   company-b:
     image: hr-company-api:latest
     container_name: company-b
-    ports:
-      - '3002:3002'
+    expose:
+      - "3002"
     environment:
       - NODE_ENV=production
       - PORT=3002
@@ -40,6 +46,12 @@ services:
     depends_on:
       mongodb:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3002/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   attendance:
     build:
@@ -47,15 +59,39 @@ services:
       dockerfile: services/attendance/Dockerfile
     image: hr-attendance:latest
     container_name: attendance
-    ports:
-      - '3003:3003'
+    expose:
+      - "3003"
     environment:
       - NODE_ENV=production
       - PORT=3003
       - MONGODB_URI=mongodb://mongodb:27017/attendance_db
+      - COMPANY_SERVICE_URL=http://company-a:3001
     depends_on:
       mongodb:
         condition: service_healthy
+      company-a:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3003/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    container_name: api-gateway
+    ports:
+      - "80:80"
+    depends_on:
+      company-a:
+        condition: service_started
+      company-b:
+        condition: service_started
+      attendance:
+        condition: service_started
 
 volumes:
   mongodb_data:

@@ -115,6 +115,34 @@ In accordance with the flexibility expected in the SRS, it is possible that busi
 2. **Medium Divergence (Strategy Pattern)**: Differences in processing logic (e.g., different payroll formulas) will be handled via the Strategy Pattern injected at runtime based on the `COMPANY_ID` context.
 3. **High Divergence (Service Forking)**: If a company's data model and entire business flow change fundamentally, we will fork `services/company-service` into a standalone bounded context (e.g., `services/company-b-custom`) and deploy it as a separate independent image within the monorepo structure. This guarantees the architecture remains robust without creating unmaintainable "spaghetti code."
 
+### API Gateway (Nginx Reverse Proxy)
+
+To comply with REQ-DIST-01 and DEC-005, we deploy an **Nginx reverse proxy** as the API Gateway entry point.
+
+#### Route Mapping
+
+| External Path | Internal Service | Internal Path |
+|--------------|------------------|---------------|
+| `/company-a/api/v1/*` | company-a (port 3001) | `/api/*` |
+| `/company-b/api/v1/*` | company-b (port 3002) | `/api/*` |
+| `/attendance/api/v1/*` | attendance (port 3003) | `/api/v1/attendances/*` |
+
+#### Implementation
+
+- **Nginx Service**: Defined in `docker-compose.yml` as `nginx` service
+- **Configuration**: `nginx/nginx.conf` with rewrite rules for path normalization
+- **Health Check**: Available at `/health` endpoint
+
+#### Service-to-Service Communication
+
+Internal service calls (e.g., Attendance Service calling Company Service) use **direct Docker network communication** for lower latency:
+
+```
+Attendance Service → http://company-a:3001/api/v1/internal/...
+```
+
+This is intentional as per SDD line 450 and 806 — internal APIs are not exposed through the API Gateway.
+
 ## 9. Database Topology: Logical vs Physical Isolation
 
 > **SDD Ref:** [DEC-003](./sdd.md#dec-003---isolated-mongodb-database-per-service), [INF-001](./sdd.md#inf-001-information-view--data-schema--persistence)
