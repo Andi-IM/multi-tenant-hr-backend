@@ -331,6 +331,49 @@ export class EmployeeService {
       timezone: employee.timezone,
     };
   }
+
+  /**
+   * Internal Service-to-Service: List all active employees for a company (REQ-V6).
+   *
+   * Retrieves all employees with status ACTIVE along with their work schedules.
+   * Optimized with projection for internal report aggregation.
+   *
+   * @param serviceCompanyId - The company identifier this service manages
+   * @returns Array of active employee details
+   */
+  async listEmployeesInternal(serviceCompanyId: string): Promise<
+    Array<{
+      employeeId: string;
+      fullName: string;
+      workSchedule: {
+        startTime: string;
+        endTime: string;
+        toleranceMinutes: number;
+        workDays: number[];
+      };
+      timezone: string;
+    }>
+  > {
+    const { data } = await employeeRepository.list(
+      serviceCompanyId,
+      { status: 'active' },
+      { employeeId: 1 },
+      0,
+      1000 // In a very large company, we might need pagination, but starting with 1000 for POC
+    );
+
+    return data.map((emp) => ({
+      employeeId: emp.employeeId,
+      fullName: emp.fullName,
+      workSchedule: {
+        startTime: emp.workSchedule.startTime,
+        endTime: emp.workSchedule.endTime,
+        toleranceMinutes: emp.workSchedule.toleranceMinutes,
+        workDays: emp.workSchedule.workDays,
+      },
+      timezone: emp.timezone,
+    }));
+  }
 }
 
 /** Singleton instance */

@@ -133,9 +133,7 @@ describe('LeavePermissionController', () => {
     });
 
     it('should return 200 with data for EMPLOYEE (own requests only)', async () => {
-      const mockData = [
-        { _id: 'req-1', employeeId: 'EMP-001', status: 'pending' },
-      ];
+      const mockData = [{ _id: 'req-1', employeeId: 'EMP-001', status: 'pending' }];
       vi.mocked(leavePermissionService.getRequests).mockResolvedValue({
         data: mockData as any,
         total: 1,

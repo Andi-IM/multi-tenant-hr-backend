@@ -32,6 +32,7 @@ app.get('/', (_req: Request, res: Response) => {
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.use('/api/v1/attendances', attendanceRoutes);
+app.use('/api/v1/attendance', attendanceRoutes); // Added support for singular as per Task 3
 app.use('/api/v1', leavePermissionRoutes);
 
 app.use(errorHandler as ErrorRequestHandler);

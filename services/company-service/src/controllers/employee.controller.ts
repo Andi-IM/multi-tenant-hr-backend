@@ -153,6 +153,28 @@ export class EmployeeController {
       next(error);
     }
   }
+
+  /**
+   * Internal Service-to-Service: GET /api/v1/internal/employees
+   *
+   * Retrieves all active employees and their schedules for the company.
+   *
+   * @returns 200 OK with array of employee details
+   */
+  async listInternal(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      // In a real multi-tenant scenario, extract companyId from JWT/Headers.
+      // Here we use the service's COMPANY_ID.
+      const data = await employeeService.listEmployeesInternal(COMPANY_ID);
+
+      res.status(200).json({
+        status: 'success',
+        data,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 /** Singleton instance */

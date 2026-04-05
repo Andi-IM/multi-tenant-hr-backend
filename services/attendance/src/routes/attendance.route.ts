@@ -177,4 +177,45 @@ router.post('/checkout', authenticateToken, attendanceController.checkOut);
  */
 router.get('/', attendanceController.listAttendances);
 
+/**
+ * @openapi
+ * /api/v1/attendances/report:
+ *   get:
+ *     summary: Get Attendance Report
+ *     description: Retrieve a rekapitulasi report for one or all employees. Supports grouping by day, week, or month.
+ *     tags: [Attendance]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: start_date
+ *         required: true
+ *         schema: { type: string, format: date }
+ *         description: Start date (YYYY-MM-DD)
+ *       - in: query
+ *         name: end_date
+ *         required: true
+ *         schema: { type: string, format: date }
+ *         description: End date (YYYY-MM-DD)
+ *       - in: query
+ *         name: employeeId
+ *         schema: { type: string }
+ *         description: Filter by employee ID (optional)
+ *       - in: query
+ *         name: group_by
+ *         schema: { type: string, enum: [day, week, month] }
+ *         description: Group results by period (optional)
+ *     responses:
+ *       200:
+ *         description: Report retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status: { type: string, example: success }
+ *                 data: { type: object }
+ */
+router.get('/report', authenticateToken, attendanceController.getReport);
+
 export default router;

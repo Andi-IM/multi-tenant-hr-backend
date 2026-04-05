@@ -3,6 +3,6 @@ import { createLocalConfig } from '@jaga-id/eslint-config';
 export default [
   ...createLocalConfig(import.meta.dirname),
   {
-    ignores: ['vitest.config.ts'],
+    ignores: ['vitest.config.ts', 'seed-data.ts'],
   },
 ];

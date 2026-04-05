@@ -1,28 +1,12 @@
 import axios, { isAxiosError } from 'axios';
-import { z } from 'zod';
 import {
   getLeavePermissionRequestModel,
   type ILeavePermissionRequest,
 } from '../models/leave-permission.model.js';
-
-const employeeStatusResponseSchema = z.object({
-  status: z.string(),
-  data: z.object({
-    employeeId: z.string(),
-    companyId: z.string(),
-    role: z.string(),
-    employmentStatus: z.string(),
-    workSchedule: z.object({
-      startTime: z.string(),
-      endTime: z.string(),
-      toleranceMinutes: z.number(),
-      workDays: z.array(z.number()),
-    }),
-    timezone: z.string(),
-  }),
-});
-
-type EmployeeStatusResponse = z.infer<typeof employeeStatusResponseSchema>;
+import {
+  type EmployeeStatusResponse,
+  employeeStatusResponseSchema,
+} from '../types/company-service.types.js';
 
 export class LeavePermissionService {
   private companyServiceUrl: string;

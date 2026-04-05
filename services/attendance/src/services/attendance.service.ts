@@ -1,27 +1,13 @@
 import axios, { isAxiosError } from 'axios';
 import { DateTime } from 'luxon';
-import { z } from 'zod';
 import { getAttendanceModel, type IAttendance } from '../models/attendance.model.js';
-
-// Zod schema for internal employee status verification
-const employeeStatusResponseSchema = z.object({
-  status: z.string(),
-  data: z.object({
-    employeeId: z.string(),
-    companyId: z.string(),
-    role: z.string(),
-    employmentStatus: z.string(),
-    workSchedule: z.object({
-      startTime: z.string(),
-      endTime: z.string(),
-      toleranceMinutes: z.number(),
-      workDays: z.array(z.number()),
-    }),
-    timezone: z.string(),
-  }),
-});
-
-type EmployeeStatusResponse = z.infer<typeof employeeStatusResponseSchema>;
+import { type ILeavePermissionRequest } from '../models/leave-permission.model.js';
+import {
+  type EmployeeStatusResponse,
+  type EmployeeListResponse,
+  employeeStatusResponseSchema,
+  employeeListResponseSchema,
+} from '../types/company-service.types.js';
 
 export class AttendanceService {
   private companyServiceUrl: string;
@@ -206,6 +192,289 @@ export class AttendanceService {
     const gracePeriodEnd = scheduledStartTime.plus({ minutes: toleranceMinutes });
 
     return checkInTime <= gracePeriodEnd ? 'on-time' : 'late';
+  }
+
+  /**
+   * Internal Service-to-Service: Fetch all active employees for a company
+   */
+  async fetchActiveEmployees(
+    companyId: string,
+    token: string
+  ): Promise<EmployeeListResponse['data']> {
+    try {
+      const response = await axios.get<unknown>(
+        `${this.companyServiceUrl}/api/v1/internal/employees`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'X-Company-ID': companyId,
+          },
+        }
+      );
+
+      const result = employeeListResponseSchema.safeParse(response.data);
+      if (!result.success) {
+        throw new Error(`Invalid response format from Company Service: ${result.error.message}`);
+      }
+
+      return result.data.data;
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to fetch employees: ${message}`, { cause: error });
+    }
+  }
+
+  /**
+   * Generate Attendance Report for one or all employees in a company
+   */
+  async getAttendanceReport(params: {
+    companyId: string;
+    employeeId?: string;
+    startDate: string;
+    endDate: string;
+    groupBy?: 'day' | 'week' | 'month';
+    token: string;
+  }) {
+    const { companyId, employeeId, startDate, endDate, groupBy, token } = params;
+
+    // 1. Fetch relevant employees and their schedules
+    let employees: Array<{
+      employeeId: string;
+      fullName: string;
+      workSchedule: {
+        startTime: string;
+        endTime: string;
+        toleranceMinutes: number;
+        workDays: number[];
+      };
+      timezone: string;
+    }>;
+
+    if (employeeId) {
+      const emp = await this.verifyEmployeeStatus(employeeId, companyId, token);
+      employees = [
+        {
+          employeeId: emp.employeeId,
+          fullName: 'Employee', // fullName not returned by verifyEmployeeStatus in original SDD, but we'll adapt
+          workSchedule: emp.workSchedule,
+          timezone: emp.timezone,
+        },
+      ];
+    } else {
+      employees = await this.fetchActiveEmployees(companyId, token);
+    }
+
+    // 2. Determine date range
+    const start = DateTime.fromISO(startDate).startOf('day');
+    const end = DateTime.fromISO(endDate).endOf('day');
+
+    if (!start.isValid || !end.isValid) {
+      throw new Error('Invalid start_date or end_date');
+    }
+
+    // 3. Prepare data from both collections
+    const AttendanceModel = getAttendanceModel();
+    const LeavePermissionModel = (
+      await import('../models/leave-permission.model.js')
+    ).getLeavePermissionRequestModel();
+
+    const [attendances, requests] = await Promise.all([
+      AttendanceModel.find({
+        companyId,
+        ...(employeeId && { employeeId }),
+        date: { $gte: start.toJSDate(), $lte: end.toJSDate() },
+      }).lean(),
+      LeavePermissionModel.find({
+        companyId,
+        ...(employeeId && { employeeId }),
+        $or: [
+          { startDate: { $gte: start.toJSDate(), $lte: end.toJSDate() } },
+          { endDate: { $gte: start.toJSDate(), $lte: end.toJSDate() } },
+          { startDate: { $lte: start.toJSDate() }, endDate: { $gte: end.toJSDate() } },
+        ],
+        status: { $in: ['approved', 'pending', 'rejected'] }, // We need all to count
+      }).lean(),
+    ]);
+
+    // 4. Calculate report per employee
+    const result = employees.map((emp) => {
+      const empAttendances = attendances.filter((a) => a.employeeId === emp.employeeId);
+      const empRequests = requests.filter((r) => r.employeeId === emp.employeeId);
+
+      const reportData = this.calculateEmployeeStats({
+        employee: emp,
+        attendances: empAttendances,
+        requests: empRequests,
+        start,
+        end,
+        groupBy,
+      });
+
+      return {
+        employeeId: emp.employeeId,
+        fullName: emp.fullName,
+        report: reportData,
+      };
+    });
+
+    return employeeId ? result[0] : result;
+  }
+
+  /**
+   * Helper to calculate stats for a single employee
+   */
+  private calculateEmployeeStats(params: {
+    employee: {
+      employeeId: string;
+      fullName: string;
+      workSchedule: {
+        startTime: string;
+        endTime: string;
+        toleranceMinutes: number;
+        workDays: number[];
+      };
+      timezone: string;
+    };
+    attendances: IAttendance[];
+    requests: ILeavePermissionRequest[];
+    start: DateTime;
+    end: DateTime;
+    groupBy?: 'day' | 'week' | 'month';
+  }) {
+    const { employee, attendances, requests, start, end, groupBy } = params;
+
+    if (!groupBy) {
+      return this.aggregateRange(attendances, requests, employee, start, end);
+    }
+
+    // If groupBy is set, we need to bucket by period
+    const buckets: Record<string, ReturnType<typeof this.aggregateRange>> = {};
+    let current = start;
+
+    while (current <= end) {
+      let bucketKey: string;
+      let next: DateTime;
+
+      if (groupBy === 'day') {
+        bucketKey = current.toISODate()!;
+        next = current.plus({ days: 1 });
+      } else if (groupBy === 'week') {
+        bucketKey = `Year ${current.weekYear}, Week ${current.weekNumber}`;
+        next = current.plus({ weeks: 1 }).startOf('week');
+      } else {
+        bucketKey = current.toFormat('yyyy-MM');
+        next = current.plus({ months: 1 }).startOf('month');
+      }
+
+      const periodEnd = next < end ? next.minus({ millisecond: 1 }) : end;
+
+      const periodAttendances = attendances.filter((a) => {
+        const d = DateTime.fromJSDate(a.date);
+        return d >= current && d <= periodEnd;
+      });
+
+      const periodRequests = requests.filter((r) => {
+        const s = DateTime.fromJSDate(r.startDate || r.createdAt);
+        const e = DateTime.fromJSDate(r.endDate || r.startDate || r.createdAt);
+        return s <= periodEnd && e >= current;
+      });
+
+      buckets[bucketKey] = {
+        period: bucketKey,
+        ...this.aggregateRange(periodAttendances, periodRequests, employee, current, periodEnd),
+      };
+
+      current = next;
+    }
+
+    return Object.values(buckets);
+  }
+
+  /**
+   * Core aggregation logic for a specific range
+   */
+  private aggregateRange(
+    attendances: IAttendance[],
+    requests: ILeavePermissionRequest[],
+    employee: {
+      employeeId: string;
+      fullName: string;
+      workSchedule: {
+        startTime: string;
+        endTime: string;
+        toleranceMinutes: number;
+        workDays: number[];
+      };
+      timezone: string;
+    },
+    start: DateTime,
+    end: DateTime
+  ) {
+    const stats: {
+      period?: string;
+      totalOnTime: number;
+      totalLate: number;
+      totalAbsent: number;
+      totalLeaveApproved: number;
+      totalLeaveRejected: number;
+      totalLeavePending: number;
+      totalPermissionApproved: number;
+      totalPermissionRejected: number;
+      totalPermissionPending: number;
+    } = {
+      totalOnTime: 0,
+      totalLate: 0,
+      totalAbsent: 0,
+      totalLeaveApproved: 0,
+      totalLeaveRejected: 0,
+      totalLeavePending: 0,
+      totalPermissionApproved: 0,
+      totalPermissionRejected: 0,
+      totalPermissionPending: 0,
+    };
+
+    // Calculate specific status counts
+    attendances.forEach((a) => {
+      if (a.status === 'on-time') stats.totalOnTime++;
+      else if (a.status === 'late') stats.totalLate++;
+    });
+
+    requests.forEach((r) => {
+      const field = `total${r.type === 'leave' ? 'Leave' : 'Permission'}${
+        r.status.charAt(0).toUpperCase() + r.status.slice(1)
+      }` as keyof typeof stats;
+      if (stats[field] !== undefined) {
+        (stats[field] as number)++;
+      }
+    });
+
+    // Calculate absences: Working Days WITHOUT (Attendance OR Approved Leave/Permission)
+    let current = start.startOf('day');
+    const last = end.startOf('day');
+
+    while (current <= last) {
+      const isWorkingDay = employee.workSchedule.workDays.includes(
+        current.weekday === 7 ? 0 : current.weekday
+      );
+      if (isWorkingDay) {
+        const hasAttendance = attendances.some((a) =>
+          DateTime.fromJSDate(a.date).hasSame(current, 'day')
+        );
+        const hasApprovedRequest = requests.some((r) => {
+          if (r.status !== 'approved') return false;
+          const s = DateTime.fromJSDate(r.startDate || r.createdAt).startOf('day');
+          const e = DateTime.fromJSDate(r.endDate || r.startDate || r.createdAt).startOf('day');
+          return current >= s && current <= e;
+        });
+
+        if (!hasAttendance && !hasApprovedRequest) {
+          stats.totalAbsent++;
+        }
+      }
+      current = current.plus({ days: 1 });
+    }
+
+    return stats;
   }
 
   /**

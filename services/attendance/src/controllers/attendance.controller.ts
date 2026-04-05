@@ -155,6 +155,51 @@ export class AttendanceController {
       next(error);
     }
   }
+
+  /**
+   * Get Attendance Report Controller
+   * GET /api/v1/attendances/report
+   */
+  async getReport(req: Request, res: Response, next: NextFunction) {
+    try {
+      const user = (req as AuthenticatedRequest).user;
+      if (!user) {
+        return res.status(401).json({ status: 'error', message: 'Unauthorized' });
+      }
+
+      const companyId = user.companyId;
+      const { start_date, end_date, employeeId, group_by } = req.query;
+
+      if (!start_date || !end_date) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'start_date and end_date are required query parameters',
+        });
+      }
+
+      const authHeader = req.headers.authorization;
+      if (!authHeader) {
+        return res.status(401).json({ status: 'error', message: 'Authorization header missing' });
+      }
+      const token = authHeader.split(' ')[1];
+
+      const report = await attendanceService.getAttendanceReport({
+        companyId,
+        employeeId: employeeId as string,
+        startDate: start_date as string,
+        endDate: end_date as string,
+        groupBy: group_by as 'day' | 'week' | 'month',
+        token,
+      });
+
+      return res.status(200).json({
+        status: 'success',
+        data: report,
+      });
+    } catch (error: unknown) {
+      next(error);
+    }
+  }
 }
 
 export const attendanceController = new AttendanceController();

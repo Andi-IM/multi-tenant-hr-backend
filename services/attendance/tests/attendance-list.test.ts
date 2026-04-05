@@ -73,11 +73,13 @@ describe('AttendanceController - listAttendances', () => {
       status: 'success',
       data: mockResult,
     });
-    expect(attendanceService.getAttendances).toHaveBeenCalledWith(expect.objectContaining({
-      companyId: 'company-A',
-      page: 1,
-      limit: 10,
-    }));
+    expect(attendanceService.getAttendances).toHaveBeenCalledWith(
+      expect.objectContaining({
+        companyId: 'company-A',
+        page: 1,
+        limit: 10,
+      })
+    );
   });
 
   it('should pass filters to attendance service', async () => {
@@ -91,13 +93,13 @@ describe('AttendanceController - listAttendances', () => {
     vi.mocked(attendanceService.getAttendances).mockResolvedValue(mockResult);
 
     const req = createMockReq({
-      query: { 
+      query: {
         companyId: 'company-A',
-        employeeId: 'EMP-123', 
-        startDate: '2024-01-01', 
+        employeeId: 'EMP-123',
+        startDate: '2024-01-01',
         endDate: '2024-01-31',
         page: '1',
-        limit: '5'
+        limit: '5',
       },
     });
     const res = createMockRes();

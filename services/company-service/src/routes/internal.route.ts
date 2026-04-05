@@ -59,4 +59,36 @@ router.get(
   (req, res, next) => employeeController.verifyStatus(req as AuthenticatedRequest, res, next)
 );
 
+/**
+ * @openapi
+ * /api/v1/internal/employees:
+ *   get:
+ *     summary: List all active employees and schedules (Internal API)
+ *     description: This internal endpoint is used by other microservices to fetch the company-wide registry of active employees and their work schedules. Only accessible by actors with the SYSTEM_ACTOR role.
+ *     tags: [Internal APIs]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of active employees retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status: { type: string, example: success }
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       employeeId: { type: string }
+ *                       fullName: { type: string }
+ *                       workSchedule: { type: object }
+ *                       timezone: { type: string }
+ */
+router.get('/employees', authenticateToken, authorizeRoles('SYSTEM_ACTOR'), (req, res, next) =>
+  employeeController.listInternal(req as AuthenticatedRequest, res, next)
+);
+
 export default router;
