@@ -1,6 +1,10 @@
 import { Router } from 'express';
 import { employeeController } from '../controllers/employee.controller.js';
-import { authenticateToken, authorizeCompany } from '../middleware/auth.middleware.js';
+import {
+  authenticateToken,
+  authorizeCompany,
+  authorizeRoles,
+} from '../middleware/auth.middleware.js';
 import { validate, validateQuery } from '../middleware/validate.middleware.js';
 import {
   createEmployeeSchema,
@@ -13,7 +17,7 @@ const router = Router();
 
 /**
  * @openapi
- * /api/employees:
+ * /api/v1/employees:
  *   post:
  *     summary: Create a new employee
  *     description: Adds a new employee to the database for the specified company. Access is restricted based on JWT companyId and the service's own companyId.
@@ -60,13 +64,14 @@ router.post(
   '/',
   authenticateToken,
   authorizeCompany,
+  authorizeRoles('ADMIN_HR'),
   validate(createEmployeeSchema),
   (req, res, next) => employeeController.create(req as AuthenticatedRequest, res, next)
 );
 
 /**
  * @openapi
- * /api/employees/{employeeId}:
+ * /api/v1/employees/{employeeId}:
  *   patch:
  *     summary: Update an employee's data
  *     description: Partially updates an existing employee's profile or work details. Only the provided fields are modified. Immutable fields (employeeId, companyId, joinDate) are not accepted.
@@ -92,7 +97,7 @@ router.post(
  *                 example: Jane Doe Updated
  *               employmentStatus:
  *                 type: string
- *                 enum: [ACTIVE, INACTIVE]
+ *                 enum: [active, inactive, terminated]
  *               workSchedule:
  *                 type: object
  *                 properties:
@@ -144,13 +149,14 @@ router.patch(
   '/:employeeId',
   authenticateToken,
   authorizeCompany,
+  authorizeRoles('ADMIN_HR'),
   validate(updateEmployeeSchema),
   (req, res, next) => employeeController.update(req as AuthenticatedRequest, res, next)
 );
 
 /**
  * @openapi
- * /api/employees/{employeeId}:
+ * /api/v1/employees/{employeeId}:
  *   get:
  *     summary: Retrieve employee details
  *     description: Returns the full profile of a single employee identified by their business-level employeeId. The query is scoped to the company database associated with the authenticated Admin's token, enforcing multi-tenant data isolation.
@@ -193,13 +199,17 @@ router.patch(
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/:employeeId', authenticateToken, authorizeCompany, (req, res, next) =>
-  employeeController.getById(req as AuthenticatedRequest, res, next)
+router.get(
+  '/:employeeId',
+  authenticateToken,
+  authorizeCompany,
+  authorizeRoles('ADMIN_HR'),
+  (req, res, next) => employeeController.getById(req as AuthenticatedRequest, res, next)
 );
 
 /**
  * @openapi
- * /api/employees:
+ * /api/v1/employees:
  *   get:
  *     summary: List employees
  *     description: Retrieves a paginated list of employees for the authenticated admin's company. Supports optionally filtering by employment status, and sorting by name or join date. Data isolation is strictly enforced.
@@ -223,7 +233,7 @@ router.get('/:employeeId', authenticateToken, authorizeCompany, (req, res, next)
  *         name: employmentStatus
  *         schema:
  *           type: string
- *           enum: [ACTIVE, INACTIVE]
+ *           enum: [active, inactive, terminated]
  *         description: Filter employees by their active status
  *       - in: query
  *         name: sortBy
@@ -281,13 +291,14 @@ router.get(
   '/',
   authenticateToken,
   authorizeCompany,
+  authorizeRoles('ADMIN_HR'),
   validateQuery(listEmployeesQuerySchema),
   (req, res, next) => employeeController.list(req as AuthenticatedRequest, res, next)
 );
 
 /**
  * @openapi
- * /api/employees/{employeeId}/deactivate:
+ * /api/v1/employees/{employeeId}/deactivate:
  *   patch:
  *     summary: Deactivate an employee (soft delete)
  *     description: Sets the employee's status to INACTIVE without deleting the document, preserving historical data for audit. No request body is needed. Returns 409 if the employee is already inactive.
@@ -311,21 +322,8 @@ router.get(
  *               properties:
  *                 status: { type: string, example: success }
  *                 message: { type: string, example: Employee deactivated successfully }
- *                 data:
- *                   type: object
- *                   properties:
- *                     employeeId: { type: string }
- *                     fullName: { type: string }
- *                     employmentStatus: { type: string, example: INACTIVE }
- *                     updatedAt: { type: string, format: date-time }
- *       401:
- *         description: Unauthorized - missing or invalid token
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
  *       403:
- *         description: Forbidden - cross-company access attempt
+ *         description: Forbidden
  *         content:
  *           application/json:
  *             schema:
@@ -337,14 +335,18 @@ router.get(
  *             schema:
  *               $ref: '#/components/schemas/Error'
  *       409:
- *         description: Employee is already inactive
+ *         description: Conflict - employee is already inactive
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.patch('/:employeeId/deactivate', authenticateToken, authorizeCompany, (req, res, next) =>
-  employeeController.deactivate(req as AuthenticatedRequest, res, next)
+router.patch(
+  '/:employeeId/deactivate',
+  authenticateToken,
+  authorizeCompany,
+  authorizeRoles('ADMIN_HR'),
+  (req, res, next) => employeeController.deactivate(req as AuthenticatedRequest, res, next)
 );
 
 export default router;

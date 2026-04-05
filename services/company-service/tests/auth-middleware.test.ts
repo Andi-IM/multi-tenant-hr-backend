@@ -20,9 +20,7 @@ describe('authenticateToken middleware', () => {
     const next = vi.fn();
 
     expect(() => authenticateToken(req, mockRes, next)).toThrow(AppError);
-    expect(() => authenticateToken(req, mockRes, next)).toThrow(
-      'Missing or malformed Authorization header'
-    );
+    expect(() => authenticateToken(req, mockRes, next)).toThrow('No token provided');
     expect(next).not.toHaveBeenCalled();
   });
 
@@ -30,9 +28,7 @@ describe('authenticateToken middleware', () => {
     const req = createMockReq({ headers: { authorization: 'Basic abc123' } });
     const next = vi.fn();
 
-    expect(() => authenticateToken(req, mockRes, next)).toThrow(
-      'Missing or malformed Authorization header'
-    );
+    expect(() => authenticateToken(req, mockRes, next)).toThrow('No token provided');
   });
 
   it('should throw 401 when token is invalid', () => {
@@ -41,7 +37,7 @@ describe('authenticateToken middleware', () => {
     });
     const next = vi.fn();
 
-    expect(() => authenticateToken(req, mockRes, next)).toThrow('Invalid or expired token');
+    expect(() => authenticateToken(req, mockRes, next)).toThrow('Invalid token');
   });
 
   it('should attach user to req and call next() when token is valid', () => {
@@ -71,7 +67,7 @@ describe('authorizeCompany middleware', () => {
 
   it('should throw 403 when user companyId does not match service COMPANY_ID', () => {
     const req = createMockReq();
-    req.user = { userId: 'user-1', companyId: 'B', role: 'ADMIN_HR' };
+    req.user = { userId: 'user-1', email: 'test@test.com', companyId: 'B', role: 'ADMIN_HR' };
     const next = vi.fn();
 
     expect(() => authorizeCompany(req, mockRes, next)).toThrow(AppError);
@@ -87,7 +83,7 @@ describe('authorizeCompany middleware', () => {
   it('should call next() when user companyId matches service COMPANY_ID', () => {
     const req = createMockReq();
     // Default COMPANY_ID is 'A' in the middleware
-    req.user = { userId: 'user-1', companyId: 'A', role: 'ADMIN_HR' };
+    req.user = { userId: 'user-1', email: 'test@test.com', companyId: 'A', role: 'ADMIN_HR' };
     const next = vi.fn();
 
     authorizeCompany(req, mockRes, next);

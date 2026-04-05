@@ -90,13 +90,13 @@ describe('GET /api/v1/internal/employees/:employeeId/status', () => {
       .set('Authorization', `Bearer ${adminToken}`);
 
     expect(response.status).toBe(403);
-    expect(response.body.message).toBe('Access denied: System Actor role required');
+    expect(response.body.message).toBe('Insufficient permissions');
   });
 
   it('should return 401 Unauthorized if no token is provided', async () => {
     const response = await request(app).get(`/api/v1/internal/employees/${employeeId}/status`);
 
     expect(response.status).toBe(401);
-    expect(response.body.message).toContain('Missing or malformed Authorization header');
+    expect(response.body.message).toBe('No token provided');
   });
 });

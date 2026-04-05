@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { employeeController } from '../controllers/employee.controller.js';
-import { authenticateToken, authorizeSystemActor } from '../middleware/auth.middleware.js';
+import { authenticateToken, authorizeRoles } from '../middleware/auth.middleware.js';
 import type { AuthenticatedRequest } from '../types/auth.types.js';
 
 const router = Router();
@@ -50,17 +50,12 @@ const router = Router();
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 status: { type: string, example: error }
- *                 message: { type: string, example: "Employee is Inactive" }
- *       404:
- *         description: Employee not found
+ *               $ref: '#/components/schemas/Error'
  */
 router.get(
   '/employees/:employeeId/status',
   authenticateToken,
-  authorizeSystemActor,
+  authorizeRoles('SYSTEM_ACTOR'),
   (req, res, next) => employeeController.verifyStatus(req as AuthenticatedRequest, res, next)
 );
 

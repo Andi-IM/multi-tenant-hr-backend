@@ -11,6 +11,7 @@ export type UserRole = 'ADMIN_HR' | 'EMPLOYEE' | 'APPROVER' | 'SYSTEM_ACTOR';
  */
 export interface JwtUserPayload {
   userId: string;
+  email: string;
   role: UserRole;
   companyId: string;
 }
