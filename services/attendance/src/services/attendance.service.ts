@@ -207,6 +207,61 @@ export class AttendanceService {
 
     return checkInTime <= gracePeriodEnd ? 'on-time' : 'late';
   }
+
+  /**
+   * Get attendance records with filtering, pagination, and company isolation
+   */
+  async getAttendances(params: {
+    companyId: string;
+    employeeId?: string;
+    startDate?: string;
+    endDate?: string;
+    page: number;
+    limit: number;
+  }): Promise<{
+    attendances: IAttendance[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    const { companyId, employeeId, startDate, endDate, page, limit } = params;
+    const Attendance = getAttendanceModel();
+    const query: Record<string, any> = { companyId };
+
+    if (employeeId) {
+      query.employeeId = employeeId;
+    }
+
+    if (startDate || endDate) {
+      query.date = {};
+      if (startDate) {
+        const start = DateTime.fromISO(startDate);
+        if (start.isValid) {
+          query.date.$gte = start.startOf('day').toJSDate();
+        }
+      }
+      if (endDate) {
+        const end = DateTime.fromISO(endDate);
+        if (end.isValid) {
+          query.date.$lte = end.endOf('day').toJSDate();
+        }
+      }
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [attendances, total] = await Promise.all([
+      Attendance.find(query).sort({ date: -1 }).skip(skip).limit(limit).lean(),
+      Attendance.countDocuments(query),
+    ]);
+
+    return {
+      attendances: attendances as unknown as IAttendance[],
+      total,
+      page,
+      limit,
+    };
+  }
 }
 
 export const attendanceService = new AttendanceService();

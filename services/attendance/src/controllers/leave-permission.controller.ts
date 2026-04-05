@@ -148,6 +148,158 @@ export class LeavePermissionController {
       next(error);
     }
   }
+
+  async getRequests(req: Request, res: Response, next: NextFunction) {
+    try {
+      const user = (req as AuthenticatedRequest).user;
+      if (!user) {
+        return res.status(401).json({
+          status: 'error',
+          message: 'Unauthorized',
+        });
+      }
+
+      const { type, status, start_date, end_date, page, limit } = req.query;
+
+      const result = await leavePermissionService.getRequests(user.id, user.companyId, user.role, {
+        type: type as string,
+        status: status as string,
+        startDate: start_date as string,
+        endDate: end_date as string,
+        page: page ? parseInt(page as string, 10) : 1,
+        limit: limit ? parseInt(limit as string, 10) : 10,
+      });
+
+      return res.status(200).json({
+        status: 'success',
+        data: result.data,
+        pagination: {
+          total: result.total,
+          page: result.page,
+          limit: result.limit,
+          totalPages: Math.ceil(result.total / result.limit),
+        },
+      });
+    } catch (error: unknown) {
+      if (error instanceof AppError) {
+        return res.status(error.statusCode).json({
+          status: 'error',
+          message: error.message,
+        });
+      }
+      next(error);
+    }
+  }
+
+  async approveRequest(req: Request, res: Response, next: NextFunction) {
+    try {
+      const user = (req as AuthenticatedRequest).user;
+      if (!user) {
+        return res.status(401).json({
+          status: 'error',
+          message: 'Unauthorized',
+        });
+      }
+
+      if (user.role !== 'ADMIN_HR') {
+        return res.status(403).json({
+          status: 'error',
+          message: 'Access denied: Admin HR role required',
+        });
+      }
+
+      const { id } = req.params;
+      const requestId = Array.isArray(id) ? id[0] : id;
+
+      const request = await leavePermissionService.approveRequest(
+        requestId,
+        user.id,
+        user.companyId
+      );
+
+      return res.status(200).json({
+        status: 'success',
+        data: request,
+      });
+    } catch (error: unknown) {
+      if (error instanceof AppError) {
+        return res.status(error.statusCode).json({
+          status: 'error',
+          message: error.message,
+        });
+      }
+      if (error instanceof Error) {
+        if (error.message.includes('Request not found')) {
+          return res.status(404).json({
+            status: 'error',
+            message: error.message,
+          });
+        }
+        if (error.message.includes('Request already processed')) {
+          return res.status(409).json({
+            status: 'error',
+            message: 'Request already processed',
+          });
+        }
+      }
+      next(error);
+    }
+  }
+
+  async rejectRequest(req: Request, res: Response, next: NextFunction) {
+    try {
+      const user = (req as AuthenticatedRequest).user;
+      if (!user) {
+        return res.status(401).json({
+          status: 'error',
+          message: 'Unauthorized',
+        });
+      }
+
+      if (user.role !== 'ADMIN_HR') {
+        return res.status(403).json({
+          status: 'error',
+          message: 'Access denied: Admin HR role required',
+        });
+      }
+
+      const { id } = req.params;
+      const requestId = Array.isArray(id) ? id[0] : id;
+
+      const request = await leavePermissionService.rejectRequest(
+        requestId,
+        user.id,
+        user.companyId
+      );
+
+      return res.status(200).json({
+        status: 'success',
+        data: request,
+      });
+    } catch (error: unknown) {
+      if (error instanceof AppError) {
+        return res.status(error.statusCode).json({
+          status: 'error',
+          message: error.message,
+        });
+      }
+      if (error instanceof Error) {
+        if (error.message.includes('Request not found')) {
+          return res.status(404).json({
+            status: 'error',
+            message: error.message,
+          });
+        }
+        if (error.message.includes('Request already processed')) {
+          return res.status(409).json({
+            status: 'error',
+            message: 'Request already processed',
+          });
+        }
+      }
+      next(error);
+    }
+  }
 }
 
 export const leavePermissionController = new LeavePermissionController();

@@ -142,6 +142,114 @@ export class LeavePermissionService {
 
     return request.save();
   }
+
+  async getRequests(
+    employeeId: string,
+    companyId: string,
+    userRole: string,
+    filters: {
+      type?: string;
+      status?: string;
+      startDate?: string;
+      endDate?: string;
+      page?: number;
+      limit?: number;
+    }
+  ): Promise<{ data: ILeavePermissionRequest[]; total: number; page: number; limit: number }> {
+    const { type, status, startDate, endDate, page = 1, limit = 10 } = filters;
+    const skip = (page - 1) * limit;
+
+    const query: Record<string, unknown> = {};
+
+    if (userRole === 'EMPLOYEE') {
+      query.employeeId = employeeId;
+    } else {
+      query.companyId = companyId;
+    }
+
+    if (type) query.type = type;
+    if (status) query.status = status;
+
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) (query.createdAt as Record<string, Date>).$gte = new Date(startDate);
+      if (endDate) (query.createdAt as Record<string, Date>).$lte = new Date(endDate);
+    }
+
+    const LeavePermissionRequest = getLeavePermissionRequestModel();
+    const [data, total] = await Promise.all([
+      LeavePermissionRequest.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      LeavePermissionRequest.countDocuments(query),
+    ]);
+
+    return { data, total, page, limit };
+  }
+
+  async approveRequest(
+    requestId: string,
+    approverId: string,
+    companyId: string
+  ): Promise<ILeavePermissionRequest> {
+    const LeavePermissionRequest = getLeavePermissionRequestModel();
+    const request = await LeavePermissionRequest.findById(requestId);
+
+    if (!request) {
+      throw new Error('Request not found');
+    }
+
+    if (request.companyId !== companyId) {
+      throw new Error('Request not found');
+    }
+
+    if (request.status !== 'pending') {
+      throw new Error('Request already processed');
+    }
+
+    request.status = 'approved';
+    request.approvedBy = approverId;
+    request.approvedAt = new Date();
+
+    await request.save();
+
+    console.log(
+      `[AUDIT] Request ${requestId} approved by ${approverId} at ${new Date().toISOString()}`
+    );
+
+    return request;
+  }
+
+  async rejectRequest(
+    requestId: string,
+    approverId: string,
+    companyId: string
+  ): Promise<ILeavePermissionRequest> {
+    const LeavePermissionRequest = getLeavePermissionRequestModel();
+    const request = await LeavePermissionRequest.findById(requestId);
+
+    if (!request) {
+      throw new Error('Request not found');
+    }
+
+    if (request.companyId !== companyId) {
+      throw new Error('Request not found');
+    }
+
+    if (request.status !== 'pending') {
+      throw new Error('Request already processed');
+    }
+
+    request.status = 'rejected';
+    request.approvedBy = approverId;
+    request.approvedAt = new Date();
+
+    await request.save();
+
+    console.log(
+      `[AUDIT] Request ${requestId} rejected by ${approverId} at ${new Date().toISOString()}`
+    );
+
+    return request;
+  }
 }
 
 export const leavePermissionService = new LeavePermissionService();

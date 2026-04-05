@@ -41,3 +41,18 @@ export function authorizeSystemActor(req: Request, _res: Response, next: NextFun
 
   next();
 }
+/**
+ * Middleware: Authorize Admin HR Access
+ */
+export function authorizeAdmin(req: Request, _res: Response, next: NextFunction): void {
+  const authenticatedReq = req as AuthenticatedRequest;
+  if (!authenticatedReq.user) {
+    throw AppError.unauthorized('Authentication required');
+  }
+
+  if (authenticatedReq.user.role !== 'ADMIN_HR') {
+    throw AppError.forbidden('Access denied: ADMIN_HR role required');
+  }
+
+  next();
+}

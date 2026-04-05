@@ -163,7 +163,7 @@ describe('PATCH /api/v1/employees/:employeeId', () => {
     expect(response.status).toBe(200);
     expect(response.body.status).toBe('success');
     expect(response.body.data.fullName).toBe(updatePayload.fullName);
-    expect(response.body.data.employmentStatus).toBe(updatePayload.employmentStatus);
+    expect(response.body.data.status).toBe(updatePayload.employmentStatus);
   });
 
   it('should return 401 if no token is provided', async () => {

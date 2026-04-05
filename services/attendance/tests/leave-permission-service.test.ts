@@ -48,11 +48,7 @@ describe('LeavePermissionService', () => {
     it('should return employee data when employee is active', async () => {
       mockedAxios.get.mockResolvedValueOnce({ data: validEmployeeResponse });
 
-      const result = await service.verifyEmployeeStatus(
-        'EMP-001',
-        'company-A',
-        'valid-token'
-      );
+      const result = await service.verifyEmployeeStatus('EMP-001', 'company-A', 'valid-token');
 
       expect(result.employeeId).toBe('EMP-001');
       expect(result.employmentStatus).toBe('active');
@@ -128,9 +124,8 @@ describe('LeavePermissionService', () => {
     it('should throw 409 conflict when overlapping approved request exists', async () => {
       mockedAxios.get.mockResolvedValueOnce({ data: validEmployeeResponse });
 
-      const { getLeavePermissionRequestModel } = await import(
-        '../src/models/leave-permission.model.js'
-      );
+      const { getLeavePermissionRequestModel } =
+        await import('../src/models/leave-permission.model.js');
       vi.mocked(getLeavePermissionRequestModel).mockReturnValueOnce({
         findOne: vi.fn().mockResolvedValueOnce({ _id: 'existing-req' }),
       } as any);

@@ -120,6 +120,41 @@ export class AttendanceController {
       next(error);
     }
   }
+
+  /**
+   * List Attendances Controller
+   * GET /api/v1/attendances/
+   */
+  async listAttendances(req: Request, res: Response, next: NextFunction) {
+    try {
+      // Access is now public as per requirement.
+      // companyId MUST be provided in the query for filtering/isolation.
+      const { companyId, employeeId, startDate, endDate, page = 1, limit = 10 } = req.query;
+
+      if (!companyId) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'companyId query parameter is required for public access',
+        });
+      }
+
+      const result = await attendanceService.getAttendances({
+        companyId: companyId as string,
+        employeeId: employeeId as string,
+        startDate: startDate as string,
+        endDate: endDate as string,
+        page: Number(page),
+        limit: Number(limit),
+      });
+
+      return res.status(200).json({
+        status: 'success',
+        data: result,
+      });
+    } catch (error: unknown) {
+      next(error);
+    }
+  }
 }
 
 export const attendanceController = new AttendanceController();

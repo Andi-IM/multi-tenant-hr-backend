@@ -1,6 +1,6 @@
 import { Router, type Router as RouterType } from 'express';
 import { attendanceController } from '../controllers/attendance.controller.js';
-import { authenticateToken } from '../middleware/auth.middleware.js';
+import { authenticateToken, authorizeAdmin } from '../middleware/auth.middleware.js';
 
 const router: RouterType = Router();
 
@@ -116,5 +116,65 @@ router.post('/checkin', authenticateToken, attendanceController.checkIn);
  *                   message: "Unauthorized"
  */
 router.post('/checkout', authenticateToken, attendanceController.checkOut);
+
+/**
+ * @openapi
+ * /api/v1/attendances:
+ *   get:
+ *     summary: List Attendance Records
+ *     description: Retrieve a paginated list of attendance records. Only accessible by HR Admins.
+ *     tags: [Attendance]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: employeeId
+ *         schema:
+ *           type: string
+ *         description: Filter by employee ID
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter by start date (YYYY-MM-DD)
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter by end date (YYYY-MM-DD)
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Records per page
+ *     responses:
+ *       200:
+ *         description: Attendance records retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status: { type: string, example: success }
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     attendances:
+ *                       type: array
+ *                       items: { $ref: '#/components/schemas/Attendance' }
+ *                     total: { type: integer }
+ *                     page: { type: integer }
+ *                     limit: { type: integer }
+ */
+router.get('/', attendanceController.listAttendances);
 
 export default router;

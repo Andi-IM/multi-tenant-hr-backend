@@ -146,7 +146,7 @@ router.post(
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put(
+router.patch(
   '/:employeeId',
   authenticateToken,
   authorizeCompany,

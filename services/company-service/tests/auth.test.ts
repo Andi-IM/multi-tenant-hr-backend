@@ -88,10 +88,10 @@ describe('Auth Controller - Login', () => {
 
     expect(response.status).toBe(200);
     expect(response.body.status).toBe('success');
-    expect(response.body.data.token).toBeDefined();
+    expect(response.body.data.accessToken).toBeDefined();
     expect(response.body.data.expiresIn).toBe(3600);
 
-    const decoded = jwt.verify(response.body.data.token, 'test-secret') as any;
+    const decoded = jwt.verify(response.body.data.accessToken, 'test-secret') as any;
     expect(decoded.email).toBe(mockEmployee.email);
     expect(decoded.role).toBe(mockEmployee.role);
     expect(decoded.companyId).toBe(mockEmployee.companyId);

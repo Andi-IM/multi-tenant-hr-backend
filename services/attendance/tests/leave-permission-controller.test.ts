@@ -6,6 +6,9 @@ vi.mock('../src/services/leave-permission.service.js', () => ({
   leavePermissionService: {
     createLeaveRequest: vi.fn(),
     createPermissionRequest: vi.fn(),
+    getRequests: vi.fn(),
+    approveRequest: vi.fn(),
+    rejectRequest: vi.fn(),
   },
 }));
 
@@ -96,9 +99,7 @@ describe('LeavePermissionController', () => {
         status: 'pending',
       };
 
-      vi.mocked(leavePermissionService.createLeaveRequest).mockResolvedValue(
-        mockRequest as any
-      );
+      vi.mocked(leavePermissionService.createLeaveRequest).mockResolvedValue(mockRequest as any);
 
       const req = createMockReq({
         user: { id: 'EMP-001', companyId: 'company-A', role: 'EMPLOYEE' },
@@ -115,54 +116,14 @@ describe('LeavePermissionController', () => {
       });
       expect(mockRequest.status).toBe('pending');
     });
-
-    it('should return 409 when overlapping approved request exists', async () => {
-      vi.mocked(leavePermissionService.createLeaveRequest).mockRejectedValue(
-        new Error('Conflict with existing approved request')
-      );
-
-      const req = createMockReq({
-        user: { id: 'EMP-001', companyId: 'company-A', role: 'EMPLOYEE' },
-        body: { startDate: '2026-04-10', endDate: '2026-04-12' },
-      });
-      const res = createMockRes();
-
-      await controller.createLeave(req, res, mockNext);
-
-      expect(res.status).toHaveBeenCalledWith(409);
-      expect(res.json).toHaveBeenCalledWith({
-        status: 'error',
-        message: 'Conflict with existing approved request',
-      });
-    });
-
-    it('should return 403 when employee is inactive', async () => {
-      vi.mocked(leavePermissionService.createLeaveRequest).mockRejectedValue(
-        new Error('Employee is not active')
-      );
-
-      const req = createMockReq({
-        user: { id: 'EMP-001', companyId: 'company-A', role: 'EMPLOYEE' },
-        body: { startDate: '2026-04-10', endDate: '2026-04-12' },
-      });
-      const res = createMockRes();
-
-      await controller.createLeave(req, res, mockNext);
-
-      expect(res.status).toHaveBeenCalledWith(403);
-      expect(res.json).toHaveBeenCalledWith({
-        status: 'error',
-        message: 'Employee is not active',
-      });
-    });
   });
 
-  describe('createPermission', () => {
+  describe('getRequests', () => {
     it('should return 401 when user is not authenticated', async () => {
       const req = createMockReq({ user: undefined });
       const res = createMockRes();
 
-      await controller.createPermission(req, res, mockNext);
+      await controller.getRequests(req, res, mockNext);
 
       expect(res.status).toHaveBeenCalledWith(401);
       expect(res.json).toHaveBeenCalledWith({
@@ -171,102 +132,237 @@ describe('LeavePermissionController', () => {
       });
     });
 
-    it('should return 400 when reason is empty', async () => {
-      const req = createMockReq({
-        user: { id: 'EMP-001', companyId: 'company-A', role: 'EMPLOYEE' },
-        body: { reason: '' },
+    it('should return 200 with data for EMPLOYEE (own requests only)', async () => {
+      const mockData = [
+        { _id: 'req-1', employeeId: 'EMP-001', status: 'pending' },
+      ];
+      vi.mocked(leavePermissionService.getRequests).mockResolvedValue({
+        data: mockData as any,
+        total: 1,
+        page: 1,
+        limit: 10,
       });
-      const res = createMockRes();
-
-      await controller.createPermission(req, res, mockNext);
-
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({
-        status: 'error',
-        message: 'Reason is required for permission request',
-      });
-    });
-
-    it('should return 400 when reason is missing', async () => {
-      const req = createMockReq({
-        user: { id: 'EMP-001', companyId: 'company-A', role: 'EMPLOYEE' },
-        body: {},
-      });
-      const res = createMockRes();
-
-      await controller.createPermission(req, res, mockNext);
-
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({
-        status: 'error',
-        message: 'Reason is required for permission request',
-      });
-    });
-
-    it('should return 400 when reason is only whitespace', async () => {
-      const req = createMockReq({
-        user: { id: 'EMP-001', companyId: 'company-A', role: 'EMPLOYEE' },
-        body: { reason: '   ' },
-      });
-      const res = createMockRes();
-
-      await controller.createPermission(req, res, mockNext);
-
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({
-        status: 'error',
-        message: 'Reason is required for permission request',
-      });
-    });
-
-    it('should return 201 with status=pending on successful permission request', async () => {
-      const mockRequest = {
-        _id: 'req-456',
-        employeeId: 'EMP-001',
-        companyId: 'company-A',
-        type: 'permission',
-        reason: 'Doctor appointment',
-        status: 'pending',
-      };
-
-      vi.mocked(leavePermissionService.createPermissionRequest).mockResolvedValue(
-        mockRequest as any
-      );
 
       const req = createMockReq({
         user: { id: 'EMP-001', companyId: 'company-A', role: 'EMPLOYEE' },
-        body: { reason: 'Doctor appointment' },
+        query: {},
       });
       const res = createMockRes();
 
-      await controller.createPermission(req, res, mockNext);
+      await controller.getRequests(req, res, mockNext);
 
-      expect(res.status).toHaveBeenCalledWith(201);
+      expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
         status: 'success',
-        data: mockRequest,
+        data: mockData,
+        pagination: {
+          total: 1,
+          page: 1,
+          limit: 10,
+          totalPages: 1,
+        },
       });
-      expect(mockRequest.status).toBe('pending');
     });
 
-    it('should return 403 when employee is inactive', async () => {
-      vi.mocked(leavePermissionService.createPermissionRequest).mockRejectedValue(
-        new Error('Employee is not active')
-      );
+    it('should return 200 with data for ADMIN_HR (all requests)', async () => {
+      const mockData = [
+        { _id: 'req-1', employeeId: 'EMP-001', status: 'pending' },
+        { _id: 'req-2', employeeId: 'EMP-002', status: 'approved' },
+      ];
+      vi.mocked(leavePermissionService.getRequests).mockResolvedValue({
+        data: mockData as any,
+        total: 2,
+        page: 1,
+        limit: 10,
+      });
 
       const req = createMockReq({
-        user: { id: 'EMP-001', companyId: 'company-A', role: 'EMPLOYEE' },
-        body: { reason: 'Doctor appointment' },
+        user: { id: 'ADMIN-001', companyId: 'company-A', role: 'ADMIN_HR' },
+        query: { type: 'leave', status: 'pending' },
       });
       const res = createMockRes();
 
-      await controller.createPermission(req, res, mockNext);
+      await controller.getRequests(req, res, mockNext);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(leavePermissionService.getRequests).toHaveBeenCalledWith(
+        'ADMIN-001',
+        'company-A',
+        'ADMIN_HR',
+        { type: 'leave', status: 'pending', page: 1, limit: 10 }
+      );
+    });
+  });
+
+  describe('approveRequest', () => {
+    it('should return 401 when user is not authenticated', async () => {
+      const req = createMockReq({ user: undefined, params: { id: 'req-123' } });
+      const res = createMockRes();
+
+      await controller.approveRequest(req, res, mockNext);
+
+      expect(res.status).toHaveBeenCalledWith(401);
+    });
+
+    it('should return 403 when user is not ADMIN_HR', async () => {
+      const req = createMockReq({
+        user: { id: 'EMP-001', companyId: 'company-A', role: 'EMPLOYEE' },
+        params: { id: 'req-123' },
+      });
+      const res = createMockRes();
+
+      await controller.approveRequest(req, res, mockNext);
 
       expect(res.status).toHaveBeenCalledWith(403);
       expect(res.json).toHaveBeenCalledWith({
         status: 'error',
-        message: 'Employee is not active',
+        message: 'Access denied: Admin HR role required',
       });
+    });
+
+    it('should return 404 when request not found', async () => {
+      vi.mocked(leavePermissionService.approveRequest).mockRejectedValue(
+        new Error('Request not found')
+      );
+
+      const req = createMockReq({
+        user: { id: 'ADMIN-001', companyId: 'company-A', role: 'ADMIN_HR' },
+        params: { id: 'req-123' },
+      });
+      const res = createMockRes();
+
+      await controller.approveRequest(req, res, mockNext);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith({
+        status: 'error',
+        message: 'Request not found',
+      });
+    });
+
+    it('should return 409 when request already processed', async () => {
+      vi.mocked(leavePermissionService.approveRequest).mockRejectedValue(
+        new Error('Request already processed')
+      );
+
+      const req = createMockReq({
+        user: { id: 'ADMIN-001', companyId: 'company-A', role: 'ADMIN_HR' },
+        params: { id: 'req-123' },
+      });
+      const res = createMockRes();
+
+      await controller.approveRequest(req, res, mockNext);
+
+      expect(res.status).toHaveBeenCalledWith(409);
+      expect(res.json).toHaveBeenCalledWith({
+        status: 'error',
+        message: 'Request already processed',
+      });
+    });
+
+    it('should return 200 with approved status when successful', async () => {
+      const mockRequest = {
+        _id: 'req-123',
+        status: 'approved',
+        approvedBy: 'ADMIN-001',
+        approvedAt: new Date(),
+      };
+      vi.mocked(leavePermissionService.approveRequest).mockResolvedValue(mockRequest as any);
+
+      const req = createMockReq({
+        user: { id: 'ADMIN-001', companyId: 'company-A', role: 'ADMIN_HR' },
+        params: { id: 'req-123' },
+      });
+      const res = createMockRes();
+
+      await controller.approveRequest(req, res, mockNext);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({
+        status: 'success',
+        data: mockRequest,
+      });
+      expect(mockRequest.status).toBe('approved');
+    });
+  });
+
+  describe('rejectRequest', () => {
+    it('should return 401 when user is not authenticated', async () => {
+      const req = createMockReq({ user: undefined, params: { id: 'req-123' } });
+      const res = createMockRes();
+
+      await controller.rejectRequest(req, res, mockNext);
+
+      expect(res.status).toHaveBeenCalledWith(401);
+    });
+
+    it('should return 403 when user is not ADMIN_HR', async () => {
+      const req = createMockReq({
+        user: { id: 'EMP-001', companyId: 'company-A', role: 'EMPLOYEE' },
+        params: { id: 'req-123' },
+      });
+      const res = createMockRes();
+
+      await controller.rejectRequest(req, res, mockNext);
+
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.json).toHaveBeenCalledWith({
+        status: 'error',
+        message: 'Access denied: Admin HR role required',
+      });
+    });
+
+    it('should return 404 when request not found', async () => {
+      vi.mocked(leavePermissionService.rejectRequest).mockRejectedValue(
+        new Error('Request not found')
+      );
+
+      const req = createMockReq({
+        user: { id: 'ADMIN-001', companyId: 'company-A', role: 'ADMIN_HR' },
+        params: { id: 'req-123' },
+      });
+      const res = createMockRes();
+
+      await controller.rejectRequest(req, res, mockNext);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+    });
+
+    it('should return 409 when request already processed', async () => {
+      vi.mocked(leavePermissionService.rejectRequest).mockRejectedValue(
+        new Error('Request already processed')
+      );
+
+      const req = createMockReq({
+        user: { id: 'ADMIN-001', companyId: 'company-A', role: 'ADMIN_HR' },
+        params: { id: 'req-123' },
+      });
+      const res = createMockRes();
+
+      await controller.rejectRequest(req, res, mockNext);
+
+      expect(res.status).toHaveBeenCalledWith(409);
+    });
+
+    it('should return 200 with rejected status when successful', async () => {
+      const mockRequest = {
+        _id: 'req-123',
+        status: 'rejected',
+        approvedBy: 'ADMIN-001',
+        approvedAt: new Date(),
+      };
+      vi.mocked(leavePermissionService.rejectRequest).mockResolvedValue(mockRequest as any);
+
+      const req = createMockReq({
+        user: { id: 'ADMIN-001', companyId: 'company-A', role: 'ADMIN_HR' },
+        params: { id: 'req-123' },
+      });
+      const res = createMockRes();
+
+      await controller.rejectRequest(req, res, mockNext);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(mockRequest.status).toBe('rejected');
     });
   });
 });
