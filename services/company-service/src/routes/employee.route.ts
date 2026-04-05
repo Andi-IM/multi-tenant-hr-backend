@@ -4,6 +4,7 @@ import {
   authenticateToken,
   authorizeCompany,
   authorizeRoles,
+  authorizeSelfOrAdmin,
 } from '../middleware/auth.middleware.js';
 import { validate, validateQuery } from '../middleware/validate.middleware.js';
 import {
@@ -145,7 +146,7 @@ router.post(
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.patch(
+router.put(
   '/:employeeId',
   authenticateToken,
   authorizeCompany,
@@ -203,7 +204,7 @@ router.get(
   '/:employeeId',
   authenticateToken,
   authorizeCompany,
-  authorizeRoles('ADMIN_HR'),
+  authorizeSelfOrAdmin,
   (req, res, next) => employeeController.getById(req as AuthenticatedRequest, res, next)
 );
 
@@ -343,6 +344,33 @@ router.get(
  */
 router.patch(
   '/:employeeId/deactivate',
+  authenticateToken,
+  authorizeCompany,
+  authorizeRoles('ADMIN_HR'),
+  (req, res, next) => employeeController.deactivate(req as AuthenticatedRequest, res, next)
+);
+
+/**
+ * @openapi
+ * /api/v1/employees/{employeeId}:
+ *   delete:
+ *     summary: Delete an employee (soft delete)
+ *     description: Sets the employee's status to INACTIVE. Access restricted to ADMIN_HR.
+ *     tags: [Employees]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: employeeId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Employee deactivated successfully
+ */
+router.delete(
+  '/:employeeId',
   authenticateToken,
   authorizeCompany,
   authorizeRoles('ADMIN_HR'),

@@ -29,24 +29,7 @@ export class EmployeeController {
       res.status(201).json({
         status: 'success',
         message: 'Employee created successfully',
-        data: {
-          id: employee._id.toString(),
-          employeeId: employee.employeeId,
-          fullName: employee.fullName,
-          companyId: employee.companyId,
-          joinDate: employee.joinDate,
-          employmentStatus: employee.status,
-          workSchedule: {
-            startTime: employee.workSchedule.startTime,
-            endTime: employee.workSchedule.endTime,
-            toleranceMinutes: employee.workSchedule.toleranceMinutes,
-            workDays: employee.workSchedule.workDays,
-          },
-          timezone: employee.timezone,
-          role: employee.role,
-          createdAt: employee.createdAt,
-          updatedAt: employee.updatedAt,
-        },
+        data: employee,
       });
     } catch (error) {
       next(error);
@@ -73,24 +56,7 @@ export class EmployeeController {
       res.status(200).json({
         status: 'success',
         message: 'Employee updated successfully',
-        data: {
-          id: employee._id.toString(),
-          employeeId: employee.employeeId,
-          fullName: employee.fullName,
-          companyId: employee.companyId,
-          joinDate: employee.joinDate,
-          employmentStatus: employee.status,
-          workSchedule: {
-            startTime: employee.workSchedule.startTime,
-            endTime: employee.workSchedule.endTime,
-            toleranceMinutes: employee.workSchedule.toleranceMinutes,
-            workDays: employee.workSchedule.workDays,
-          },
-          timezone: employee.timezone,
-          role: employee.role,
-          createdAt: employee.createdAt,
-          updatedAt: employee.updatedAt,
-        },
+        data: employee,
       });
     } catch (error) {
       next(error);
@@ -111,24 +77,7 @@ export class EmployeeController {
 
       res.status(200).json({
         status: 'success',
-        data: {
-          id: employee._id.toString(),
-          employeeId: employee.employeeId,
-          fullName: employee.fullName,
-          companyId: employee.companyId,
-          joinDate: employee.joinDate,
-          employmentStatus: employee.status,
-          workSchedule: {
-            startTime: employee.workSchedule.startTime,
-            endTime: employee.workSchedule.endTime,
-            toleranceMinutes: employee.workSchedule.toleranceMinutes,
-            workDays: employee.workSchedule.workDays,
-          },
-          timezone: employee.timezone,
-          role: employee.role,
-          createdAt: employee.createdAt,
-          updatedAt: employee.updatedAt,
-        },
+        data: employee,
       });
     } catch (error) {
       next(error);
@@ -148,24 +97,7 @@ export class EmployeeController {
 
       res.status(200).json({
         status: 'success',
-        data: result.data.map((employee) => ({
-          id: employee._id,
-          employeeId: employee.employeeId,
-          fullName: employee.fullName,
-          companyId: employee.companyId,
-          joinDate: employee.joinDate,
-          employmentStatus: employee.status,
-          workSchedule: {
-            startTime: employee.workSchedule.startTime,
-            endTime: employee.workSchedule.endTime,
-            toleranceMinutes: employee.workSchedule.toleranceMinutes,
-            workDays: employee.workSchedule.workDays,
-          },
-          timezone: employee.timezone,
-          role: employee.role,
-          createdAt: employee.createdAt,
-          updatedAt: employee.updatedAt,
-        })),
+        data: result.data,
         meta: result.meta,
       });
     } catch (error) {
@@ -189,17 +121,7 @@ export class EmployeeController {
       res.status(200).json({
         status: 'success',
         message: 'Employee deactivated successfully',
-        data: {
-          id: employee._id.toString(),
-          employeeId: employee.employeeId,
-          fullName: employee.fullName,
-          companyId: employee.companyId,
-          joinDate: employee.joinDate,
-          employmentStatus: employee.status,
-          timezone: employee.timezone,
-          updatedAt: employee.updatedAt,
-          deactivationDate: employee.deactivationDate,
-        },
+        data: employee,
       });
     } catch (error) {
       next(error);

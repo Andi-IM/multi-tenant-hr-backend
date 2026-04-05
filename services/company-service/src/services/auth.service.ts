@@ -38,6 +38,7 @@ export class AuthService {
     const expiresIn = 3600; // 1 hour as requested in criteria
     const payload = {
       userId: employee._id.toString(),
+      employeeId: employee.employeeId,
       email: employee.email,
       role: employee.role,
       companyId: employee.companyId,

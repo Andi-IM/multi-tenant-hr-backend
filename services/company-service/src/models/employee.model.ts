@@ -57,6 +57,20 @@ export const EmployeeSchema: Schema<IEmployeeDocument> = new Schema(
   },
   {
     timestamps: true,
+    toJSON: {
+      transform(_doc, ret) {
+        delete (ret as { passwordHash?: string }).passwordHash;
+        delete (ret as { __v?: number }).__v;
+        return ret;
+      },
+    },
+    toObject: {
+      transform(_doc, ret) {
+        delete (ret as { passwordHash?: string }).passwordHash;
+        delete (ret as { __v?: number }).__v;
+        return ret;
+      },
+    },
   }
 );
 

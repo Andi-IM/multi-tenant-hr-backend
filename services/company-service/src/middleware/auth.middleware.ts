@@ -75,3 +75,30 @@ export function authorizeCompany(req: Request, _res: Response, next: NextFunctio
 
   next();
 }
+
+/**
+ * Middleware: Authorize Self or Admin
+ *
+ * Special RBAC:
+ * - ADMIN_HR: has full access to any employee record in their company.
+ * - EMPLOYEE: can only access their own record (where employeeId in URL matches JWT sub).
+ */
+export function authorizeSelfOrAdmin(req: Request, _res: Response, next: NextFunction): void {
+  const authReq = req as AuthenticatedRequest;
+  if (!authReq.user) {
+    throw AppError.unauthorized('Authentication required');
+  }
+
+  // If Admin, proceed
+  if (authReq.user.role === 'ADMIN_HR') {
+    return next();
+  }
+
+  // If Employee, check if the requested employeeId matches their own
+  const { employeeId } = req.params;
+  if (authReq.user.employeeId !== employeeId) {
+    throw AppError.forbidden('Access denied: You can only access your own data');
+  }
+
+  next();
+}
