@@ -15,7 +15,7 @@ export class AuthService {
   async login(
     input: LoginInput,
     serviceCompanyId: string
-  ): Promise<{ token: string; expiresIn: number }> {
+  ): Promise<{ accessToken: string; refreshToken: string; expiresIn: number }> {
     const { email, password } = input;
 
     // 1. Cari employee berdasarkan email
@@ -44,11 +44,52 @@ export class AuthService {
       companyId: employee.companyId,
     };
 
-    const token = jwt.sign(payload, jwtSecret, {
+    const accessToken = jwt.sign(payload, jwtSecret, {
       expiresIn,
     });
 
-    return { token, expiresIn };
+    // 4. Generate Refresh Token (Longer expiration, separate secret)
+    const refreshSecret = process.env.REFRESH_TOKEN_SECRET || 'your-refresh-secret-key-here';
+    const refreshToken = jwt.sign(payload, refreshSecret, {
+      expiresIn: '7d', // 7 days refresh validity
+    });
+
+    return { accessToken, refreshToken, expiresIn };
+  }
+
+  /**
+   * Refresh an expired access token using a valid refresh token.
+   * Stateless implementation: Verifies signatures and returns new pair.
+   *
+   * @param refreshToken - The refresh token provided by the client
+   * @returns {Promise<{ accessToken: string, refreshToken: string, expiresIn: number }>}
+   */
+  async refresh(
+    refreshToken: string
+  ): Promise<{ accessToken: string; refreshToken: string; expiresIn: number }> {
+    const refreshSecret = process.env.REFRESH_TOKEN_SECRET || 'your-refresh-secret-key-here';
+    const jwtSecret = process.env.JWT_SECRET || 'your-secret-key-here';
+
+    try {
+      // 1. Verify refresh token
+      const decoded = jwt.verify(refreshToken, refreshSecret) as any;
+
+      // 2. Prepare new payload (removing iat/exp from decoded)
+      const { iat, exp, ...payload } = decoded;
+
+      // 3. Generate new pair
+      const expiresIn = 3600;
+      const newAccessToken = jwt.sign(payload, jwtSecret, { expiresIn });
+      const newRefreshToken = jwt.sign(payload, refreshSecret, { expiresIn: '7d' });
+
+      return {
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+        expiresIn,
+      };
+    } catch (error) {
+      throw AppError.unauthorized('Invalid or expired refresh token');
+    }
   }
 }
 

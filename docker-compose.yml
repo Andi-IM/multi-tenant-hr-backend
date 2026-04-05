@@ -4,8 +4,11 @@ services:
     container_name: mongodb
     ports:
       - '27017:27017'
+    environment:
+      - TZ=Asia/Jakarta
     volumes:
       - mongodb_data:/data/db
+      - /etc/localtime:/etc/localtime:ro
     healthcheck:
       test: ['CMD', 'mongosh', '--eval', "db.adminCommand('ping')"]
       interval: 10s
@@ -26,6 +29,11 @@ services:
       - PORT=3001
       - MONGODB_URI=mongodb://mongodb:27017/company_a_db
       - COMPANY_ID=A
+      - TZ=Asia/Jakarta
+      - JWT_SECRET=${JWT_SECRET:-your-secret-key-here}
+      - REFRESH_TOKEN_SECRET=${REFRESH_TOKEN_SECRET:-your-refresh-secret-key-here}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
     depends_on:
       mongodb:
         condition: service_healthy
@@ -49,6 +57,11 @@ services:
       - PORT=3002
       - MONGODB_URI=mongodb://mongodb:27017/company_b_db
       - COMPANY_ID=B
+      - TZ=Asia/Jakarta
+      - JWT_SECRET=${JWT_SECRET:-your-secret-key-here}
+      - REFRESH_TOKEN_SECRET=${REFRESH_TOKEN_SECRET:-your-refresh-secret-key-here}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
     depends_on:
       mongodb:
         condition: service_healthy
@@ -72,6 +85,9 @@ services:
       - PORT=3003
       - MONGODB_URI=mongodb://mongodb:27017/attendance_db
       - COMPANY_SERVICE_URL=http://company-a:3001
+      - TZ=Asia/Jakarta
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
     depends_on:
       mongodb:
         condition: service_healthy
@@ -98,6 +114,10 @@ services:
         condition: service_started
       attendance:
         condition: service_started
+    environment:
+      - TZ=Asia/Jakarta
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
 
 volumes:
   mongodb_data:

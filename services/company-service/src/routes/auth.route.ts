@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { authController } from '../controllers/auth.controller.js';
 import { validate } from '../middleware/validate.middleware.js';
 import { loginSchema } from '../validators/auth.validator.js';
+import { loginRateLimit } from '../middleware/rate-limit.middleware.js';
+import { AppError } from '../errors/app-error.js';
 
 const router = Router();
 
@@ -10,7 +12,7 @@ const router = Router();
  * /api/v1/auth/login:
  *   post:
  *     summary: Login and get JWT token
- *     description: Public endpoint to authenticate employees.
+ *     description: Public endpoint to authenticate employees. Includes rate limiting (5 attempts per 15 minutes).
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -38,11 +40,11 @@ const router = Router();
  *             schema:
  *               type: object
  *               properties:
- *                 status: { type: string, example: success }
  *                 data:
  *                   type: object
  *                   properties:
- *                     token: { type: string, example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." }
+ *                     accessToken: { type: string, example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." }
+ *                     refreshToken: { type: string, example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." }
  *                     expiresIn: { type: number, example: 3600 }
  *       400:
  *         description: Validation error
@@ -64,6 +66,50 @@ const router = Router();
  *               status: error
  *               message: "Invalid credentials"
  */
-router.post('/login', validate(loginSchema), authController.login);
+router.post(
+  '/login',
+  loginRateLimit,
+  validate(loginSchema),
+  (req, res, next) => authController.login(req as any, res, next)
+);
+
+/**
+ * @openapi
+ * /api/v1/auth/refresh:
+ *   post:
+ *     summary: Refresh access token
+ *     description: Exchange a valid refresh token for a new set of access and refresh tokens.
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refreshToken
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *                 example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *     responses:
+ *       200:
+ *         description: Token refreshed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status: { type: string, example: success }
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     accessToken: { type: string, example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." }
+ *                     refreshToken: { type: string, example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." }
+ *                     expiresIn: { type: number, example: 3600 }
+ *       401:
+ *         description: Invalid or expired refresh token
+ */
+router.post('/refresh', (req, res, next) => authController.refresh(req, res, next));
 
 export default router;

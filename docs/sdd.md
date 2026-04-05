@@ -405,7 +405,8 @@ Seluruh endpoint publik berjalan di bawah prefix `/api/v1/`. Format payload: `ap
 | GET | `/api/v1/employees/:id` | ADMIN_HR, EMPLOYEE (self) | Detail satu karyawan |
 | PUT | `/api/v1/employees/:id` | ADMIN_HR | Perbarui data karyawan |
 | DELETE | `/api/v1/employees/:id` | ADMIN_HR | Hapus / nonaktifkan karyawan |
-| POST | `/api/v1/auth/login` | Public | Login, mendapat JWT |
+| POST | `/api/v1/auth/login` | Public | Login, mendapat access & refresh token |
+| POST | `/api/v1/auth/refresh` | Public | Refresh access token menggunakan refresh token |
 
 > Seluruh response **DILARANG** menyertakan `passwordHash` atau field internal sistem. Controller wajib melakukan sanitasi output sebelum merespons klien (REQ-QOS-01).
 
@@ -771,13 +772,19 @@ FUNCTION generateAttendanceReport(employeeId, dateFrom, dateTo):
 **Autentikasi — JWT Middleware (dapat digunakan ulang di seluruh Routes):**
 
 ```
-MIDDLEWARE authenticateJWT(req, res, next):
-  1. Ekstrak token dari header: Authorization: Bearer <token>
-  2. Verifikasi signature menggunakan JWT_SECRET (env variable)
-  3. Dekode payload: { userId, role, companyId, iat, exp }
-  4. Lampirkan ke req.user = { userId, role, companyId }
-  5. Panggil next()
   6. Jika gagal: respons 401 Unauthorized
+
+**Autentikasi — Refresh Token:**
+
+Sistem menggunakan strategi dual-token untuk menyeimbangkan keamanan dan UX:
+1. **Access Token**: Berumur pendek (1 jam), digunakan untuk setiap request API.
+2. **Refresh Token**: Berumur panjang (7 hari), hanya digunakan untuk mendapatkan access token baru. Implementasi saat ini bersifat stateless menggunakan JWT dengan secret terpisah.
+
+**Rate Limiting — Brute Force Protection:**
+
+Sistem menerapkan pembatasan jumlah permintaan untuk mencegah serangan brute force dan abuse:
+1. **Gateway Level (Nginx)**: 10 req/s dengan burst 20 untuk seluruh trafik API.
+2. **Service Level (Login)**: Khusus endpoint `/login` dibatasi 5 percobaan per 15 menit per IP menggunakan `express-rate-limit`.
 ```
 
 **Otorisasi — RBAC Middleware (dikonfigurasi per route):**
@@ -912,8 +919,23 @@ Lihat Appendix 5.2 untuk daftar lengkap variabel lingkungan per layanan.
   - *Option A:* Server-side timestamp — timestamp dihasilkan oleh server Attendance Service.
   - *Option B:* Client-side timestamp — timestamp dikirim oleh klien dalam request body.
 - **Outcome:** Dipilih **Option A: Server-side timestamp**. Timestamp dari klien dapat dimanipulasi dengan mudah, membuka celah kecurangan absensi. Server selalu menjadi sumber kebenaran waktu.
-- **Trade-off yang Diakui:** Jika terjadi clock skew pada server, kalkulasi bisa tidak akurat. Mitigasi: gunakan NTP untuk sinkronisasi jam server.
+- **Implementation Note (2026-04-05):** Untuk menjamin keakuratan antar-layanan, sistem menggunakan sinkronisasi jam berbasis **NTP** di level host, yang diteruskan ke seluruh kontainer melalui mounting `/etc/localtime` dan pengaturan variabel lingkungan `TZ=Asia/Jakarta`. (REQ-PORT-01)
+- **Trade-off yang Diakui:** Jika terjadi clock skew pada server, kalkulasi bisa tidak akurat. Mitigasi: sinkronisasi jam di level infrastruktur.
 - **More Information:** REQ-PORT-01, ALG-001.
+
+---
+
+### 4.7 DEC-007 — Stateless Refresh Token Strategy
+
+- **ID:** DEC-007
+- **Title:** Strategi Refresh Token Stateless via JWT
+- **Context:** Sistem membutuhkan mekanisme untuk memperpanjang sesi tanpa memaksa user login ulang sering-sering. (SEC-001)
+- **Options:**
+  - *Option A:* Database-backed Refresh Token — token disimpan di DB, bisa di-revoke secara granular.
+  - *Option B:* Stateless JWT Refresh Token — token tidak disimpan di DB, validasi hanya via signature.
+- **Outcome:** Dipilih **Option B: Stateless JWT Refresh Token**. Alasan: menjaga kesederhanaan infrastruktur sesuai preferensi pengembang (tidak butuh Redis/tabel tambahan) dan tetap aman karena menggunakan secret key yang berbeda dari Access Token.
+- **Trade-off yang Diakui:** Token tidak bisa di-revoke secara individu sebelum masa berlakunya habis (kecuali dengan mengganti Global Secret). Namun untuk skala awal, ini dianggap cukup.
+- **More Information:** SEC-001.
 
 ---
 
@@ -986,7 +1008,9 @@ Sistem DILARANG berjalan jika salah satu variabel wajib di atas tidak terdefinis
 | Karyawan check-in dua kali dalam satu hari | Ditolak dengan `409 Conflict`. |
 | Perubahan jadwal kerja karyawan | Hanya berlaku untuk transaksi masa mendatang. Data historis menggunakan `workScheduleSnapshot` yang sudah disimpan dan bersifat immutable. |
 | Pengajuan cuti dengan rentang tanggal overlapping | Sistem memeriksa konflik dengan pengajuan yang sudah `approved` untuk karyawan yang sama. |
-| Token JWT kedaluwarsa | Middleware merespons `401 Unauthorized` dengan pesan `"Token expired"`. |
+| Token Access JWT kedaluwarsa | Middleware merespons `401 Unauthorized` dengan pesan `"Token expired"`. User diarahkan memanggil `/refresh`. |
+| Serangan Brute Force Login | Dibatasi oleh Rate Limiter (429 Too Many Requests) setelah 5 percobaan dalam 15 menit. |
+| Jam antar kontainer tidak sinkron | Dimigitasi dengan sinkronisasi jam host via `/etc/localtime` mnt. |
 
 ### 5.4 Load Testing Plan
 
