@@ -14,6 +14,9 @@ services:
       start_period: 30s
 
   company-a:
+    build:
+      context: .
+      dockerfile: services/company-service/Dockerfile
     image: hr-company-api:latest
     container_name: company-a
     expose:
@@ -34,6 +37,9 @@ services:
       start_period: 10s
 
   company-b:
+    build:
+      context: .
+      dockerfile: services/company-service/Dockerfile
     image: hr-company-api:latest
     container_name: company-b
     expose:
@@ -80,8 +86,8 @@ services:
 
   nginx:
     build:
-      context: .
-      dockerfile: nginx/Dockerfile
+      context: ./nginx
+      dockerfile: Dockerfile
     container_name: api-gateway
     ports:
       - "80:80"

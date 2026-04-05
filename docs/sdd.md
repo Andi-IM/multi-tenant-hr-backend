@@ -7,8 +7,7 @@
 ## Sistem Multi-Service Backend Kehadiran & Manajemen Tenaga Kerja
 
 Version 1.0
-Prepared by [Author]
-[Organization]
+Prepared by Andi Irham
 2025
 
 ---
