@@ -8,11 +8,15 @@ import { getAttendanceModel, type IAttendance } from '../models/attendance.model
 const employeeStatusResponseSchema = z.object({
   status: z.string(),
   data: z.object({
+    employeeId: z.string(),
+    companyId: z.string(),
+    role: z.string(),
     employmentStatus: z.string(),
     workSchedule: z.object({
       startTime: z.string(),
       endTime: z.string(),
-      workingDays: z.array(z.string()),
+      toleranceMinutes: z.number(),
+      workDays: z.array(z.number()),
     }),
     timezone: z.string(),
   }),
@@ -102,15 +106,26 @@ export class AttendanceService {
     }
 
     // 5. Calculate status (On-Time vs Late)
-    const status = this.calculateStatus(now, workSchedule.startTime, timezone);
+    const status = this.calculateStatus(
+      now,
+      workSchedule.startTime,
+      workSchedule.toleranceMinutes ?? 15
+    );
 
-    // 6. Save new check-in
+    // 6. Save new check-in with immutable snapshot
     const newAttendance = new Attendance({
       employeeId,
       companyId,
       date: todayDate,
-      checkIn: now.toJSDate(),
+      checkInTime: now.toJSDate(),
       status,
+      timezone: timezone,
+      workScheduleSnapshot: {
+        startTime: workSchedule.startTime,
+        endTime: workSchedule.endTime,
+        toleranceMinutes: workSchedule.toleranceMinutes,
+        workDays: workSchedule.workDays,
+      },
     });
 
     await newAttendance.save();
@@ -149,25 +164,25 @@ export class AttendanceService {
     }
 
     // 6. Handle Idempotency (if already checked out, just return success)
-    if (attendance.checkOut) {
+    if (attendance.checkOutTime) {
       return { alreadyRecorded: true, attendance };
     }
 
     // 7. Update check-out time
-    attendance.checkOut = now.toJSDate();
+    attendance.checkOutTime = now.toJSDate();
     await attendance.save();
 
     return { alreadyRecorded: false, attendance };
   }
 
   /**
-   * Calculate if the check-in is on-time or late with 15-minute grace period
+   * Calculate if the check-in is on-time or late with configurable grace period
    */
   private calculateStatus(
     checkInTime: DateTime,
     startTimeStr: string,
-    _timezone: string
-  ): 'On-Time' | 'Late' {
+    toleranceMinutes: number
+  ): 'on-time' | 'late' {
     if (!startTimeStr || !startTimeStr.includes(':')) {
       throw new Error(`Invalid start time format: ${startTimeStr}`);
     }
@@ -189,10 +204,9 @@ export class AttendanceService {
       throw new Error(`Failed to create a valid scheduled start time from: ${startTimeStr}`);
     }
 
-    // 15 minutes grace period
-    const gracePeriodEnd = scheduledStartTime.plus({ minutes: 15 });
+    const gracePeriodEnd = scheduledStartTime.plus({ minutes: toleranceMinutes });
 
-    return checkInTime <= gracePeriodEnd ? 'On-Time' : 'Late';
+    return checkInTime <= gracePeriodEnd ? 'on-time' : 'late';
   }
 }
 
