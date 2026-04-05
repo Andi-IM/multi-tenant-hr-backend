@@ -21,9 +21,14 @@ vi.mock('../src/models/attendance.model.js', () => ({
   getAttendanceModel: vi.fn(),
 }));
 
+vi.mock('../src/models/leave-permission.model.js', () => ({
+  getLeavePermissionRequestModel: vi.fn(),
+}));
+
 import axios from 'axios';
 import { getDatabaseConnection } from '../src/config/database.js';
 import { getAttendanceModel } from '../src/models/attendance.model.js';
+import { getLeavePermissionRequestModel } from '../src/models/leave-permission.model.js';
 
 describe('AttendanceService', () => {
   const service = new AttendanceService();
@@ -260,6 +265,254 @@ describe('AttendanceService', () => {
       await expect(service.checkIn('EMP-001', 'company-A', 'token-123')).rejects.toThrow(
         'Failed to verify employee status'
       );
+    });
+  });
+
+  // ──────────────────────────────────────────────
+  // checkOut tests
+  // ──────────────────────────────────────────────
+
+  describe('checkOut', () => {
+    const mockFindOne = vi.fn();
+    const mockSave = vi.fn();
+
+    function MockAttendanceModel(this: Record<string, unknown>, data: Record<string, unknown>) {
+      Object.assign(this, data);
+      this.save = mockSave;
+    }
+    MockAttendanceModel.findOne = mockFindOne;
+
+    beforeEach(() => {
+      vi.mocked(axios.get).mockResolvedValue({ data: mockEmployeeData });
+      vi.mocked(getAttendanceModel).mockReturnValue(MockAttendanceModel as any);
+      mockFindOne.mockReset();
+      mockSave.mockReset();
+    });
+
+    it('should successfully check out if check-in exists', async () => {
+      const existingRecord = {
+        employeeId: 'EMP-001',
+        date: new Date(),
+        checkInTime: new Date(),
+        checkOutTime: undefined,
+        save: mockSave,
+      };
+      mockFindOne.mockResolvedValue(existingRecord);
+      mockSave.mockResolvedValue(undefined);
+
+      const result = await service.checkOut('EMP-001', 'company-A', 'token-123');
+
+      expect(result.alreadyRecorded).toBe(false);
+      expect(existingRecord.checkOutTime).toBeDefined();
+      expect(mockSave).toHaveBeenCalledOnce();
+    });
+
+    it('should return alreadyRecorded: true if already checked out', async () => {
+      const existingRecord = {
+        employeeId: 'EMP-001',
+        date: new Date(),
+        checkInTime: new Date(),
+        checkOutTime: new Date(),
+      };
+      mockFindOne.mockResolvedValue(existingRecord);
+
+      const result = await service.checkOut('EMP-001', 'company-A', 'token-123');
+
+      expect(result.alreadyRecorded).toBe(true);
+      expect(mockSave).not.toHaveBeenCalled();
+    });
+
+    it('should throw error if no check-in record found', async () => {
+      mockFindOne.mockResolvedValue(null);
+
+      await expect(service.checkOut('EMP-001', 'company-A', 'token-123')).rejects.toThrow(
+        'Check-in record not found for today'
+      );
+    });
+  });
+
+  // ──────────────────────────────────────────────
+  // fetchActiveEmployees tests
+  // ──────────────────────────────────────────────
+
+  describe('fetchActiveEmployees', () => {
+    it('should successfully fetch active employees', async () => {
+      const mockListResponse = {
+        status: 'success',
+        data: [
+          {
+            employeeId: 'emp1',
+            fullName: 'John Doe',
+            workSchedule: mockEmployeeData.data.workSchedule,
+            timezone: mockEmployeeData.data.timezone,
+          },
+        ],
+      };
+      vi.mocked(axios.get).mockResolvedValue({ data: mockListResponse });
+
+      const result = await service.fetchActiveEmployees('company-A', 'token-123');
+
+      expect(result).toHaveLength(1);
+      expect(result[0].employeeId).toBe('emp1');
+    });
+
+    it('should throw error on invalid response format', async () => {
+      vi.mocked(axios.get).mockResolvedValue({ data: { status: 'error' } });
+
+      await expect(service.fetchActiveEmployees('company-A', 'token-123')).rejects.toThrow(
+        'Failed to fetch employees'
+      );
+    });
+  });
+
+  // ──────────────────────────────────────────────
+  // getAttendances tests
+  // ──────────────────────────────────────────────
+
+  describe('getAttendances', () => {
+    it('should fetch attendance records with filters and pagination', async () => {
+      const mockFind = {
+        sort: vi.fn().mockReturnThis(),
+        skip: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        lean: vi.fn().mockResolvedValue([{ employeeId: 'emp1' }]),
+      };
+      const mockCount = vi.fn().mockResolvedValue(1);
+
+      vi.mocked(getAttendanceModel).mockReturnValue({
+        find: vi.fn().mockReturnValue(mockFind),
+        countDocuments: mockCount,
+      } as any);
+
+      const result = await service.getAttendances({
+        companyId: 'company-A',
+        page: 1,
+        limit: 10,
+        startDate: '2026-04-01',
+        endDate: '2026-04-30',
+      });
+
+      expect(result.attendances).toHaveLength(1);
+      expect(result.total).toBe(1);
+      expect(result.page).toBe(1);
+    });
+  });
+
+  // ──────────────────────────────────────────────
+  // getAttendanceReport tests
+  // ──────────────────────────────────────────────
+
+  describe('getAttendanceReport', () => {
+    beforeEach(() => {
+      vi.mocked(axios.get).mockResolvedValue({ data: mockEmployeeData });
+      vi.mocked(getAttendanceModel).mockReturnValue({
+        find: vi.fn().mockReturnValue({
+          lean: vi.fn().mockResolvedValue([]),
+        }),
+      } as any);
+      vi.mocked(getLeavePermissionRequestModel).mockReturnValue({
+        find: vi.fn().mockReturnValue({
+          lean: vi.fn().mockResolvedValue([]),
+        }),
+      } as any);
+    });
+
+    it('should generate report for a single employee', async () => {
+      const result = (await service.getAttendanceReport({
+        companyId: 'company-A',
+        employeeId: 'emp_123',
+        startDate: '2026-04-01',
+        endDate: '2026-04-05',
+        token: 'token-123',
+      })) as any;
+
+      expect(result.employeeId).toBe('emp_123');
+      expect(result.report).toBeDefined();
+      expect(result.report.totalAbsent).toBe(3); // April 1-5, 2026: Wed, Thu, Fri (Working), Sat, Sun (Non-working)
+      // Wait, 2026-04-01 is Wednesday. 04-02 Thu, 04-03 Fri. So 3 working days.
+    });
+
+    it('should generate report for all employees', async () => {
+      vi.mocked(axios.get).mockResolvedValueOnce({
+        data: {
+          status: 'success',
+          data: [
+            {
+              employeeId: 'emp1',
+              fullName: 'Emp 1',
+              workSchedule: mockEmployeeData.data.workSchedule,
+              timezone: 'Asia/Jakarta',
+            },
+            {
+              employeeId: 'emp2',
+              fullName: 'Emp 2',
+              workSchedule: mockEmployeeData.data.workSchedule,
+              timezone: 'Asia/Jakarta',
+            },
+          ],
+        },
+      });
+
+      const result = await (service as any).getAttendanceReport({
+        companyId: 'company-A',
+        startDate: '2026-04-01',
+        endDate: '2026-04-05',
+        token: 'token-123',
+      });
+
+      expect(result).toHaveLength(2);
+    });
+
+    it('should handle groupBy: day', async () => {
+      const result = (await service.getAttendanceReport({
+        companyId: 'company-A',
+        employeeId: 'emp_123',
+        startDate: '2026-04-01',
+        endDate: '2026-04-02',
+        groupBy: 'day',
+        token: 'token-123',
+      })) as any;
+
+      expect(result.report).toHaveLength(2);
+      expect(result.report[0].period).toBe('2026-04-01');
+    });
+
+    it('should handle groupBy: week', async () => {
+      const result = (await service.getAttendanceReport({
+        companyId: 'company-A',
+        employeeId: 'emp_123',
+        startDate: '2026-04-01',
+        endDate: '2026-04-10',
+        groupBy: 'week',
+        token: 'token-123',
+      })) as any;
+
+      expect(result.report).toHaveLength(2); // Spans 2 weeks
+    });
+
+    it('should handle groupBy: month', async () => {
+      const result = (await service.getAttendanceReport({
+        companyId: 'company-A',
+        employeeId: 'emp_123',
+        startDate: '2026-03-31',
+        endDate: '2026-04-01',
+        groupBy: 'month',
+        token: 'token-123',
+      })) as any;
+
+      expect(result.report).toHaveLength(2); // March and April
+    });
+
+    it('should throw error on invalid dates', async () => {
+      await expect(
+        service.getAttendanceReport({
+          companyId: 'company-A',
+          employeeId: 'emp_123',
+          startDate: 'invalid',
+          endDate: 'invalid',
+          token: 'token-123',
+        })
+      ).rejects.toThrow('Invalid start_date or end_date');
     });
   });
 });
