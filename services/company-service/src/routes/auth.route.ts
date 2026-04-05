@@ -42,11 +42,27 @@ const router = Router();
  *                 data:
  *                   type: object
  *                   properties:
- *                     token: { type: string }
+ *                     token: { type: string, example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." }
+ *                     expiresIn: { type: number, example: 3600 }
  *       400:
  *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               status: error
+ *               message: "Validation Error"
+ *               errors: [{ field: "email", message: "Invalid email format" }]
  *       401:
  *         description: Unauthorized - invalid credentials
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               status: error
+ *               message: "Invalid credentials"
  */
 router.post('/login', validate(loginSchema), authController.login);
 
