@@ -226,7 +226,11 @@ export class AttendanceService {
   }> {
     const { companyId, employeeId, startDate, endDate, page, limit } = params;
     const Attendance = getAttendanceModel();
-    const query: Record<string, any> = { companyId };
+    const query: {
+      companyId: string;
+      employeeId?: string;
+      date?: Record<string, Date>;
+    } = { companyId };
 
     if (employeeId) {
       query.employeeId = employeeId;

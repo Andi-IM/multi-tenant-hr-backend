@@ -1,6 +1,6 @@
 import { Router, type Router as RouterType } from 'express';
 import { attendanceController } from '../controllers/attendance.controller.js';
-import { authenticateToken, authorizeAdmin } from '../middleware/auth.middleware.js';
+import { authenticateToken } from '../middleware/auth.middleware.js';
 
 const router: RouterType = Router();
 

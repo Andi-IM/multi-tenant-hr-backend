@@ -1,9 +1,8 @@
-import { Router } from 'express';
+import { Router, type Request, type Response, type NextFunction } from 'express';
 import { authController } from '../controllers/auth.controller.js';
 import { validate } from '../middleware/validate.middleware.js';
 import { loginSchema } from '../validators/auth.validator.js';
 import { loginRateLimit } from '../middleware/rate-limit.middleware.js';
-import { AppError } from '../errors/app-error.js';
 
 const router = Router();
 
@@ -70,7 +69,7 @@ router.post(
   '/login',
   loginRateLimit,
   validate(loginSchema),
-  (req, res, next) => authController.login(req as any, res, next)
+  (req: Request, res: Response, next: NextFunction) => authController.login(req, res, next)
 );
 
 /**
@@ -110,6 +109,8 @@ router.post(
  *       401:
  *         description: Invalid or expired refresh token
  */
-router.post('/refresh', (req, res, next) => authController.refresh(req, res, next));
+router.post('/refresh', (req: Request, res: Response, next: NextFunction) =>
+  authController.refresh(req, res, next)
+);
 
 export default router;

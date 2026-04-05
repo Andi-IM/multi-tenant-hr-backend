@@ -72,10 +72,24 @@ export class AuthService {
 
     try {
       // 1. Verify refresh token
-      const decoded = jwt.verify(refreshToken, refreshSecret) as any;
+      const decoded = jwt.verify(refreshToken, refreshSecret) as {
+        iat?: number;
+        exp?: number;
+        userId: string;
+        employeeId: string;
+        email: string;
+        role: string;
+        companyId: string;
+      };
 
       // 2. Prepare new payload (removing iat/exp from decoded)
-      const { iat, exp, ...payload } = decoded;
+      const payload = {
+        userId: decoded.userId,
+        employeeId: decoded.employeeId,
+        email: decoded.email,
+        role: decoded.role,
+        companyId: decoded.companyId,
+      };
 
       // 3. Generate new pair
       const expiresIn = 3600;
@@ -87,7 +101,7 @@ export class AuthService {
         refreshToken: newRefreshToken,
         expiresIn,
       };
-    } catch (error) {
+    } catch {
       throw AppError.unauthorized('Invalid or expired refresh token');
     }
   }
