@@ -63,12 +63,14 @@ Tugas di bawah ini dirancang dengan prinsip **Layered Architecture** dan praktik
 
 - **Deskripsi:** Buat endpoint untuk _check-in_ dan _check-out_ dengan logika pencegahan _double-submit_ (_idempotency_). Kalkulasi status kehadiran (misal: "Tepat Waktu", "Terlambat") berdasarkan aturan bisnis di Task 1.
 - **Acceptance Criteria (AC):**
-  - API mengembalikan kode HTTP `2xx` jika sukses dan merekam _timestamp_.
+  - API mengembalikan kode HTTP `2xx` jika sukses dan merekam `serverTimestamp` (konversi ke timezone karyawan untuk penentuan tanggal).
+  - Status (`on-time`/`late`) dihitung berdasarkan `startTime` dan `toleranceMinutes` dari data master karyawan (ALG-001).
+  - Snapshot `timezone` dan `workSchedule` disimpan dalam dokumen `attendance`.
   - Jika pengguna melakukan _check-in_ dua kali di hari yang sama, API akan menolak dan mengembalikan status penanganan error (_duplicate check/idempotency_).
 
 **Task 8: Implementasi Modul Cuti & Izin (Leave & Permission)**
 
-- **Deskripsi:** Buat endpoint untuk mengajukan cuti dan izin beserta status persetujuannya (Pending, Approved, Rejected). Implementasikan validasi _overlapping_ (tanggal yang tumpang tindih), duplikasi, dan validasi _role_ (hanya admin/approver yang bisa mengubah status).
+- **Deskripsi:** Buat endpoint untuk mengajukan cuti dan izin beserta status persetujuannya (`pending`, `approved`, `rejected`). Implementasikan validasi _overlapping_ (tanggal yang tumpang tindih), duplikasi, dan validasi _role_ (hanya admin/approver yang bisa mengubah status).
 - **Acceptance Criteria (AC):**
   - Karyawan dapat mengajukan _leave_/_permission_.
   - Pengajuan yang memiliki tanggal tumpang tindih dengan pengajuan yang sudah ada ditolak.
@@ -80,9 +82,10 @@ Tugas di bawah ini dirancang dengan prinsip **Layered Architecture** dan praktik
 
 **Task 9: Pembuatan API Pelaporan Rentang Tanggal (Date-Range Reporting)**
 
-- **Deskripsi:** Buat API di _Attendance Service_ untuk menghasilkan rekap (total absen, terlambat, izin, cuti, dll.) per karyawan dalam rentang tanggal tertentu. Gunakan query agregasi MongoDB yang optimal dan manfaatkan _index_ yang dirancang di Task 2.
+- **Deskripsi:** Buat API di _Attendance Service_ untuk menghasilkan rekap (total `absent`, `late`, `on-time`, serta statistik cuti/izin) per karyawan dalam rentang tanggal tertentu. Gunakan **MongoDB Aggregation Pipeline** (ALG-002) yang optimal dan manfaatkan _index_ ESR yang dirancang di Task 2.
 - **Acceptance Criteria (AC):**
-  - API mengembalikan data agregasi yang akurat.
+  - API mengembalikan data agregasi yang akurat mencakup status kehadiran dan pengajuan.
+  - Latensi query < 3 detik untuk rentang 1 bulan (REQ-POC-02).
   - Query database hanya memindai dokumen dalam rentang tanggal yang diminta (terverifikasi via observasi log atau `explain()` di MongoDB).
 
 **Task 10: Mandatory Load Testing (Pengujian Beban)**

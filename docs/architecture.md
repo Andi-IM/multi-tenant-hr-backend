@@ -1,6 +1,12 @@
 # Architecture & Design Documentation
 
+> **📋 Dokumen ini adalah turunan/implementasi dari SDD.md.**
+> Semua keputusan arsitektur dan teknis harus dapat ditelusuri ke elemen desain di SDD.
+> Jika ada ketidaksesuaian, **SDD.md yang menjadi acuan utama**.
+
 ## 1. System Architecture
+
+> **SDD Ref:** [CMP-002](./sdd.md#cmp-002-composition-view---layered-architecture-per-service), [DEC-004](./sdd.md#dec-004---layered-architecture)
 
 This project follows a **Microservices Architecture** managed as a **Monorepo** using `pnpm` and `Turborepo`.
 
@@ -15,25 +21,31 @@ Each microservice (e.g., `company-service`) implements a strict **Layered Archit
 
 ## 2. Multi-tenant Data Isolation Strategy
 
+> **SDD Ref:** [CMP-001](./sdd.md#cmp-001-composition-view--service-decomposition), [DEC-003](./sdd.md#dec-003---isolated-mongodb-database-per-service), [INF-001](./sdd.md#inf-001-information-view--data-schema--persistence)
+
 ### Dynamic Database Switching (Logical Isolation)
 
 Instead of a shared database with a `companyId` filter (which pose risks of data leakage), we implement **Logical Database Separation**.
 
 - **Mongoose `useDb()`**: The repository dynamically switches context using the `companyId` provided in the request context.
-- **Context Normalization**: Database names are generated as `tenant_<companyId>` (e.g., `tenant_CompanyA`).
+- **Context Normalization**: Database names are explicitly mapped as `company_a_db`, `company_b_db`, and `attendance_db` (INF-001).
 - **Security Boundaries**: Access is validated in two steps:
   1.  **Token Validation**: The JWT must contain a valid `companyId`.
   2.  **Service Authorization**: The service checks if it is authorized to handle that specifically requested `companyId` (REQ-DATA-001).
 
 ## 3. Authentication & Authorization
 
+> **SDD Ref:** [SEC-001](./sdd.md#sec-001-interface-view---authentication--authorization-design), [REQ-QOS-01](./sdd.md#req-qos-01-security-and-data-protection), [REQ-QOS-02](./sdd.md#req-qos-02-inter-service-trust-boundaries)
+
 ### Stateless Identity Management
 
 - **Authentication**: Uses JSON Web Token (JWT). The system is designed to be stateless, with user context injected from the token.
-- **RBAC (Role-Based Access Control)**: Separates roles (e.g., `Employee`, `Admin_HR`).
-- **Data Ownership Model**: Combines RBAC with ownership validation. For instance, an Admin from Company B is strictly forbidden from creating data for Company A (HTTP 403).
+- **RBAC (Role-Based Access Control)**: Separates roles (e.g., `EMPLOYEE`, `ADMIN_HR`).
+- **Data Ownership Model**: Combines RBAC with ownership validation. For instance, an Admin from Company B is strictly forbidden from accessing data for Company A (HTTP 403 / IDOR protection).
 
 ## 4. Indexing Strategy (ESR Guidelines)
+
+> **SDD Ref:** [Appendix 5.1](./sdd.md#51-mongodb-index-strategy)
 
 We utilize the **ESR (Equality, Sort, Range)** guidelines for MongoDB to ensure query performance:
 
@@ -44,11 +56,15 @@ We utilize the **ESR (Equality, Sort, Range)** guidelines for MongoDB to ensure 
 
 ## 5. Edge Case Handling
 
+> **SDD Ref:** [Appendix 5.3](./sdd.md#53-edge-case-handling)
+
 1.  **Idempotency**: CRUD operations and check-in/out events utilize database-level unique constraints (Mongoose E11000) to prevent duplicate data caused by network retries.
-2.  **Timezone Strategy**: All timestamps should be stored in **UTC** in the database. Conversion to the employee's inherited timezone occurs during report aggregation or display.
+2.  **Timezone Strategy**: All timestamps are stored in **UTC** in the database. During check-in, the system snapshots the employee's current `timezone` and `workSchedule` into the attendance document to ensure historical immutability (LOG-001, REQ-CM-02).
 3.  **Overlapping Leave**: Service-level validation ensures that new leave requests do not overlap with existing "Pending" or "Approved" records.
 
 ## 6. Technology Stack Rationale
+
+> **SDD Ref:** [DEC-004](./sdd.md#dec-004---layered-architecture), [REQ-MAINT-02](./srs.md#req-maint-02-schema-validation-with-odm)
 
 ### Transition from Prisma to Mongoose
 
@@ -60,6 +76,8 @@ Initially, the project used Prisma. We transitioned to **Mongoose** to fulfill t
 
 ## 7. Architectural Trade-offs
 
+> **SDD Ref:** [DEC-001](./sdd.md#dec-001---synchronous-rest-for-inter-service-communication), [DEC-002](./sdd.md#dec-002---database-level-aggregation-for-reporting)
+
 ### Consistency vs Availability (CAP Theorem)
 
 - **Challenge**: Validating employee data across services (e.g., Attendance calling Company Service) creates a dependency.
@@ -67,6 +85,8 @@ Initially, the project used Prisma. We transitioned to **Mongoose** to fulfill t
 - **Mitigation**: Eventual consistency can be tolerated for non-critical lookups through caching (e.g., Redis) or an event-driven architecture to ensure High Availability during service interruptions.
 
 ## 8. Containerization & Deployment Strategy
+
+> **SDD Ref:** [DEP-001](./sdd.md#dep-001-deployment-view---topology), [DEC-005](./sdd.md#dec-005---api-gateway-as-single-public-entry-point), [REQ-DIST-01](./srs.md#req-dist-01)
 
 To simplify the architecture and minimize build overhead, we utilize a **Shared Container Image** strategy for identical business services.
 
@@ -97,14 +117,16 @@ In accordance with the flexibility expected in the SRS, it is possible that busi
 
 ## 9. Database Topology: Logical vs Physical Isolation
 
+> **SDD Ref:** [DEC-003](./sdd.md#dec-003---isolated-mongodb-database-per-service), [INF-001](./sdd.md#inf-001-information-view--data-schema--persistence)
+
 A common misconception of the "Database per Service" microservice principle is that each service requires its own dedicated database **server**. In practice, the principle refers to **logical isolation** (separate databases), not necessarily **physical isolation** (separate instances).
 
 ### Current Architecture: Single Instance, Multiple Databases
 
 We deploy a single MongoDB instance (Replica Set) that hosts multiple logically separated databases:
 
-- `company_a_db` — owned exclusively by the Company A container.
-- `company_b_db` — owned exclusively by the Company B container.
+- `company_a_db` — owned exclusively by the Company A deployment.
+- `company_b_db` — owned exclusively by the Company B deployment.
 - `attendance_db` — owned exclusively by the Attendance service.
 
 Each service connects only to its designated database via the `DATABASE_URL` environment variable. Cross-service data access is strictly prohibited at the database level and is enforced through inter-service REST API calls (REQ-FUNC-02).
@@ -127,6 +149,8 @@ Physical database separation (dedicated instances per service) becomes justified
 Until these conditions arise, the current topology follows the **YAGNI (You Aren't Gonna Need It)** principle — avoiding premature complexity while maintaining clean service boundaries.
 
 ## 10. Testing Strategy
+
+> **SDD Ref:** [REQ-COMP-03](./srs.md#req-comp-03-documentation-completeness), [REQ-DEAD-01](./srs.md#req-dead-01-delivery-deadline)
 
 To ensure high reliability and to maintain the independent testability of our microservices, we employ a sophisticated multi-tiered testing strategy:
 
