@@ -6,11 +6,13 @@ variable "project_id" {
 variable "region" {
   description = "The Google Cloud region"
   type        = string
+  default     = "us-central1"
 }
 
 variable "artifact_registry_repository_id" {
   description = "The ID of the Artifact Registry repository"
   type        = string
+  default     = "mthrb-repo"
 }
 
 variable "cloud_run_min_instances" {

@@ -21,3 +21,15 @@ output "edge_gateway_url" {
 output "api_gateway_hostname" {
   value = google_api_gateway_gateway.gateway.default_hostname
 }
+
+output "project_id" {
+  value = var.project_id
+}
+
+output "region" {
+  value = var.region
+}
+
+output "artifact_registry_repository_id" {
+  value = var.artifact_registry_repository_id
+}
