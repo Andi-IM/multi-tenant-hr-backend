@@ -1,6 +1,11 @@
 #!/bin/bash
 
+# Get the directory where the script is located
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+TERRAFORM_DIR="$SCRIPT_DIR/.."
+
 # Configuration
+cd "$TERRAFORM_DIR"
 PROJECT_ID=$(terraform output -raw project_id 2>/dev/null || grep 'project_id' terraform.tfvars | cut -d'"' -f2)
 REGION=$(terraform output -raw region 2>/dev/null || grep 'region' terraform.tfvars | cut -d'"' -f2)
 REPO_ID=$(terraform output -raw artifact_registry_repository_id 2>/dev/null || grep 'artifact_registry_repository_id' terraform.tfvars | cut -d'"' -f2)
@@ -48,6 +53,9 @@ REPO_URL="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_ID}"
 
 echo "🏗️ Building and Pushing Images to $REPO_URL..."
 
+# Navigate to project root for docker build
+cd "$SCRIPT_DIR/../../"
+
 # Authenticate Docker
 gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
 
@@ -67,6 +75,7 @@ docker build -t ${REPO_URL}/edge-gateway:latest ./nginx
 docker push ${REPO_URL}/edge-gateway:latest
 
 # 4. Stage 2: Provision the rest of the Infrastructure
+cd "$TERRAFORM_DIR"
 echo "🚀 Stage 2: Provisioning Cloud Run Services, MongoDB, and API Gateway..."
 terraform apply -auto-approve
 

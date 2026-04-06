@@ -101,11 +101,6 @@ resource "google_cloud_run_v2_service" "company_a" {
       }
 
       env {
-        name  = "PORT"
-        value = "8080"
-      }
-
-      env {
         name  = "TZ"
         value = var.timezone
       }
@@ -175,11 +170,6 @@ resource "google_cloud_run_v2_service" "company_b" {
       env {
         name  = "NODE_ENV"
         value = "production"
-      }
-
-      env {
-        name  = "PORT"
-        value = "8080"
       }
 
       env {
@@ -255,11 +245,6 @@ resource "google_cloud_run_v2_service" "attendance" {
       }
 
       env {
-        name  = "PORT"
-        value = "8080"
-      }
-
-      env {
         name  = "TZ"
         value = var.timezone
       }
@@ -316,11 +301,6 @@ resource "google_cloud_run_v2_service" "edge_gateway" {
 
       ports {
         container_port = 8080
-      }
-
-      env {
-        name  = "PORT"
-        value = "8080"
       }
 
       env {
