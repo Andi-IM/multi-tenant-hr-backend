@@ -7,6 +7,7 @@ locals {
     "servicemanagement.googleapis.com",
     "servicecontrol.googleapis.com",
     "iamcredentials.googleapis.com",
+    "cloudresourcemanager.googleapis.com",
   ])
 }
 
