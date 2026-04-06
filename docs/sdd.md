@@ -6,7 +6,7 @@
 
 ## Sistem Multi-Service Backend Kehadiran & Manajemen Tenaga Kerja
 
-Version 1.1
+Version 1.2
 Prepared by Andi Irham
 2026
 
@@ -38,6 +38,7 @@ Prepared by Andi Irham
 |------|------|--------------------|---------|
 | Andi-IM | 2026-04-05 | Initial draft derived from SRS | 1.0 |
 | Andi-IM | 2026-04-06 | Update: Document implementation deviations (ADI-001), role name SYSTEM_ACTOR, env var changes | 1.1 |
+| Andi-IM | 2026-04-06 | Decision: Tenant-aware Company Service URL selection in Attendance (Option A) | 1.2 |
 
 ---
 
@@ -914,7 +915,21 @@ Lihat Appendix 5.2 untuk daftar lengkap variabel lingkungan per layanan.
 
 ---
 
-### 4.6 DEC-006 — Server-Side Timestamp for Attendance
+### 4.6 DEC-008 — Tenant-Aware Company Service URL Selection (Attendance)
+
+- **ID:** DEC-008
+- **Title:** Pemilihan Endpoint Company Service Berdasarkan CompanyId di Attendance Service
+- **Context:** Attendance Service perlu memanggil Company A Service atau Company B Service untuk validasi identitas karyawan secara real-time. Saat dijalankan di Cloud Run, Company A dan Company B berada pada base URL yang berbeda. Diperlukan keputusan bagaimana Attendance menentukan target Company Service yang tepat. (REQ-DIST-02, REQ-INST-01)
+- **Options:**
+  - *Option A:* Tenant-aware routing di Attendance Service — Attendance memilih base URL berdasarkan `companyId` menggunakan variabel lingkungan `COMPANY_A_SERVICE_URL` dan `COMPANY_B_SERVICE_URL`.
+  - *Option B:* Single `COMPANY_SERVICE_URL` + routing infrastruktur — Attendance selalu memanggil satu URL dan infrastruktur melakukan routing berdasarkan header seperti `X-Company-ID`.
+- **Outcome:** Dipilih **Option A: Tenant-aware routing di Attendance Service**. Alasan: mengurangi kompleksitas infrastruktur, menghindari ketergantungan pada konfigurasi routing header yang tidak selalu tersedia di API Gateway, serta tetap mempertahankan komunikasi REST sinkronus yang eksplisit dan mudah diuji.
+- **Trade-off yang Diakui:** Konfigurasi environment menjadi lebih banyak dan risiko salah-konfigurasi meningkat (mis-route antar Company A/B). Mitigasi: penamaan variabel yang eksplisit (`COMPANY_A_SERVICE_URL`, `COMPANY_B_SERVICE_URL`) dan verifikasi deployment melalui smoke test.
+- **More Information:** DEC-001, REQ-DIST-02, CNF-001.
+
+---
+
+### 4.7 DEC-006 — Server-Side Timestamp for Attendance
 
 - **ID:** DEC-006
 - **Title:** Server-Side Timestamp untuk Kalkulasi Kehadiran
@@ -929,7 +944,7 @@ Lihat Appendix 5.2 untuk daftar lengkap variabel lingkungan per layanan.
 
 ---
 
-### 4.7 DEC-007 — Stateless Refresh Token Strategy
+### 4.8 DEC-007 — Stateless Refresh Token Strategy
 
 - **ID:** DEC-007
 - **Title:** Strategi Refresh Token Stateless via JWT
@@ -985,9 +1000,9 @@ Setiap layanan menyediakan `.env.example` dengan variabel-variabel berikut:
 |----------|-----------|-------|
 | `PORT` | Port HTTP layanan | Ya |
 | `MONGODB_URI` | Connection string MongoDB eksklusif layanan ini | Ya |
-| `JWT_SECRET` | Secret key untuk signing dan verifikasi JWT | Ya |
+| `JWT_SECRET` | Secret key untuk signing dan verifikasi JWT (Access Token) | Ya |
+| `REFRESH_TOKEN_SECRET` | Secret key untuk signing dan verifikasi Refresh Token | Ya |
 | `COMPANY_ID` | Identifier unik perusahaan (A atau B) | Ya |
-| `SYSTEM_JWT_SECRET` | Secret untuk memverifikasi token dari Attendance Service | Ya |
 
 **Attendance Service:**
 
@@ -996,7 +1011,9 @@ Setiap layanan menyediakan `.env.example` dengan variabel-variabel berikut:
 | `PORT` | Port HTTP layanan | Ya |
 | `MONGODB_URI` | Connection string Attendance DB | Ya |
 | `JWT_SECRET` | Secret key JWT untuk user karyawan/admin | Ya |
-| `COMPANY_SERVICE_URL` | Base URL internal untuk Company Service (A atau B). Routing dilakukan via header `X-Company-ID` | Ya |
+| `COMPANY_A_SERVICE_URL` | Base URL internal untuk Company A Service | Ya |
+| `COMPANY_B_SERVICE_URL` | Base URL internal untuk Company B Service | Ya |
+| `COMPANY_SERVICE_URL` | Fallback base URL untuk kompatibilitas (jika `COMPANY_A_SERVICE_URL` / `COMPANY_B_SERVICE_URL` tidak di-set) | Tidak |
 | `SYSTEM_JWT_SECRET` | Secret untuk signing token inter-service (role SYSTEM_ACTOR) | Ya |
 
 Sistem DILARANG berjalan jika salah satu variabel wajib di atas tidak terdefinisi. Validasi dilakukan saat startup.

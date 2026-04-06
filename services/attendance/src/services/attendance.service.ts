@@ -14,12 +14,22 @@ import {
 import { type IAttendance } from '../models/attendance.model.js';
 
 export class AttendanceService {
-  private companyServiceUrl: string;
+  private companyServiceUrlFallback: string;
+  private companyAServiceUrl: string;
+  private companyBServiceUrl: string;
   private jwtSecret: string;
 
   constructor() {
-    this.companyServiceUrl = process.env.COMPANY_SERVICE_URL || 'http://localhost:3001';
+    this.companyServiceUrlFallback = process.env.COMPANY_SERVICE_URL || 'http://localhost:3001';
+    this.companyAServiceUrl = process.env.COMPANY_A_SERVICE_URL || this.companyServiceUrlFallback;
+    this.companyBServiceUrl = process.env.COMPANY_B_SERVICE_URL || this.companyServiceUrlFallback;
     this.jwtSecret = process.env.JWT_SECRET || 'your-secret-key-here';
+  }
+
+  private getCompanyServiceUrl(companyId: string): string {
+    if (companyId === 'A') return this.companyAServiceUrl;
+    if (companyId === 'B') return this.companyBServiceUrl;
+    return this.companyServiceUrlFallback;
   }
 
   private getSystemActorToken(companyId: string): string {
@@ -46,8 +56,9 @@ export class AttendanceService {
   ): Promise<EmployeeStatusResponse['data']> {
     try {
       const systemToken = this.getSystemActorToken(companyId);
+      const companyServiceUrl = this.getCompanyServiceUrl(companyId);
       const response = await axios.get<unknown>(
-        `${this.companyServiceUrl}/api/v1/internal/employees/${employeeId}/status`,
+        `${companyServiceUrl}/api/v1/internal/employees/${employeeId}/status`,
         {
           headers: {
             Authorization: `Bearer ${systemToken}`,
@@ -232,15 +243,13 @@ export class AttendanceService {
   ): Promise<EmployeeListResponse['data']> {
     try {
       const systemToken = this.getSystemActorToken(companyId);
-      const response = await axios.get<unknown>(
-        `${this.companyServiceUrl}/api/v1/internal/employees`,
-        {
-          headers: {
-            Authorization: `Bearer ${systemToken}`,
-            'X-Company-ID': companyId,
-          },
-        }
-      );
+      const companyServiceUrl = this.getCompanyServiceUrl(companyId);
+      const response = await axios.get<unknown>(`${companyServiceUrl}/api/v1/internal/employees`, {
+        headers: {
+          Authorization: `Bearer ${systemToken}`,
+          'X-Company-ID': companyId,
+        },
+      });
 
       const result = employeeListResponseSchema.safeParse(response.data);
       if (!result.success) {
