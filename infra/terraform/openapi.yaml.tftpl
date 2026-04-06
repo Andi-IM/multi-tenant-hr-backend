@@ -1,0 +1,19 @@
+swagger: "2.0"
+info:
+  title: "multi-tenant-hr-backend"
+  version: "1.0.0"
+schemes:
+  - "https"
+produces:
+  - "application/json"
+x-google-allow: all
+x-google-backend:
+  address: "${edge_gateway_url}"
+  path_translation: "APPEND_PATH_TO_ADDRESS"
+paths:
+  /:
+    get:
+      operationId: "root"
+      responses:
+        "200":
+          description: "OK"

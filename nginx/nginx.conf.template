@@ -1,0 +1,68 @@
+events {
+    worker_connections 1024;
+}
+
+http {
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+
+    log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                    '$status $body_bytes_sent "$http_referer" '
+                    '"$http_user_agent" "$http_x_forwarded_for"';
+
+    access_log /var/log/nginx/access.log main;
+    error_log /var/log/nginx/error.log warn;
+
+    sendfile on;
+    keepalive_timeout 65;
+    resolver 8.8.8.8 ipv6=off valid=10s;
+
+    server {
+        listen ${PORT};
+        server_name _;
+
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_ssl_server_name on;
+
+        location /company-a/ {
+            set $company_a ${COMPANY_A_URL};
+            rewrite ^/company-a(/.*)$ $1 break;
+            proxy_pass $company_a;
+        }
+
+        location /company-b/ {
+            set $company_b ${COMPANY_B_URL};
+            rewrite ^/company-b(/.*)$ $1 break;
+            proxy_pass $company_b;
+        }
+
+        location /attendance/api-docs/ {
+            set $attendance ${ATTENDANCE_URL};
+            rewrite ^/attendance/api-docs(/.*)$ /api-docs$1 break;
+            proxy_pass $attendance;
+        }
+
+        location /attendance/ {
+            set $attendance ${ATTENDANCE_URL};
+            rewrite ^/attendance/(.*)$ /$1 break;
+            proxy_pass $attendance;
+        }
+
+        location /health {
+            access_log off;
+            add_header Content-Type application/json;
+            return 200 '{"status":"UP"}';
+        }
+
+        location / {
+            default_type application/json;
+            return 200 '{"status":"UP","gateway":"edge-gateway","timestamp":"$time_iso8601"}';
+        }
+    }
+}

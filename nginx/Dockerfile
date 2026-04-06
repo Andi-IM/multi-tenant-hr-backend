@@ -1,7 +1,11 @@
 FROM nginx:alpine
 
-COPY nginx.conf /etc/nginx/nginx.conf
+RUN apk add --no-cache gettext
 
-EXPOSE 80
+COPY nginx.conf.template /etc/nginx/nginx.conf.template
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-CMD ["nginx", "-g", "daemon off;"]
+EXPOSE 8080
+
+CMD ["/entrypoint.sh"]
