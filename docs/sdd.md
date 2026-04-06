@@ -6,9 +6,9 @@
 
 ## Sistem Multi-Service Backend Kehadiran & Manajemen Tenaga Kerja
 
-Version 1.0
+Version 1.1
 Prepared by Andi Irham
-2025
+2026
 
 ---
 
@@ -26,6 +26,9 @@ Prepared by Andi Irham
 - [3. Design Views](#3-design-views)
 - [4. Decisions](#4-decisions)
 - [5. Appendixes](#5-appendixes)
+- [6. Implementation Notes](#6-implementation-notes)
+  - [6.1 ADI-001 — Implementation Deviation Record](#61-adi-001--implementation-deviation-record)
+  - [6.2 Rasional Deviasi](#62-rasional-deviasi))
 
 ---
 
@@ -34,6 +37,7 @@ Prepared by Andi Irham
 | Name | Date | Reason For Changes | Version |
 |------|------|--------------------|---------|
 | Andi-IM | 2026-04-05 | Initial draft derived from SRS | 1.0 |
+| Andi-IM | 2026-04-06 | Update: Document implementation deviations (ADI-001), role name SYSTEM_ACTOR, env var changes | 1.1 |
 
 ---
 
@@ -809,7 +813,7 @@ Controllers wajib memvalidasi bahwa `req.user.companyId` sesuai dengan `companyI
 
 **Internal Service Authentication:**
 
-Attendance Service menggunakan JWT bertanda `role: SYSTEM` saat memanggil endpoint internal Company Service. Endpoint `/internal/*` dikonfigurasi dengan `authorizeRoles('SYSTEM')` dan tidak terekspos ke API Gateway.
+Attendance Service menggunakan JWT bertanda `role: SYSTEM_ACTOR` saat memanggil endpoint internal Company Service. Endpoint `/internal/*` dikonfigurasi dengan `authorizeRoles('SYSTEM_ACTOR')` dan tidak terekspos ke API Gateway.
 
 ---
 
@@ -992,9 +996,8 @@ Setiap layanan menyediakan `.env.example` dengan variabel-variabel berikut:
 | `PORT` | Port HTTP layanan | Ya |
 | `MONGODB_URI` | Connection string Attendance DB | Ya |
 | `JWT_SECRET` | Secret key JWT untuk user karyawan/admin | Ya |
-| `COMPANY_A_SERVICE_URL` | Base URL internal Company A Service | Ya |
-| `COMPANY_B_SERVICE_URL` | Base URL internal Company B Service | Ya |
-| `SYSTEM_JWT_SECRET` | Secret untuk signing token inter-service (role SYSTEM) | Ya |
+| `COMPANY_SERVICE_URL` | Base URL internal untuk Company Service (A atau B). Routing dilakukan via header `X-Company-ID` | Ya |
+| `SYSTEM_JWT_SECRET` | Secret untuk signing token inter-service (role SYSTEM_ACTOR) | Ya |
 
 Sistem DILARANG berjalan jika salah satu variabel wajib di atas tidak terdefinisi. Validasi dilakukan saat startup.
 
@@ -1033,3 +1036,37 @@ Sesuai §4 SRS, load testing WAJIB dilakukan pada minimal satu endpoint kritis.
 6. **Analisis perbaikan** — usulan konkret (contoh: tambah indeks, caching, connection pooling)
 
 **KPI Referensi (dari REQ-POC-02):** Laporan bulanan harus selesai < 3 detik.
+
+---
+
+## 6. Implementation Notes
+
+> **Catatan:** Bagian ini mendokumentasikan deviasi antara desain dalam SDD dan implementasi aktual. Deviasi ini merupakan penyesuaian yang disadari dan telah dianalisis sebelum implementasi.
+
+### 6.1 ADI-001 — Implementation Deviation Record
+
+| ID | Deskripsi | SDD Original | Implementasi Aktual | Alasan Deviasi |
+|----|-----------|--------------|---------------------|----------------|
+| ADI-001 | Role name untuk inter-service | `SYSTEM` | `SYSTEM_ACTOR` | Menghindari konflik dengan role `SYSTEM` yang mungkin digunakan sistem lain. Nama `SYSTEM_ACTOR` lebih eksplisit menunjukkan bahwa ini adalah service actor. |
+| ADI-002 | Env variable URL Company Service | `COMPANY_A_SERVICE_URL` + `COMPANY_B_SERVICE_URL` | `COMPANY_SERVICE_URL` tunggal dengan routing via `X-Company-ID` | Menyederhanakan konfigurasi. Satu endpoint Company Service (yang di-deploy dengan COMPANY_ID berbeda) dapat menangani request dari Attendance Service dengan memilih service target berdasarkan header. |
+| ADI-003 | Header untuk routing antar-service | `X-Internal-Service: attendance-service` | `X-Company-ID: {companyId}` | Header `X-Company-ID` lebih sesuai karena Attendance Service perlu menentukan ingin mengakses data perusahaan mana (Company A atau B). |
+
+### 6.2 Rasional Deviasi
+
+#### ADI-001: SYSTEM_ACTOR Role
+SDD mendefinisikan role `SYSTEM` untuk inter-service communication. Namun, implementasi menggunakan `SYSTEM_ACTOR` karena:
+- `SYSTEM` terlalu generik dan dapat bentrok dengan reserved keywords di library lain
+- `SYSTEM_ACTOR` lebih eksplisit menunjukkan bahwa ini adalah service account yang bertindak atas nama sistem
+- Semua referensi kode telah menggunakan `SYSTEM_ACTOR`
+
+#### ADI-002: Company Service URL Strategy
+SDD mendefinisikan dua variabel URL terpisah untuk Company A dan B. Implementasi menggunakan satu variabel `COMPANY_SERVICE_URL` dengan pertimbangan:
+- Company Service dijalankan dengan environment variable `COMPANY_ID` yang berbeda (A atau B)
+- Request dari Attendance Service menyertakan header `X-Company-ID` untuk memilih service target
+- Konfigurasi lebih sederhana: hanya perlu satu URL instead of managing two separate URLs
+
+#### ADI-003: Internal Header Convention
+Perubahan dari `X-Internal-Service` ke `X-Company-ID` karena:
+- Attendance Service perlu mengetahui perusahaan mana yang menjadi target validasi
+- Header `X-Company-ID` lebih intuitif dan sesuai dengan business domain
+- Tidak ada kebutuhan untuk mengidentifikasi service mana yang memanggil, yang penting adalah company ID
