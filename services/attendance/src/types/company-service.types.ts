@@ -13,6 +13,7 @@ export const employeeStatusResponseSchema = z.object({
   status: z.string(),
   data: z.object({
     employeeId: z.string(),
+    fullName: z.string(),
     companyId: z.string(),
     role: z.string(),
     employmentStatus: z.string(),

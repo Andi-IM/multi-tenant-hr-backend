@@ -55,6 +55,7 @@ describe('Company Service - Pact Provider', () => {
     // @ts-ignore
     vi.mocked(employeeRepository.findActiveEmployeeForInternal).mockResolvedValue({
       employeeId: 'emp_123',
+      fullName: 'John Doe',
       companyId: 'comp_abc',
       role: 'EMPLOYEE',
       status: 'active',

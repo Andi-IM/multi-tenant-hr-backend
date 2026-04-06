@@ -112,9 +112,6 @@ importers:
       '@types/luxon':
         specifier: ^3.4.2
         version: 3.7.1
-      '@types/mongoose':
-        specifier: ^5.11.97
-        version: 5.11.97(@aws-sdk/credential-providers@3.1022.0)(socks@2.8.7)
       '@types/morgan':
         specifier: ^1.9.9
         version: 1.9.10

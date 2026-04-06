@@ -44,6 +44,7 @@
             "companyId": "comp_abc",
             "employeeId": "emp_123",
             "employmentStatus": "active",
+            "fullName": "John Doe",
             "role": "EMPLOYEE",
             "timezone": "Asia/Jakarta",
             "workSchedule": {
@@ -71,6 +72,14 @@
               ]
             },
             "$.data.employeeId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.data.fullName": {
               "combine": "AND",
               "matchers": [
                 {

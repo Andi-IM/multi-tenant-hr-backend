@@ -38,6 +38,7 @@ describe('Attendance Service - Company Service Contract', () => {
           status: 'success',
           data: {
             employeeId: string('emp_123'),
+            fullName: string('John Doe'),
             companyId: string('comp_abc'),
             role: string('EMPLOYEE'),
             employmentStatus: 'active',

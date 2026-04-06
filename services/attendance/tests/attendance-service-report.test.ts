@@ -1,43 +1,25 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { DateTime } from 'luxon';
 import { attendanceService } from '../src/services/attendance.service.js';
+import { attendanceRepository } from '../src/repositories/attendance.repository.js';
 
-const { mockAttendanceModel, mockLeaveModel } = vi.hoisted(() => ({
-  mockAttendanceModel: { find: vi.fn() },
-  mockLeaveModel: { find: vi.fn() },
+vi.mock('../src/repositories/attendance.repository.js', () => ({
+  attendanceRepository: {
+    getReportAggregation: vi.fn(),
+    findOneAttendance: vi.fn(),
+    createAttendance: vi.fn(),
+    findAttendance: vi.fn(),
+    countAttendances: vi.fn(),
+  },
 }));
 
-// Mock DB models
-vi.mock('../src/models/attendance.model.js', () => ({
-  getAttendanceModel: () => mockAttendanceModel,
-}));
-
-// Mock leave permission model
-vi.mock('../src/models/leave-permission.model.js', () => ({
-  getLeavePermissionRequestModel: () => mockLeaveModel,
-}));
-
-import { getAttendanceModel } from '../src/models/attendance.model.js';
-import { getLeavePermissionRequestModel } from '../src/models/leave-permission.model.js';
-
-describe('AttendanceService - getAttendanceReport logic', () => {
-  // Use the same references
-  const attendanceModel = getAttendanceModel();
-  const leaveModel = getLeavePermissionRequestModel();
-
+describe('AttendanceService - getAttendanceReport (Refactored)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Default mock behavior for successful empty finds
-    vi.mocked(mockAttendanceModel.find).mockReturnValue({
-      lean: vi.fn().mockResolvedValue([]),
-    } as any);
-    vi.mocked(mockLeaveModel.find).mockReturnValue({
-      lean: vi.fn().mockResolvedValue([]),
-    } as any);
-
     vi.spyOn(attendanceService, 'verifyEmployeeStatus').mockResolvedValue({
       employeeId: 'EMP-001',
+      fullName: 'John Doe',
       companyId: 'company-A',
       role: 'EMPLOYEE',
       employmentStatus: 'active',
@@ -45,72 +27,45 @@ describe('AttendanceService - getAttendanceReport logic', () => {
         startTime: '08:00',
         endTime: '17:00',
         toleranceMinutes: 15,
-        workDays: [1, 2, 3, 4, 5], // Mon-Fri
+        workDays: [1, 2, 3, 4, 5],
       },
       timezone: 'UTC',
     } as any);
-  });
 
-  it('should correctly calculate totals for a single employee', async () => {
-    const startDate = '2026-01-01'; // Thursday (Work day)
-    const endDate = '2026-01-05'; // Monday (Work day)
-
-    const mockAttendances = [
-      { employeeId: 'EMP-001', date: DateTime.fromISO('2026-01-01').toJSDate(), status: 'on-time' },
-      { employeeId: 'EMP-001', date: DateTime.fromISO('2026-01-02').toJSDate(), status: 'late' },
-    ];
-
-    vi.mocked(mockAttendanceModel.find).mockReturnValue({
-      lean: vi.fn().mockResolvedValue(mockAttendances),
-    } as any);
-
-    const report = (await attendanceService.getAttendanceReport({
-      companyId: 'company-A',
-      employeeId: 'EMP-001',
-      startDate,
-      endDate,
-      token: 'token',
-    })) as any;
-
-    expect(report.employeeId).toBe('EMP-001');
-    expect(report.report.totalOnTime).toBe(1);
-    expect(report.report.totalLate).toBe(1);
-    expect(report.report.totalAbsent).toBe(1); // Jan 5 is missing
-  });
-
-  it('should ignore absences on non-working days', async () => {
-    const startDate = '2026-01-03'; // Sat
-    const endDate = '2026-01-04'; // Sun
-
-    const report = (await attendanceService.getAttendanceReport({
-      companyId: 'company-A',
-      employeeId: 'EMP-001',
-      startDate,
-      endDate,
-      token: 'token',
-    })) as any;
-
-    expect(report.report.totalAbsent).toBe(0);
-  });
-
-  it('should NOT count absence if there is an approved leave', async () => {
-    const startDate = '2026-01-05'; // Mon (Work day)
-    const endDate = '2026-01-05';
-
-    // Mock an approved leave for Jan 5
-    const mockRequests = [
+    vi.spyOn(attendanceService, 'fetchActiveEmployees').mockResolvedValue([
       {
         employeeId: 'EMP-001',
-        type: 'leave',
-        status: 'approved',
-        startDate: DateTime.fromISO('2026-01-05').toJSDate(),
-        endDate: DateTime.fromISO('2026-01-05').toJSDate(),
+        fullName: 'John Doe',
+        workSchedule: {
+          startTime: '08:00',
+          endTime: '17:00',
+          toleranceMinutes: 15,
+          workDays: [1, 2, 3, 4, 5],
+        },
+        timezone: 'UTC',
       },
-    ];
+    ] as any);
+  });
 
-    vi.mocked(mockLeaveModel.find).mockReturnValue({
-      lean: vi.fn().mockResolvedValue(mockRequests),
-    } as any);
+  it('should call repository aggregation and map results correctly', async () => {
+    const startDate = '2026-01-01';
+    const endDate = '2026-01-31';
+
+    vi.mocked(attendanceRepository.getReportAggregation).mockResolvedValue({
+      attendanceStats: [
+        {
+          _id: { employeeId: 'EMP-001' },
+          totalOnTime: 10,
+          totalLate: 2,
+          totalIncomplete: 1,
+          totalAbsent: 5,
+        },
+      ],
+      leaveStats: [
+        { _id: { employeeId: 'EMP-001', type: 'leave' }, count: 2 },
+        { _id: { employeeId: 'EMP-001', type: 'permission' }, count: 1 },
+      ],
+    });
 
     const report = (await attendanceService.getAttendanceReport({
       companyId: 'company-A',
@@ -120,7 +75,55 @@ describe('AttendanceService - getAttendanceReport logic', () => {
       token: 'token',
     })) as any;
 
-    expect(report.report.totalAbsent).toBe(0);
-    expect(report.report.totalLeaveApproved).toBe(1);
+    expect(attendanceRepository.getReportAggregation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        employeeId: 'EMP-001',
+        companyId: 'company-A',
+      })
+    );
+
+    expect(report.fullName).toBe('John Doe');
+    expect(report.report.totalOnTime).toBe(10);
+    expect(report.report.totalAbsent).toBe(5);
+    expect(report.report.totalLeaveApproved).toBe(2);
+    expect(report.report.totalPermissionApproved).toBe(1);
+  });
+
+  it('should handle groupBy: "day" correctly', async () => {
+    vi.mocked(attendanceRepository.getReportAggregation).mockResolvedValue({
+      attendanceStats: [
+        {
+          _id: { employeeId: 'EMP-001', period: '2026-01-01' },
+          totalOnTime: 1,
+          totalLate: 0,
+          totalIncomplete: 0,
+          totalAbsent: 0,
+        },
+        {
+          _id: { employeeId: 'EMP-001', period: '2026-01-02' },
+          totalOnTime: 0,
+          totalLate: 1,
+          totalIncomplete: 0,
+          totalAbsent: 0,
+        },
+      ],
+      leaveStats: [],
+    });
+
+    const report = (await attendanceService.getAttendanceReport({
+      companyId: 'company-A',
+      employeeId: 'EMP-001',
+      startDate: '2026-01-01',
+      endDate: '2026-01-02',
+      groupBy: 'day',
+      token: 'token',
+    })) as any;
+
+    expect(Array.isArray(report.report)).toBe(true);
+    expect(report.report.length).toBe(2);
+    expect(report.report[0].period).toBe('2026-01-01');
+    expect(report.report[0].totalOnTime).toBe(1);
+    expect(report.report[1].period).toBe('2026-01-02');
+    expect(report.report[1].totalLate).toBe(1);
   });
 });

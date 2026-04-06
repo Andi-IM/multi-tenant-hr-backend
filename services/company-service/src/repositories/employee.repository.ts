@@ -42,12 +42,21 @@ export class EmployeeRepository {
     employeeId: string
   ): Promise<Pick<
     IEmployee,
-    'employeeId' | 'companyId' | 'role' | 'status' | 'workSchedule' | 'timezone'
+    'employeeId' | 'fullName' | 'companyId' | 'role' | 'status' | 'workSchedule' | 'timezone'
   > | null> {
     const TenantModel = getEmployeeModel();
     return TenantModel.findOne(
       { employeeId },
-      { employeeId: 1, companyId: 1, role: 1, status: 1, workSchedule: 1, timezone: 1, _id: 0 }
+      {
+        employeeId: 1,
+        fullName: 1,
+        companyId: 1,
+        role: 1,
+        status: 1,
+        workSchedule: 1,
+        timezone: 1,
+        _id: 0,
+      }
     ).lean();
   }
 

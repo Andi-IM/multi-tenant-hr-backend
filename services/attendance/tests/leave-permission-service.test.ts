@@ -26,6 +26,7 @@ describe('LeavePermissionService', () => {
     status: 'success',
     data: {
       employeeId: 'EMP-001',
+      fullName: 'John Doe',
       companyId: 'company-A',
       role: 'EMPLOYEE',
       employmentStatus: 'active',
@@ -59,6 +60,7 @@ describe('LeavePermissionService', () => {
         status: 'success',
         data: {
           employeeId: 'EMP-001',
+          fullName: 'John Doe',
           companyId: 'company-A',
           role: 'EMPLOYEE',
           employmentStatus: 'inactive',
@@ -239,7 +241,8 @@ describe('LeavePermissionService', () => {
       const mockFind = {
         sort: vi.fn().mockReturnThis(),
         skip: vi.fn().mockReturnThis(),
-        limit: vi.fn().mockResolvedValueOnce(mockData),
+        limit: vi.fn().mockReturnThis(),
+        lean: vi.fn().mockResolvedValueOnce(mockData),
       };
 
       const mockModel = {
@@ -266,7 +269,8 @@ describe('LeavePermissionService', () => {
         find: vi.fn().mockReturnValue({
           sort: vi.fn().mockReturnThis(),
           skip: vi.fn().mockReturnThis(),
-          limit: vi.fn().mockResolvedValueOnce([]),
+          limit: vi.fn().mockReturnThis(),
+          lean: vi.fn().mockResolvedValueOnce([]),
         }),
         countDocuments: vi.fn().mockResolvedValueOnce(0),
       };
@@ -288,7 +292,8 @@ describe('LeavePermissionService', () => {
         find: vi.fn().mockReturnValue({
           sort: vi.fn().mockReturnThis(),
           skip: vi.fn().mockReturnThis(),
-          limit: vi.fn().mockResolvedValueOnce([]),
+          limit: vi.fn().mockReturnThis(),
+          lean: vi.fn().mockResolvedValueOnce([]),
         }),
         countDocuments: vi.fn().mockResolvedValueOnce(0),
       };
@@ -316,7 +321,8 @@ describe('LeavePermissionService', () => {
         find: vi.fn().mockReturnValue({
           sort: vi.fn().mockReturnThis(),
           skip: vi.fn().mockReturnThis(),
-          limit: vi.fn().mockResolvedValueOnce([]),
+          limit: vi.fn().mockReturnThis(),
+          lean: vi.fn().mockResolvedValueOnce([]),
         }),
         countDocuments: vi.fn().mockResolvedValueOnce(0),
       };

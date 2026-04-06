@@ -295,6 +295,7 @@ export class EmployeeService {
     serviceCompanyId: string
   ): Promise<{
     employeeId: string;
+    fullName: string;
     companyId: string;
     role: string;
     employmentStatus: string;
@@ -322,6 +323,7 @@ export class EmployeeService {
 
     return {
       employeeId: employee.employeeId,
+      fullName: employee.fullName,
       companyId: employee.companyId,
       role: employee.role,
       employmentStatus: employee.status,

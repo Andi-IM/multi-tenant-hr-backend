@@ -37,6 +37,7 @@ describe('AttendanceService', () => {
     status: 'success',
     data: {
       employeeId: 'emp_123',
+      fullName: 'John Doe',
       companyId: 'company-A',
       role: 'EMPLOYEE',
       employmentStatus: 'active',
@@ -194,7 +195,13 @@ describe('AttendanceService', () => {
 
     it('should create new check-in when no existing record', async () => {
       mockFindOne.mockResolvedValue(null);
-      mockSave.mockResolvedValue(undefined);
+      mockSave.mockResolvedValue({
+        employeeId: 'EMP-001',
+        companyId: 'company-A',
+        date: new Date(),
+        checkInTime: new Date(),
+        status: 'on-time',
+      } as any);
 
       const result = await service.checkIn('EMP-001', 'company-A', 'token-123');
 
@@ -222,7 +229,13 @@ describe('AttendanceService', () => {
       vi.spyOn(DateTime, 'now').mockReturnValue(checkInTime);
 
       mockFindOne.mockResolvedValue(null);
-      mockSave.mockResolvedValue(undefined);
+      mockSave.mockResolvedValue({
+        employeeId: 'EMP-001',
+        companyId: 'company-A',
+        date: new Date(),
+        checkInTime: new Date(),
+        status: 'on-time',
+      } as any);
 
       const result = await service.checkIn('EMP-001', 'company-A', 'token-123');
 
@@ -237,7 +250,13 @@ describe('AttendanceService', () => {
       vi.spyOn(DateTime, 'now').mockReturnValue(checkInTime);
 
       mockFindOne.mockResolvedValue(null);
-      mockSave.mockResolvedValue(undefined);
+      mockSave.mockResolvedValue({
+        employeeId: 'EMP-001',
+        companyId: 'company-A',
+        date: new Date(),
+        checkInTime: new Date(),
+        status: 'late',
+      } as any);
 
       const result = await service.checkIn('EMP-001', 'company-A', 'token-123');
 
@@ -252,7 +271,13 @@ describe('AttendanceService', () => {
       vi.spyOn(DateTime, 'now').mockReturnValue(checkInTime);
 
       mockFindOne.mockResolvedValue(null);
-      mockSave.mockResolvedValue(undefined);
+      mockSave.mockResolvedValue({
+        employeeId: 'EMP-001',
+        companyId: 'company-A',
+        date: new Date(),
+        checkInTime: new Date(),
+        status: 'on-time',
+      } as any);
 
       const result = await service.checkIn('EMP-001', 'company-A', 'token-123');
 
@@ -409,11 +434,27 @@ describe('AttendanceService', () => {
         find: vi.fn().mockReturnValue({
           lean: vi.fn().mockResolvedValue([]),
         }),
+        aggregate: vi.fn().mockResolvedValue([
+          {
+            _id: { period: '2026-04-01', employeeId: 'emp_123' },
+            totalOnTime: 1,
+            totalLate: 0,
+            totalIncomplete: 0,
+            totalAbsent: 2,
+          },
+        ]),
       } as any);
       vi.mocked(getLeavePermissionRequestModel).mockReturnValue({
         find: vi.fn().mockReturnValue({
-          lean: vi.fn().mockResolvedValue([]),
+          sort: vi.fn().mockReturnValue({
+            skip: vi.fn().mockReturnValue({
+              limit: vi.fn().mockReturnValue({
+                lean: vi.fn().mockResolvedValue([]),
+              }),
+            }),
+          }),
         }),
+        aggregate: vi.fn().mockResolvedValue([]),
       } as any);
     });
 
@@ -428,8 +469,7 @@ describe('AttendanceService', () => {
 
       expect(result.employeeId).toBe('emp_123');
       expect(result.report).toBeDefined();
-      expect(result.report.totalAbsent).toBe(3); // April 1-5, 2026: Wed, Thu, Fri (Working), Sat, Sun (Non-working)
-      // Wait, 2026-04-01 is Wednesday. 04-02 Thu, 04-03 Fri. So 3 working days.
+      expect(result.report.totalAbsent).toBe(2);
     });
 
     it('should generate report for all employees', async () => {
@@ -464,6 +504,25 @@ describe('AttendanceService', () => {
     });
 
     it('should handle groupBy: day', async () => {
+      vi.mocked(getAttendanceModel).mockReturnValue({
+        aggregate: vi.fn().mockResolvedValue([
+          {
+            _id: { period: '2026-04-01', employeeId: 'emp_123' },
+            totalOnTime: 1,
+            totalLate: 0,
+            totalIncomplete: 0,
+            totalAbsent: 0,
+          },
+          {
+            _id: { period: '2026-04-02', employeeId: 'emp_123' },
+            totalOnTime: 0,
+            totalLate: 1,
+            totalIncomplete: 0,
+            totalAbsent: 0,
+          },
+        ]),
+      } as any);
+
       const result = (await service.getAttendanceReport({
         companyId: 'company-A',
         employeeId: 'emp_123',
@@ -478,11 +537,30 @@ describe('AttendanceService', () => {
     });
 
     it('should handle groupBy: week', async () => {
+      vi.mocked(getAttendanceModel).mockReturnValue({
+        aggregate: vi.fn().mockResolvedValue([
+          {
+            _id: { period: '2026-W01', employeeId: 'emp_123' },
+            totalOnTime: 1,
+            totalLate: 0,
+            totalIncomplete: 0,
+            totalAbsent: 0,
+          },
+          {
+            _id: { period: '2026-W02', employeeId: 'emp_123' },
+            totalOnTime: 0,
+            totalLate: 1,
+            totalIncomplete: 0,
+            totalAbsent: 0,
+          },
+        ]),
+      } as any);
+
       const result = (await service.getAttendanceReport({
         companyId: 'company-A',
         employeeId: 'emp_123',
-        startDate: '2026-04-01',
-        endDate: '2026-04-10',
+        startDate: '2026-03-31',
+        endDate: '2026-04-02',
         groupBy: 'week',
         token: 'token-123',
       })) as any;
@@ -491,6 +569,25 @@ describe('AttendanceService', () => {
     });
 
     it('should handle groupBy: month', async () => {
+      vi.mocked(getAttendanceModel).mockReturnValue({
+        aggregate: vi.fn().mockResolvedValue([
+          {
+            _id: { period: '2026-03', employeeId: 'emp_123' },
+            totalOnTime: 1,
+            totalLate: 0,
+            totalIncomplete: 0,
+            totalAbsent: 0,
+          },
+          {
+            _id: { period: '2026-04', employeeId: 'emp_123' },
+            totalOnTime: 0,
+            totalLate: 1,
+            totalIncomplete: 0,
+            totalAbsent: 0,
+          },
+        ]),
+      } as any);
+
       const result = (await service.getAttendanceReport({
         companyId: 'company-A',
         employeeId: 'emp_123',
@@ -501,6 +598,70 @@ describe('AttendanceService', () => {
       })) as any;
 
       expect(result.report).toHaveLength(2); // March and April
+    });
+
+    it('should handle groupBy: week', async () => {
+      vi.mocked(getAttendanceModel).mockReturnValue({
+        aggregate: vi.fn().mockResolvedValue([
+          {
+            _id: { period: '2026-W14', employeeId: 'emp_123' },
+            totalOnTime: 1,
+            totalLate: 0,
+            totalIncomplete: 0,
+            totalAbsent: 0,
+          },
+          {
+            _id: { period: '2026-W15', employeeId: 'emp_123' },
+            totalOnTime: 0,
+            totalLate: 1,
+            totalIncomplete: 0,
+            totalAbsent: 0,
+          },
+        ]),
+      } as any);
+
+      const result = (await service.getAttendanceReport({
+        companyId: 'company-A',
+        employeeId: 'emp_123',
+        startDate: '2026-04-01',
+        endDate: '2026-04-10',
+        groupBy: 'week',
+        token: 'token-123',
+      })) as any;
+
+      expect(result.report).toHaveLength(2);
+    });
+
+    it('should handle groupBy: month', async () => {
+      vi.mocked(getAttendanceModel).mockReturnValue({
+        aggregate: vi.fn().mockResolvedValue([
+          {
+            _id: { period: '2026-03', employeeId: 'emp_123' },
+            totalOnTime: 1,
+            totalLate: 0,
+            totalIncomplete: 0,
+            totalAbsent: 0,
+          },
+          {
+            _id: { period: '2026-04', employeeId: 'emp_123' },
+            totalOnTime: 0,
+            totalLate: 1,
+            totalIncomplete: 0,
+            totalAbsent: 0,
+          },
+        ]),
+      } as any);
+
+      const result = (await service.getAttendanceReport({
+        companyId: 'company-A',
+        employeeId: 'emp_123',
+        startDate: '2026-03-01',
+        endDate: '2026-04-30',
+        groupBy: 'month',
+        token: 'token-123',
+      })) as any;
+
+      expect(result.report).toHaveLength(2);
     });
 
     it('should throw error on invalid dates', async () => {

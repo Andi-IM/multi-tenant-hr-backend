@@ -1,13 +1,11 @@
 import axios, { isAxiosError } from 'axios';
 import jwt from 'jsonwebtoken';
 import {
-  getLeavePermissionRequestModel,
-  type ILeavePermissionRequest,
-} from '../models/leave-permission.model.js';
-import {
   type EmployeeStatusResponse,
   employeeStatusResponseSchema,
 } from '../types/company-service.types.js';
+import { attendanceRepository } from '../repositories/attendance.repository.js';
+import { type ILeavePermissionRequest } from '../models/leave-permission.model.js';
 
 export class LeavePermissionService {
   private companyServiceUrl: string;
@@ -79,9 +77,7 @@ export class LeavePermissionService {
     startDate: Date,
     endDate: Date
   ): Promise<boolean> {
-    const LeavePermissionRequest = getLeavePermissionRequestModel();
-
-    const overlapping = await LeavePermissionRequest.findOne({
+    const overlapping = await attendanceRepository.findOneLeaveRequest({
       employeeId,
       status: 'approved',
       $or: [{ startDate: { $lte: endDate }, endDate: { $gte: startDate } }],
@@ -108,8 +104,7 @@ export class LeavePermissionService {
       throw new Error('Conflict with existing approved request');
     }
 
-    const LeavePermissionRequest = getLeavePermissionRequestModel();
-    const request = new LeavePermissionRequest({
+    const request = await attendanceRepository.createLeaveRequest({
       employeeId,
       companyId,
       type: 'leave',
@@ -118,7 +113,7 @@ export class LeavePermissionService {
       status: 'pending',
     });
 
-    return request.save();
+    return request;
   }
 
   async createPermissionRequest(
@@ -133,8 +128,7 @@ export class LeavePermissionService {
       throw new Error('Reason is required for permission request');
     }
 
-    const LeavePermissionRequest = getLeavePermissionRequestModel();
-    const request = new LeavePermissionRequest({
+    const request = await attendanceRepository.createLeaveRequest({
       employeeId,
       companyId,
       type: 'permission',
@@ -142,7 +136,7 @@ export class LeavePermissionService {
       status: 'pending',
     });
 
-    return request.save();
+    return request;
   }
 
   async getRequests(
@@ -178,13 +172,17 @@ export class LeavePermissionService {
       if (endDate) (query.createdAt as Record<string, Date>).$lte = new Date(endDate);
     }
 
-    const LeavePermissionRequest = getLeavePermissionRequestModel();
     const [data, total] = await Promise.all([
-      LeavePermissionRequest.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
-      LeavePermissionRequest.countDocuments(query),
+      attendanceRepository.findLeaveRequests(query, { skip, limit }),
+      attendanceRepository.countLeaveRequests(query),
     ]);
 
-    return { data, total, page, limit };
+    return {
+      data,
+      total,
+      page,
+      limit,
+    };
   }
 
   async approveRequest(
@@ -192,8 +190,7 @@ export class LeavePermissionService {
     approverId: string,
     companyId: string
   ): Promise<ILeavePermissionRequest> {
-    const LeavePermissionRequest = getLeavePermissionRequestModel();
-    const request = await LeavePermissionRequest.findById(requestId);
+    const request = await attendanceRepository.findOneLeaveRequest(requestId);
 
     if (!request) {
       throw new Error('Request not found');
@@ -225,8 +222,7 @@ export class LeavePermissionService {
     approverId: string,
     companyId: string
   ): Promise<ILeavePermissionRequest> {
-    const LeavePermissionRequest = getLeavePermissionRequestModel();
-    const request = await LeavePermissionRequest.findById(requestId);
+    const request = await attendanceRepository.findOneLeaveRequest(requestId);
 
     if (!request) {
       throw new Error('Request not found');
