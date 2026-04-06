@@ -1,0 +1,12 @@
+project_id = "tech-test-assesment"
+region     = "us-central1"
+artifact_registry_repository_id = "mthrb-repo"
+cloud_run_min_instances         = 0
+cloud_run_max_instances         = 1
+timezone                        = "UTC"
+company_service_image           = "us-central1-docker.pkg.dev/tech-test-assesment/mthrb-repo/company-service:latest"
+attendance_service_image        = "us-central1-docker.pkg.dev/tech-test-assesment/mthrb-repo/attendance-service:latest"
+edge_gateway_image              = "us-central1-docker.pkg.dev/tech-test-assesment/mthrb-repo/edge-gateway:latest"
+company_a_mongodb_uri           = "mongodb+srv://<YOUR_DB_USER>:<YOUR_DB_PASSWORD>@cluster0.tpqorys.mongodb.net/attendance?retryWrites=true&w=majority"
+company_b_mongodb_uri           = "mongodb+srv://<YOUR_DB_USER>:<YOUR_DB_PASSWORD>@cluster0.tpqorys.mongodb.net/attendance?retryWrites=true&w=majority"
+attendance_mongodb_uri          = "mongodb+srv://<YOUR_DB_USER>:<YOUR_DB_PASSWORD>@cluster0.tpqorys.mongodb.net/attendance?retryWrites=true&w=majority"

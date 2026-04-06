@@ -23,32 +23,24 @@ COPY --from=pruner /app/out/full/ .
 COPY turbo.json turbo.json
 RUN turbo build --filter=@jaga-id/attendance
 
-# Use pnpm to install only production dependencies in a separate stage
-FROM base AS prod-installer
-WORKDIR /app
-COPY --from=pruner /app/out/json/ .
-COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
-# Use shamefully-hoist to flatten node_modules, making it easier to copy and run
-RUN pnpm install --prod --frozen-lockfile --shamefully-hoist
-
-FROM node:20-alpine AS runner
+FROM base AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nodejs
 
-# Copy node_modules from the prod-installer stage
-COPY --from=prod-installer --chown=nodejs:nodejs /app/node_modules ./node_modules
+# Copy the pruned lockfile and package.json to install prod dependencies
+COPY --from=pruner /app/out/json/ .
+COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+RUN pnpm install --prod --frozen-lockfile
 
-# Copy the build artifacts from the builder stage
-# We copy them into the root workdir since we are running in a specialized container
-COPY --from=builder --chown=nodejs:nodejs /app/services/attendance/package.json ./package.json
-COPY --from=builder --chown=nodejs:nodejs /app/services/attendance/dist ./dist
+# Copy built assets
+COPY --from=builder /app/services/attendance/dist ./services/attendance/dist
+COPY --from=builder /app/packages/logger/dist ./packages/logger/dist
 
 USER nodejs
-
 EXPOSE 3003
 
-# Run from the root
-CMD ["node", "dist/index.js"]
+# Run from the service directory
+CMD ["node", "services/attendance/dist/index.js"]
