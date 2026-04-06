@@ -6,6 +6,10 @@ import {
 } from '../types/company-service.types.js';
 import { attendanceRepository } from '../repositories/attendance.repository.js';
 import { type ILeavePermissionRequest } from '../models/leave-permission.model.js';
+import { createChildLogger } from '@jaga-id/logger';
+import { AppError } from '../errors/app-error.js';
+
+const logger = createChildLogger('LeavePermissionService');
 
 export class LeavePermissionService {
   private companyServiceUrl: string;
@@ -201,7 +205,7 @@ export class LeavePermissionService {
     }
 
     if (request.status !== 'pending') {
-      throw new Error('Request already processed');
+      throw new AppError('Request already processed', 409);
     }
 
     request.status = 'approved';
@@ -210,8 +214,9 @@ export class LeavePermissionService {
 
     await request.save();
 
-    console.log(
-      `[AUDIT] Request ${requestId} approved by ${approverId} at ${new Date().toISOString()}`
+    logger.info(
+      { requestId, approverId, action: 'approve', status: 'approved' },
+      'Leave/Permission request approved'
     );
 
     return request;
@@ -233,7 +238,7 @@ export class LeavePermissionService {
     }
 
     if (request.status !== 'pending') {
-      throw new Error('Request already processed');
+      throw new AppError('Request already processed', 409);
     }
 
     request.status = 'rejected';
@@ -242,8 +247,9 @@ export class LeavePermissionService {
 
     await request.save();
 
-    console.log(
-      `[AUDIT] Request ${requestId} rejected by ${approverId} at ${new Date().toISOString()}`
+    logger.info(
+      { requestId, approverId, action: 'reject', status: 'rejected' },
+      'Leave/Permission request rejected'
     );
 
     return request;

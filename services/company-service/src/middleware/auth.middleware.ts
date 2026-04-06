@@ -2,7 +2,9 @@ import { type Request, type Response, type NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { AppError } from '../errors/app-error.js';
 import type { JwtUserPayload, AuthenticatedRequest, UserRole } from '../types/auth.types.js';
+import { createChildLogger } from '@jaga-id/logger';
 
+const logger = createChildLogger('AuthMiddleware');
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-here';
 const COMPANY_ID = process.env.COMPANY_ID || 'A';
 
@@ -16,6 +18,10 @@ export function authenticateToken(req: Request, _res: Response, next: NextFuncti
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    logger.warn(
+      { method: req.method, path: req.path, reason: 'missing_or_malformed_header' },
+      'Authentication failed'
+    );
     throw AppError.unauthorized('No token provided');
   }
 
@@ -26,6 +32,11 @@ export function authenticateToken(req: Request, _res: Response, next: NextFuncti
     (req as AuthenticatedRequest).user = decoded;
     next();
   } catch (error) {
+    const err = error as Error & { name?: string };
+    logger.warn(
+      { method: req.method, path: req.path, error: err.name },
+      'Authentication failed - invalid or expired token'
+    );
     if (error instanceof jwt.TokenExpiredError) {
       throw AppError.unauthorized('Token expired');
     }

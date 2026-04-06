@@ -52,14 +52,14 @@ Tugas di bawah ini dirancang dengan prinsip **Layered Architecture** dan praktik
 
 **Fokus Utama:** Membangun logika kehadiran dan memvalidasi identitas karyawan dari layanan terpisah.
 
-**🚧 Task 6: Komunikasi Lintas Layanan (Service-to-Service Validation)**
+**✅ Task 6: Komunikasi Lintas Layanan (Service-to-Service Validation)**
 
 - **Deskripsi:** Terapkan logika di _Attendance Service_ untuk mengambil/memvalidasi data karyawan melalui API _Company Service_ yang relevan menggunakan HTTP request (misalnya `fetch` atau `axios`). _Attendance Service_ **tidak boleh** menyimpan data karyawan ini sebagai sumber utama.
 - **Acceptance Criteria (AC):**
   - _Attendance Service_ memiliki fungsi validasi yang berhasil memanggil Company A atau B secara aman (berbasis identitas karyawan/token).
   - Penanganan kesalahan (seperti API _Company Service_ _down_ atau karyawan tidak ditemukan/tidak aktif) tertangani dengan log yang jelas.
 
-**Task 7: Implementasi Modul Kehadiran (Check-In & Check-Out)**
+**✅ Task 7: Implementasi Modul Kehadiran (Check-In & Check-Out)**
 
 - **Deskripsi:** Buat endpoint untuk _check-in_ dan _check-out_ dengan logika pencegahan _double-submit_ (_idempotency_). Kalkulasi status kehadiran (misal: "Tepat Waktu", "Terlambat") berdasarkan aturan bisnis di Task 1.
 - **Acceptance Criteria (AC):**
@@ -68,7 +68,7 @@ Tugas di bawah ini dirancang dengan prinsip **Layered Architecture** dan praktik
   - Snapshot `timezone` dan `workSchedule` disimpan dalam dokumen `attendance`.
   - Jika pengguna melakukan _check-in_ dua kali di hari yang sama, API akan menolak dan mengembalikan status penanganan error (_duplicate check/idempotency_).
 
-**Task 8: Implementasi Modul Cuti & Izin (Leave & Permission)**
+**✅ Task 8: Implementasi Modul Cuti & Izin (Leave & Permission)**
 
 - **Deskripsi:** Buat endpoint untuk mengajukan cuti dan izin beserta status persetujuannya (`pending`, `approved`, `rejected`). Implementasikan validasi _overlapping_ (tanggal yang tumpang tindih), duplikasi, dan validasi _role_ (hanya admin/approver yang bisa mengubah status).
 - **Acceptance Criteria (AC):**
@@ -80,7 +80,7 @@ Tugas di bawah ini dirancang dengan prinsip **Layered Architecture** dan praktik
 
 **Fokus Utama:** Pelaporan yang efisien, pengujian performa wajib, dan kelengkapan dokumentasi penyerahan.
 
-**Task 9: Pembuatan API Pelaporan Rentang Tanggal (Date-Range Reporting)**
+**✅ Task 9: Pembuatan API Pelaporan Rentang Tanggal (Date-Range Reporting)**
 
 - **Deskripsi:** Buat API di _Attendance Service_ untuk menghasilkan rekap (total `absent`, `late`, `on-time`, serta statistik cuti/izin) per karyawan dalam rentang tanggal tertentu. Gunakan **MongoDB Aggregation Pipeline** (ALG-002) yang optimal dan manfaatkan _index_ ESR yang dirancang di Task 2.
 - **Acceptance Criteria (AC):**
@@ -88,14 +88,14 @@ Tugas di bawah ini dirancang dengan prinsip **Layered Architecture** dan praktik
   - Latensi query < 3 detik untuk rentang 1 bulan (REQ-POC-02).
   - Query database hanya memindai dokumen dalam rentang tanggal yang diminta (terverifikasi via observasi log atau `explain()` di MongoDB).
 
-**Task 10: Mandatory Load Testing (Pengujian Beban)**
+**✅ Task 10: Mandatory Load Testing (Pengujian Beban)**
 
 - **Deskripsi:** Lakukan _load test_ pada satu endpoint kritis (misal: _Submit Attendance_ atau _Reporting_) menggunakan alat seperti K6 atau Artillery. Analisis _bottleneck_ (hambatan) dan catat hasilnya.
 - **Acceptance Criteria (AC):**
   - Skrip _load test_ dilampirkan dalam repositori.
   - Ringkasan hasil (konkurensi, metrik latensi, hambatan yang diamati, dan analisis pengoptimalan) telah didokumentasikan.
 
-**Task 11: Finalisasi Dokumentasi (Deliverables Verification)**
+**✅ Task 11: Finalisasi Dokumentasi (Deliverables Verification)**
 
 - **Deskripsi:** Lengkapi semua dokumentasi final sebelum dikirimkan. Rapikan instruksi instalasi dan pastikan _API documentation_ mencatat format rute, _request_, dan respons (termasuk _error_).
 - **Acceptance Criteria (AC):**
@@ -105,4 +105,6 @@ Tugas di bawah ini dirancang dengan prinsip **Layered Architecture** dan praktik
 
 Dengan disiplin memecah proyek ini ke dalam 11 _tasks_ dengan target yang bisa diverifikasi, Anda telah berpikir sebagai seorang insinyur berkaliber produksi (_production-grade engineer_).
 
-Apakah Anda ingin kita membedah implementasi kode spesifik untuk **Task 6 (Service-to-Service Validation)** atau **Task 10 (Load Testing)** selanjutnya?
+---
+
+## Status Completed: All Tasks Done ✅

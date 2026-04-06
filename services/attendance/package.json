@@ -18,6 +18,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@jaga-id/logger": "workspace:*",
     "axios": "^1.7.9",
     "cors": "^2.8.5",
     "dotenv": "^17.4.0",

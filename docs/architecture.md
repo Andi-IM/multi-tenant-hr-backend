@@ -176,13 +176,89 @@ Physical database separation (dedicated instances per service) becomes justified
 
 Until these conditions arise, the current topology follows the **YAGNI (You Aren't Gonna Need It)** principle — avoiding premature complexity while maintaining clean service boundaries.
 
-## 10. Testing Strategy
+## 10. Logging Strategy
+
+> **SDD Ref:** [REQ-QOS-04](./srs.md#req-qos-04-pencatatan-log-operasional-logging)
+
+We use **Pino** as our structured logging solution to meet the observability requirements specified in REQ-QOS-04.
+
+### Implementation
+
+The logger is implemented as a shared package (`@jaga-id/logger`) that provides:
+
+- **Structured JSON logging** with timestamps, level, and message
+- **Sensitive data masking** - automatically redacts PII like passwords, tokens, and secrets
+- **Child loggers** - services can create context-specific loggers
+- **Pretty printing** in development, JSON in production
+
+### Logged Events (per REQ-QOS-04)
+
+The following events are logged:
+- Authentication failures (missing/invalid token)
+- Approval actions (approve/reject leave/permission requests)
+- Service communication failures
+- Report generation events
+
+### Example Usage
+
+```typescript
+import { createChildLogger } from '@jaga-id/logger';
+
+const logger = createChildLogger('ServiceName');
+
+logger.info({ userId, action: 'approve' }, 'Leave request approved');
+logger.warn({ path, reason: 'missing_token' }, 'Authentication failed');
+```
+
+### Security Considerations
+
+- Password hashes, tokens, and other secrets are automatically masked
+- No PII is logged in production
+- Stack traces are never exposed to clients
+
+## 11. Indexing Strategy
+
+> **SDD Ref:** [REQ-QOS-05](./srs.md#req-qos-05-efisiensi-kueri-dan-pengindeksan-basis-data), [Appendix 5.1 SDD](./sdd.md#51-mongodb-index-strategy)
+
+We follow the **ESR (Equality, Sort, Range)** guidelines for MongoDB indexing:
+
+### Collections and Indexes
+
+**employees (Company A/B DB):**
+| Field(s) | Index Type | Purpose |
+|----------|------------|---------|
+| `_id` | Default | Primary key lookup |
+| `employeeId` | Unique | Prevent duplicates, fast lookup |
+| `companyId` | Single | Filter per company |
+| `employmentStatus` | Single | Filter active employees |
+
+**attendances (Attendance DB):**
+| Field(s) | Index Type | Purpose |
+|----------|------------|---------|
+| `employeeId` | Single | Filter by employee |
+| `employeeId, date` | Compound | Efficient date-range queries |
+| `companyId, date` | Compound | Company-wide reports |
+| `status` | Single | Filter by attendance status |
+
+**leave_permission_requests (Attendance DB):**
+| Field(s) | Index Type | Purpose |
+|----------|------------|---------|
+| `employeeId` | Single | Filter by employee |
+| `employeeId, startDate, endDate` | Compound | Overlap detection |
+| `status` | Single | Filter by approval status |
+| `companyId, status` | Compound | Admin filtering |
+
+### KPI
+
+As specified in REQ-POC-02, report generation for 1-month range completes in **< 3 seconds** with proper indexing.
+
+## 12. Testing Strategy
 
 > **SDD Ref:** [REQ-COMP-03](./srs.md#req-comp-03-documentation-completeness), [REQ-DEAD-01](./srs.md#req-dead-01-delivery-deadline)
 
 To ensure high reliability and to maintain the independent testability of our microservices, we employ a sophisticated multi-tiered testing strategy:
 
-### 10.1. Contract Testing (Pact)
+### 12.1. Contract Testing (Pact)
 
 - **Challenge**: The Attendance Service relies heavily on the Company Service for employee validation, relying on synchronous cross-service APIs. Traditional End-to-End (E2E) tests for these interactions require complex, brittle environments (standing up both services and their databases).
 - **Solution**: We implemented **Consumer-Driven Contract Testing** using **Pact**.
@@ -190,7 +266,7 @@ To ensure high reliability and to maintain the independent testability of our mi
   - The Company Service (Provider) verifies its actual API responses against this generated contract during its independent CI pipeline.
   - This eliminates brittle E2E paths, providing integration safety while allowing both services to evolve and be tested rapidly in isolation.
 
-### 10.2. "No-Domino-Effect" Unit & Integration Testing
+### 12.2. "No-Domino-Effect" Unit & Integration Testing
 
 - We enforce strict isolation in behavior-driven unit testing (via Vitest/Jest). The standard approach separates the architecture into verifiable segments without overlapping: Controllers mock Services, and Services mock Repositories.
 - Supported by Codecov inside GitHub Actions, checking for coverage targets on every commit. This ensures stable production code while preventing localized failures from cascading through test suites.
