@@ -19,6 +19,30 @@ terraform init
 echo "📦 Stage 1: Provisioning Artifact Registry and APIs..."
 terraform apply -target=google_project_service.required -target=google_artifact_registry_repository.docker -auto-approve
 
+# Refresh state after Stage 1 to get outputs
+terraform refresh
+
+# Get values after refresh
+PROJECT_ID=$(terraform output -raw project_id 2>/dev/null)
+REGION=$(terraform output -raw region 2>/dev/null)
+REPO_ID=$(terraform output -raw artifact_registry_repository_id 2>/dev/null)
+
+# Fallback to terraform.tfvars if still empty
+if [ -z "$PROJECT_ID" ]; then
+  PROJECT_ID=$(grep 'project_id' terraform.tfvars | cut -d'"' -f2)
+fi
+if [ -z "$REGION" ]; then
+  REGION=$(grep 'region' terraform.tfvars | cut -d'"' -f2)
+fi
+if [ -z "$REPO_ID" ]; then
+  REPO_ID=$(grep 'artifact_registry_repository_id' terraform.tfvars | cut -d'"' -f2)
+fi
+
+if [ -z "$PROJECT_ID" ] || [ -z "$REGION" ] || [ -z "$REPO_ID" ]; then
+  echo "Error: Missing required configuration. Please check terraform.tfvars."
+  exit 1
+fi
+
 # 3. Build & Push Docker Images
 REPO_URL="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_ID}"
 
