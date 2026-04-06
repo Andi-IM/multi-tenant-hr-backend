@@ -11,7 +11,11 @@
     "test:coverage": "turbo run test:coverage",
     "test:api": "npx newman run ./multi-tenant-hr-backend.postman_collection.json -e ./mthrb-local.postman_environment.json --env-var base_url=http://localhost --env-var company_service=company-a/api/v1 --env-var attendance_service=attendance/api/v1 --env-var companyId=A --reporters cli",
     "format": "turbo run format",
-    "format:check": "turbo run format:check"
+    "format:check": "turbo run format:check",
+    "load-test": "k6 run load-test/src/k6-attendance.js",
+    "load-test:checkin": "k6 run -e ENABLE_REPORT=false -e ENABLE_RATELIMIT=false load-test/src/k6-attendance.js",
+    "load-test:report": "k6 run -e ENABLE_CHECKIN=false -e ENABLE_RATELIMIT=false load-test/src/k6-attendance.js",
+    "load-test:ratelimit": "k6 run -e ENABLE_CHECKIN=false -e ENABLE_REPORT=false -e ENABLE_RATELIMIT=true load-test/src/k6-attendance.js"
   },
   "devDependencies": {
     "@jaga-id/prettier-config": "workspace:*",
