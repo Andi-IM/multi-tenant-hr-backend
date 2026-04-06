@@ -2,7 +2,7 @@
 
 # Get the directory where the script is located
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-TERRAFORM_DIR="$SCRIPT_DIR/.."
+TERRAFORM_DIR="$SCRIPT_DIR/../terraform"
 
 # Configuration
 cd "$TERRAFORM_DIR"
