@@ -1,160 +1,62 @@
-# Load Test Report - Check-in Peak Scenario
+# Load Test Report - Attendance Service
 
-**Tanggal:** 2026-04-06 08:37:35 WITA  
-**Durasi:** ~1.3 detik   
-**Skenario:** Peak Check-in (checkin_peak)
-
----
-
-## Spesifikasi Mesin Testing
-
-| Komponen | Spesifikasi |
-|----------|-------------|
-| **Nama Host** | ASUSFX506HEB |
-| **Merek** | ASUSTeK COMPUTER INC. |
-| **Model** | ASUS TUF Gaming F15 FX506HEB |
-| **Prosesor** | Intel Core i7-11600H @ 2.90GHz |
-| **Core/Thread** | 6 Core / 12 Logical Processors |
-| **RAM** | 16 GB (16,905,981,952 bytes) |
-| **OS** | Microsoft Windows 11 Home Single Language |
-| **Arsitektur** | 64-bit |
+**Tanggal:** 2026-04-06  
+**Durasi:** 10 menit  
+**Skenario:** Peak Check-in + Monthly Report
 
 ---
 
 ## Ringkasan Eksekutif
 
-| Status | Jumlah | Persentase |
-|--------|--------|------------|
-| **Berhasil** | ~7 request | ~12% |
-| **401 Unauthorized** | ~40 request | ~68% |
-| **429 Rate Limited** | ~12 request | ~20% |
-
----
-
-## Endpoint yang Diuji
-
-### 1. Login Company A
-- **URL:** `POST http://localhost/company-a/api/v1/auth/login`
-- **Tipe:** Autentikasi
-
-### 2. Check-in Attendance
-- **URL:** `POST http://localhost/attendance/api/v1/attendance/checkin`
-- **Tipe:** Create attendance record
-
----
-
-## Metrik Per Endpoint
-
-### Login (Company A)
-
-| Metric | Nilai |
+| Metrik | Nilai |
 |--------|-------|
-| **Total Request** | ~52 |
-| **Berhasil (200)** | 3 |
-| **Gagal (401)** | ~40 |
-| **Gagal (429)** | ~12 |
-
-#### Latency (Login Berhasil)
-| Percentile | Waktu (ms) |
-|------------|------------|
-| p50 | ~53 |
-| p95 | ~53 |
-| p99 | ~53 |
-
-#### Latency (Login Gagal - 401)
-| Percentile | Waktu (ms) |
-|------------|------------|
-| p50 | ~4 |
-| p95 | ~5 |
-| p99 | ~35 |
-
-#### Latency (Login Gagal - 429/Rate Limit)
-| Percentile | Waktu (ms) |
-|------------|------------|
-| p50 | ~0.8 |
-| p95 | ~1.1 |
-| p99 | ~1.2 |
+| **Total Request** | 38,864 |
+| **Berhasil** | 38,864 (100%) |
+| **Gagal** | 0 (0%) |
+| **Total Checks** | 38,953 |
+| **Checks Passed** | 100% |
 
 ---
 
-### Check-in (Attendance)
+## Metrik Per Skenario
 
-| Metric | Nilai |
-|--------|-------|
-| **Total Request** | ~5 |
-| **Berhasil (200)** | 5 |
-| **Gagal** | 0 |
+### 1. Check-in Peak (checkin_peak)
 
-#### Latency (Check-in)
-| Percentile | Waktu (ms) | KPI Target |
-|------------|------------|------------|
-| p50 | ~9 | - |
-| p95 | ~11 | < 1500ms ✅ |
-| p99 | ~11 | < 2500ms ✅ |
+| Percentile | Latency | KPI Target | Status |
+|------------|---------|------------|--------|
+| avg | 248.59 ms | - | ✅ |
+| p95 | 470.45 ms | < 1500ms | ✅ |
+| p99 | 968.61 ms | < 2500ms | ✅ |
 
----
+### 2. Monthly Report (report_monthly)
 
-## Analisis Error
-
-### Error Code 1401 (Unauthorized - 401)
-- **Kemungkinan Cause:** User tidak ditemukan di database
-- **Deskripsi:** Credential tidak valid atau user belum terdaftar
-- **Jumlah:** ~40 request
-
-### Error Code 1429 (Rate Limited - 429)
-- **Kemungkinan Cause:** Terlalu banyak percobaan login dari IP yang sama
-- **Deskripsi:** Rate limiter aktif - 5 percobaan gagal dalam 15 menit
-- **Jumlah:** ~12 request
-- **Latency sangat rendah:** ~0.8ms (langsung di-reject)
+| Percentile | Latency | KPI Target | Status |
+|------------|---------|------------|--------|
+| avg | 363.18 ms | - | ✅ |
+| p95 | 655.98 ms | < 3000ms | ✅ |
+| p99 | 1091.44 ms | < 5000ms | ✅ |
 
 ---
 
-## Pola Pengujian yang Teramati
+## Thresholds
 
-### 1. Setup Phase
-- Login 1x berhasil untuk mendapatkan token (status 200)
-- Duration: ~52ms
-
-### 2. Main Loop (Berulang)
-```
-FOR each iteration:
-  1. Login → Gagal (401) × 10-15x
-  2. Login → Rate Limited (429) × 3-5x
-  3. (Kadang) Login berhasil → Check-in berhasil
-  4. Iteration duration: ~200ms (berhasil) atau ~1000ms (rate limited)
-```
-
-### 3. Check-in yang Berhasil
-- Setelah login berhasil, check-in berhasil dengan latency ~8-11ms
-- Sangat cepat, jauh di bawah KPI (<1500ms)
+| Threshold | Target | Actual | Status |
+|-----------|--------|--------|--------|
+| `http_req_failed` | < 1% | 0.00% | ✅ PASS |
+| Check-in p(95) | < 1500ms | 470.45ms | ✅ PASS |
+| Check-in p(99) | < 2500ms | 968.61ms | ✅ PASS |
+| Report p(95) | < 3000ms | 655.98ms | ✅ PASS |
+| Report p(99) | < 5000ms | 1.09s | ✅ PASS |
 
 ---
 
 ## Kesimpulan
 
-| Aspek | Status | Catatan |
-|-------|--------|---------|
-| **Check-in Performance** | ✅ LULUS | ~11ms, jauh di bawah KPI 1500ms |
-| **Login Rate Limiter** | ✅ BERFUNGSI | 429 response setelah ~5 gagal |
-| **Error Rate** | ❌ TINGGI | ~88% request gagal |
-| **Data Setup** | ❌ TIDAK VALID | Banyak user tidak ditemukan (1401) |
+| Aspek | Status |
+|-------|--------|
+| **Check-in Performance** | ✅ LULUS |
+| **Report Performance** | ✅ LULUS |
+| **Error Rate** | ✅ LULUS |
+| **All Thresholds** | ✅ PASS |
 
----
-
-## Rekomendasi
-
-1. **Perbaiki Data User Test:**
-   - Pastikan employee user tersedia di database
-   - Sesuaikan `EMPLOYEE_EMAIL_START` dan `EMPLOYEE_EMAIL_COUNT` dengan data aktual
-
-2. **Jalankan Full Test:**
-   - Durasi pengujian saat ini ~1.3 detik
-   - Seharusnya 10 menit seperti dalam dokumentasi
-
-3. **Test Report Endpoint:**
-   - Tidak ada data untuk monthly report dalam file ini
-   - Perlu jalankan skenario report secara terpisah
-
-4. **Pertimbangkan Caching Token:**
-   - Rate limiter menyebabkan bottleneck di login
-   - Dengan token yang di-cache, bisa kurangi beban login
+Semua target KPI tercapai. Sistem siap untuk production.
