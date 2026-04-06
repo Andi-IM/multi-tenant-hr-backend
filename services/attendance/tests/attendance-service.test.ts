@@ -69,7 +69,7 @@ describe('AttendanceService', () => {
         expect.stringContaining('/api/v1/internal/employees/EMP-001/status'),
         expect.objectContaining({
           headers: {
-            Authorization: 'Bearer token-123',
+            Authorization: expect.stringContaining('Bearer eyJ'),
             'X-Company-ID': 'company-A',
           },
         })

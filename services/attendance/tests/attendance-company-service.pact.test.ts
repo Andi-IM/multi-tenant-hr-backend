@@ -25,8 +25,8 @@ describe('Attendance Service - Company Service Contract', () => {
         method: 'GET',
         path: `/api/v1/internal/employees/${employeeId}/status`,
         headers: {
-          'X-Company-ID': companyId,
-          Authorization: `Bearer ${token}`,
+          'X-Company-ID': like(companyId),
+          Authorization: like(`Bearer ${token}`),
         },
       })
       .willRespondWith({
