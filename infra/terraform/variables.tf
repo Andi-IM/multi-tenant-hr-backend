@@ -26,8 +26,9 @@ variable "cloud_run_max_instances" {
 }
 
 variable "company_service_image" {
-  description = "Docker image for the Company service"
+  description = "Docker image for the Company service (automatically derived if empty)"
   type        = string
+  default     = ""
 }
 
 variable "timezone" {
@@ -37,26 +38,31 @@ variable "timezone" {
 }
 
 variable "company_a_mongodb_uri" {
-  description = "MongoDB URI for Company A"
+  description = "MongoDB URI for Company A (automatically derived if empty)"
   type        = string
+  default     = ""
 }
 
 variable "company_b_mongodb_uri" {
-  description = "MongoDB URI for Company B"
+  description = "MongoDB URI for Company B (automatically derived if empty)"
   type        = string
+  default     = ""
 }
 
 variable "attendance_service_image" {
-  description = "Docker image for the Attendance service"
+  description = "Docker image for the Attendance service (automatically derived if empty)"
   type        = string
+  default     = ""
 }
 
 variable "attendance_mongodb_uri" {
-  description = "MongoDB URI for the Attendance service"
+  description = "MongoDB URI for the Attendance service (automatically derived if empty)"
   type        = string
+  default     = ""
 }
 
 variable "edge_gateway_image" {
-  description = "Docker image for the Edge Gateway service"
+  description = "Docker image for the Edge Gateway service (automatically derived if empty)"
   type        = string
+  default     = ""
 }

@@ -87,7 +87,7 @@ resource "google_cloud_run_v2_service" "company_a" {
     }
 
     containers {
-      image = var.company_service_image
+      image = local.company_service_image
 
       ports {
         container_port = 8080
@@ -115,7 +115,7 @@ resource "google_cloud_run_v2_service" "company_a" {
 
       env {
         name  = "MONGODB_URI"
-        value = var.company_a_mongodb_uri
+        value = local.mongodb_internal_uri
       }
 
       env {
@@ -164,7 +164,7 @@ resource "google_cloud_run_v2_service" "company_b" {
     }
 
     containers {
-      image = var.company_service_image
+      image = local.company_service_image
 
       ports {
         container_port = 8080
@@ -192,7 +192,7 @@ resource "google_cloud_run_v2_service" "company_b" {
 
       env {
         name  = "MONGODB_URI"
-        value = var.company_b_mongodb_uri
+        value = local.mongodb_internal_uri
       }
 
       env {
@@ -241,7 +241,7 @@ resource "google_cloud_run_v2_service" "attendance" {
     }
 
     containers {
-      image = var.attendance_service_image
+      image = local.attendance_service_image
 
       ports {
         container_port = 8080
@@ -264,7 +264,7 @@ resource "google_cloud_run_v2_service" "attendance" {
 
       env {
         name  = "MONGODB_URI"
-        value = var.attendance_mongodb_uri
+        value = local.mongodb_internal_uri
       }
 
       env {
@@ -310,7 +310,7 @@ resource "google_cloud_run_v2_service" "edge_gateway" {
     }
 
     containers {
-      image = var.edge_gateway_image
+      image = local.edge_gateway_image
 
       ports {
         container_port = 8080
