@@ -1,19 +1,26 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
-import { getEmployeeModel } from './src/models/employee.model.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
+// Set defaults for seeding BEFORE importing models
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-here';
+process.env.COMPANY_ID = process.env.COMPANY_ID || 'A';
+
 async function seed() {
+  // Dynamic import to ensure env vars are set before module loads
+  const { getEmployeeModel } = await import('./src/models/employee.model.js');
+
   const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/company_a_db';
   const companyId = process.env.COMPANY_ID || 'A';
   const companySlug = companyId === 'B' ? 'company-b' : 'company-a';
+
   console.log(`Connecting to ${uri}...`);
+  console.log(`Company ID: ${companyId}`);
   await mongoose.connect(uri);
 
   const Employee = getEmployeeModel();
-
   await Employee.deleteMany({});
 
   const passwordHash = await bcrypt.hash('password123', 10);
@@ -73,10 +80,9 @@ async function seed() {
   ];
 
   await Employee.insertMany(employeeData);
-  console.log('Employee seed data inserted successfully!');
-  console.log('');
-  console.log('Login credentials (for integration testing):');
-  console.log(`  Admin HR:  admin@${companySlug}.com / password123`);
+  console.log('Seed data inserted successfully!');
+  console.log('Login credentials:');
+  console.log(`  Admin: admin@${companySlug}.com / password123`);
   console.log(`  Employee: employee1@${companySlug}.com / password123`);
   console.log(`  Employee: employee2@${companySlug}.com / password123`);
   await mongoose.disconnect();

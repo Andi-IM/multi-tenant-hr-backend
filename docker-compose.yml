@@ -86,8 +86,9 @@ services:
       - NODE_ENV=production
       - PORT=3003
       - MONGODB_URI=mongodb://mongodb:27017/attendance_db
-      - COMPANY_A_URL=http://company-a:3001
-      - COMPANY_B_URL=http://company-b:3002
+      - COMPANY_SERVICE_URL=http://company-a:3001
+      - COMPANY_A_SERVICE_URL=http://company-a:3001
+      - COMPANY_B_SERVICE_URL=http://company-b:3002
       - TZ=Asia/Jakarta
       - JWT_SECRET=${JWT_SECRET:-your-secret-key-here}
     volumes:
