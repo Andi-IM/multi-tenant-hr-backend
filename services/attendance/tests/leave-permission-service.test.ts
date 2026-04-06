@@ -251,7 +251,9 @@ describe('LeavePermissionService', () => {
 
       const result = await service.getRequests('EMP-001', 'company-A', 'EMPLOYEE', {});
 
-      expect(mockModel.find).toHaveBeenCalledWith(expect.objectContaining({ employeeId: 'EMP-001' }));
+      expect(mockModel.find).toHaveBeenCalledWith(
+        expect.objectContaining({ employeeId: 'EMP-001' })
+      );
       expect(result.data).toEqual(mockData);
       expect(result.total).toBe(1);
     });
@@ -273,7 +275,9 @@ describe('LeavePermissionService', () => {
 
       await service.getRequests('EMP-001', 'company-A', 'ADMIN_HR', {});
 
-      expect(mockModel.find).toHaveBeenCalledWith(expect.objectContaining({ companyId: 'company-A' }));
+      expect(mockModel.find).toHaveBeenCalledWith(
+        expect.objectContaining({ companyId: 'company-A' })
+      );
     });
 
     it('should apply status and type filters', async () => {

@@ -10,7 +10,10 @@ export type UserRole = 'ADMIN_HR' | 'EMPLOYEE' | 'APPROVER' | 'SYSTEM_ACTOR';
  * Embedded into the token by the authentication system.
  */
 export interface JwtUserPayload {
-  id: string; // The user's ID
+  id?: string;
+  userId?: string;
+  employeeId?: string;
+  email?: string;
   role: UserRole;
   companyId: string;
 }

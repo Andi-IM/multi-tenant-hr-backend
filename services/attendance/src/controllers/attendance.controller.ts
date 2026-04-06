@@ -15,7 +15,10 @@ export class AttendanceController {
         return res.status(401).json({ status: 'error', message: 'Unauthorized' });
       }
 
-      const employeeId = user.id; // Or user.employeeId depending on token structure
+      const employeeId = user.employeeId ?? user.id;
+      if (!employeeId) {
+        return res.status(401).json({ status: 'error', message: 'Unauthorized' });
+      }
       const companyId = user.companyId;
 
       // 2. Extract token from Authorization header to pass to internal service
@@ -72,7 +75,10 @@ export class AttendanceController {
         return res.status(401).json({ status: 'error', message: 'Unauthorized' });
       }
 
-      const employeeId = user.id;
+      const employeeId = user.employeeId ?? user.id;
+      if (!employeeId) {
+        return res.status(401).json({ status: 'error', message: 'Unauthorized' });
+      }
       const companyId = user.companyId;
 
       // 2. Extract token from Authorization header

@@ -2,7 +2,7 @@ import { Router, type Request, type Response, type NextFunction } from 'express'
 import { authController } from '../controllers/auth.controller.js';
 import { validate } from '../middleware/validate.middleware.js';
 import { loginSchema } from '../validators/auth.validator.js';
-import { loginRateLimit } from '../middleware/rate-limit.middleware.js';
+import { effectiveLoginRateLimit } from '../middleware/rate-limit.middleware.js';
 
 const router = Router();
 
@@ -68,7 +68,7 @@ const router = Router();
  */
 router.post(
   '/login',
-  loginRateLimit,
+  effectiveLoginRateLimit,
   validate(loginSchema),
   (req: Request, res: Response, next: NextFunction) => authController.login(req, res, next)
 );

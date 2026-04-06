@@ -1,4 +1,5 @@
 import axios, { isAxiosError } from 'axios';
+import jwt from 'jsonwebtoken';
 import {
   getLeavePermissionRequestModel,
   type ILeavePermissionRequest,
@@ -10,22 +11,39 @@ import {
 
 export class LeavePermissionService {
   private companyServiceUrl: string;
+  private jwtSecret: string;
 
   constructor() {
     this.companyServiceUrl = process.env.COMPANY_SERVICE_URL || 'http://localhost:3001';
+    this.jwtSecret = process.env.JWT_SECRET || 'your-secret-key-here';
+  }
+
+  private getSystemActorToken(companyId: string): string {
+    return jwt.sign(
+      {
+        userId: 'attendance-service',
+        employeeId: 'SYSTEM_ACTOR',
+        email: 'attendance-service@local',
+        role: 'SYSTEM_ACTOR',
+        companyId,
+      },
+      this.jwtSecret,
+      { expiresIn: '5m' }
+    );
   }
 
   async verifyEmployeeStatus(
     employeeId: string,
     companyId: string,
-    token: string
+    _token: string
   ): Promise<EmployeeStatusResponse['data']> {
     try {
+      const systemToken = this.getSystemActorToken(companyId);
       const response = await axios.get<unknown>(
         `${this.companyServiceUrl}/api/v1/internal/employees/${employeeId}/status`,
         {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${systemToken}`,
             'X-Company-ID': companyId,
           },
         }

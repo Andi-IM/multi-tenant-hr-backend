@@ -53,7 +53,8 @@ export function errorHandler(err: Error, _req: Request, res: Response, _next: Ne
     const fields = mongoDuplicateKey.keyPattern ? Object.keys(mongoDuplicateKey.keyPattern) : [];
     res.status(409).json({
       status: 'error',
-      message: fields.length > 0 ? `Duplicate value for: ${fields.join(', ')}` : 'Duplicate key error',
+      message:
+        fields.length > 0 ? `Duplicate value for: ${fields.join(', ')}` : 'Duplicate key error',
     });
     return;
   }

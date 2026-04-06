@@ -1,4 +1,5 @@
 import { rateLimit } from 'express-rate-limit';
+import type { RequestHandler } from 'express';
 
 /**
  * Rate limiting middleware for sensitive endpoints (e.g., /login).
@@ -13,4 +14,9 @@ export const loginRateLimit = rateLimit({
   },
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-});
+}) as RequestHandler;
+
+export const effectiveLoginRateLimit: RequestHandler =
+  process.env.NODE_ENV !== 'production' || process.env.RATE_LIMIT_ENABLED === 'false'
+    ? (_req, _res, next) => next()
+    : loginRateLimit;

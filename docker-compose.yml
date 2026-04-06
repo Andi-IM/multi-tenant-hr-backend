@@ -32,6 +32,7 @@ services:
       - TZ=Asia/Jakarta
       - JWT_SECRET=${JWT_SECRET:-your-secret-key-here}
       - REFRESH_TOKEN_SECRET=${REFRESH_TOKEN_SECRET:-your-refresh-secret-key-here}
+      - RATE_LIMIT_ENABLED=false
     volumes:
       - /etc/localtime:/etc/localtime:ro
     depends_on:
@@ -60,6 +61,7 @@ services:
       - TZ=Asia/Jakarta
       - JWT_SECRET=${JWT_SECRET:-your-secret-key-here}
       - REFRESH_TOKEN_SECRET=${REFRESH_TOKEN_SECRET:-your-refresh-secret-key-here}
+      - RATE_LIMIT_ENABLED=false
     volumes:
       - /etc/localtime:/etc/localtime:ro
     depends_on:
@@ -86,6 +88,7 @@ services:
       - MONGODB_URI=mongodb://mongodb:27017/attendance_db
       - COMPANY_SERVICE_URL=http://company-a:3001
       - TZ=Asia/Jakarta
+      - JWT_SECRET=${JWT_SECRET:-your-secret-key-here}
     volumes:
       - /etc/localtime:/etc/localtime:ro
     depends_on:

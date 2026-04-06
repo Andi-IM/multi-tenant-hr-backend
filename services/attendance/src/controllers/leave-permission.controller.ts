@@ -42,8 +42,16 @@ export class LeavePermissionController {
       }
       const token = authHeader.split(' ')[1];
 
+      const employeeId = user.employeeId ?? user.id;
+      if (!employeeId) {
+        return res.status(401).json({
+          status: 'error',
+          message: 'Unauthorized',
+        });
+      }
+
       const request = await leavePermissionService.createLeaveRequest(
-        user.id,
+        employeeId,
         user.companyId,
         start,
         end,
@@ -113,8 +121,16 @@ export class LeavePermissionController {
       }
       const token = authHeader.split(' ')[1];
 
+      const employeeId = user.employeeId ?? user.id;
+      if (!employeeId) {
+        return res.status(401).json({
+          status: 'error',
+          message: 'Unauthorized',
+        });
+      }
+
       const request = await leavePermissionService.createPermissionRequest(
-        user.id,
+        employeeId,
         user.companyId,
         reason,
         token
@@ -161,14 +177,27 @@ export class LeavePermissionController {
 
       const { type, status, start_date, end_date, page, limit } = req.query;
 
-      const result = await leavePermissionService.getRequests(user.id, user.companyId, user.role, {
-        type: type as string,
-        status: status as string,
-        startDate: start_date as string,
-        endDate: end_date as string,
-        page: page ? parseInt(page as string, 10) : 1,
-        limit: limit ? parseInt(limit as string, 10) : 10,
-      });
+      const employeeId = user.employeeId ?? user.id;
+      if (!employeeId) {
+        return res.status(401).json({
+          status: 'error',
+          message: 'Unauthorized',
+        });
+      }
+
+      const result = await leavePermissionService.getRequests(
+        employeeId,
+        user.companyId,
+        user.role,
+        {
+          type: type as string,
+          status: status as string,
+          startDate: start_date as string,
+          endDate: end_date as string,
+          page: page ? parseInt(page as string, 10) : 1,
+          limit: limit ? parseInt(limit as string, 10) : 10,
+        }
+      );
 
       return res.status(200).json({
         status: 'success',
@@ -211,9 +240,17 @@ export class LeavePermissionController {
       const { id } = req.params;
       const requestId = Array.isArray(id) ? id[0] : id;
 
+      const approverId = user.employeeId ?? user.id ?? user.userId;
+      if (!approverId) {
+        return res.status(401).json({
+          status: 'error',
+          message: 'Unauthorized',
+        });
+      }
+
       const request = await leavePermissionService.approveRequest(
         requestId,
-        user.id,
+        approverId,
         user.companyId
       );
 
@@ -266,9 +303,17 @@ export class LeavePermissionController {
       const { id } = req.params;
       const requestId = Array.isArray(id) ? id[0] : id;
 
+      const approverId = user.employeeId ?? user.id ?? user.userId;
+      if (!approverId) {
+        return res.status(401).json({
+          status: 'error',
+          message: 'Unauthorized',
+        });
+      }
+
       const request = await leavePermissionService.rejectRequest(
         requestId,
-        user.id,
+        approverId,
         user.companyId
       );
 

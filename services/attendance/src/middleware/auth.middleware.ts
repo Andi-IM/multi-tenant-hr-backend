@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import { AppError } from '../errors/app-error.js';
 import type { JwtUserPayload, AuthenticatedRequest } from '../types/auth.types.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-change-me';
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-here';
 
 /**
  * Middleware: Authenticate JWT Token

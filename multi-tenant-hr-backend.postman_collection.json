@@ -1,0 +1,2553 @@
+{
+  "info": {
+    "_postman_id": "e4ca02ff-c923-4c07-a3e4-92bac54dc54f",
+    "name": "multi-tenant-hr-backend",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "10339203"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login and get JWT token",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"admin@company-a.com\",\r\n  \"password\": \"password123\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/{{company_service}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{company_service}}",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status code is 200', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('login response shape is valid', () => {",
+                  "  pm.expect(json).to.have.property('status', 'success');",
+                  "  pm.expect(json).to.have.nested.property('data.accessToken');",
+                  "  pm.expect(json).to.have.nested.property('data.refreshToken');",
+                  "  pm.expect(json).to.have.nested.property('data.expiresIn');",
+                  "});",
+                  "pm.environment.set('token', json.data.accessToken);",
+                  "pm.environment.set('refreshToken', json.data.refreshToken);",
+                  "const base64UrlDecode = (input) => {",
+                  "  const b64 = input.replace(/-/g, '+').replace(/_/g, '/');",
+                  "  const pad = b64.length % 4 === 0 ? '' : '='.repeat(4 - (b64.length % 4));",
+                  "  return atob(b64 + pad);",
+                  "};",
+                  "try {",
+                  "  const payload = JSON.parse(base64UrlDecode(json.data.accessToken.split('.')[1]));",
+                  "  if (payload.companyId) pm.environment.set('companyId', payload.companyId);",
+                  "  if (payload.employeeId) pm.environment.set('employeeId', payload.employeeId);",
+                  "} catch (e) {}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Login successful",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"email\": \"admin@company-b.com\",\r\n  \"password\": \"password123\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/{{company_service}}/auth/login",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "{{company_service}}",
+                    "auth",
+                    "login"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Server",
+                  "value": "nginx/1.29.7"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 05 Apr 2026 22:51:30 GMT"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "665"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "RateLimit-Policy",
+                  "value": "5;w=900"
+                },
+                {
+                  "key": "RateLimit-Limit",
+                  "value": "5"
+                },
+                {
+                  "key": "RateLimit-Remaining",
+                  "value": "4"
+                },
+                {
+                  "key": "RateLimit-Reset",
+                  "value": "900"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"299-JVvhPmgkwQkYD/yrkITzM3GoXLY\""
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": \"success\",\n    \"data\": {\n        \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWQyZTYwZjQ3NTk1YjNiMTYwNjU5OTkiLCJlbXBsb3llZUlkIjoiRU1QLTAwMCIsImVtYWlsIjoiYWRtaW5AY29tcGFueS1iLmNvbSIsInJvbGUiOiJBRE1JTl9IUiIsImNvbXBhbnlJZCI6IkIiLCJpYXQiOjE3NzU0Mjk0OTAsImV4cCI6MTc3NTQzMzA5MH0.opIWMqeh4bFv2J_FF9_rfaKH4PVU1cZS01MsoRNuD-k\",\n        \"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWQyZTYwZjQ3NTk1YjNiMTYwNjU5OTkiLCJlbXBsb3llZUlkIjoiRU1QLTAwMCIsImVtYWlsIjoiYWRtaW5AY29tcGFueS1iLmNvbSIsInJvbGUiOiJBRE1JTl9IUiIsImNvbXBhbnlJZCI6IkIiLCJpYXQiOjE3NzU0Mjk0OTAsImV4cCI6MTc3NjAzNDI5MH0.HmXT6cnXHietIkIYUTHF78ZgGiN_GbVnrD4Gm1oy2P4\",\n        \"expiresIn\": 3600\n    }\n}"
+            },
+            {
+              "name": "Validation Error",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"email\": \"admin.com\",\r\n  \"password\": \"password123\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/{{company_service}}/auth/login",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "{{company_service}}",
+                    "auth",
+                    "login"
+                  ]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Server",
+                  "value": "nginx/1.29.7"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 05 Apr 2026 22:59:04 GMT"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "110"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "RateLimit-Policy",
+                  "value": "5;w=900"
+                },
+                {
+                  "key": "RateLimit-Limit",
+                  "value": "5"
+                },
+                {
+                  "key": "RateLimit-Remaining",
+                  "value": "3"
+                },
+                {
+                  "key": "RateLimit-Reset",
+                  "value": "651"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"6e-cQrb+z0yK915whKmo0vXvnwIBZw\""
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": \"error\",\n    \"message\": \"Validation failed\",\n    \"errors\": [\n        {\n            \"field\": \"email\",\n            \"message\": \"Invalid email format\"\n        }\n    ]\n}"
+            },
+            {
+              "name": "Invalid Credential",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"email\": \"admin@company.com\",\r\n  \"password\": \"password123\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/{{company_service}}/auth/login",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "{{company_service}}",
+                    "auth",
+                    "login"
+                  ]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Server",
+                  "value": "nginx/1.29.7"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 05 Apr 2026 23:00:14 GMT"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "50"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "RateLimit-Policy",
+                  "value": "5;w=900"
+                },
+                {
+                  "key": "RateLimit-Limit",
+                  "value": "5"
+                },
+                {
+                  "key": "RateLimit-Remaining",
+                  "value": "2"
+                },
+                {
+                  "key": "RateLimit-Reset",
+                  "value": "581"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"32-nHlhgoBn2rOjY/pQURBWBfOmom4\""
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": \"error\",\n    \"message\": \"Invalid credentials\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Refresh access token",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"refreshToken\": \"{{refreshToken}}\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/{{company_service}}/auth/refresh",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{company_service}}",
+                "auth",
+                "refresh"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status code is 200', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('refresh response shape is valid', () => {",
+                  "  pm.expect(json).to.have.property('status', 'success');",
+                  "  pm.expect(json).to.have.nested.property('data.accessToken');",
+                  "  pm.expect(json).to.have.nested.property('data.refreshToken');",
+                  "  pm.expect(json).to.have.nested.property('data.expiresIn');",
+                  "});",
+                  "pm.environment.set('token', json.data.accessToken);",
+                  "pm.environment.set('refreshToken', json.data.refreshToken);"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Refresh Token Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWQyZTYwZjQ3NTk1YjNiMTYwNjU5OTkiLCJlbXBsb3llZUlkIjoiRU1QLTAwMCIsImVtYWlsIjoiYWRtaW5AY29tcGFueS1iLmNvbSIsInJvbGUiOiJBRE1JTl9IUiIsImNvbXBhbnlJZCI6IkIiLCJpYXQiOjE3NzU0Mjk0OTAsImV4cCI6MTc3NjAzNDI5MH0.HmXT6cnXHietIkIYUTHF78ZgGiN_GbVnrD4Gm1oy2P4\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/{{company_service}}/auth/refresh",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "{{company_service}}",
+                    "auth",
+                    "refresh"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Server",
+                  "value": "nginx/1.29.7"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 05 Apr 2026 23:01:47 GMT"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "665"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"299-FLc5G0IIXpC1IgiIPdh1vGHODHo\""
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": \"success\",\n    \"data\": {\n        \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWQyZTYwZjQ3NTk1YjNiMTYwNjU5OTkiLCJlbXBsb3llZUlkIjoiRU1QLTAwMCIsImVtYWlsIjoiYWRtaW5AY29tcGFueS1iLmNvbSIsInJvbGUiOiJBRE1JTl9IUiIsImNvbXBhbnlJZCI6IkIiLCJpYXQiOjE3NzU0MzAxMDcsImV4cCI6MTc3NTQzMzcwN30.Uhd_7_DgN5V9t1gkdnR4Ow8Gb-Z9swjcd-OOF2jh3RM\",\n        \"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWQyZTYwZjQ3NTk1YjNiMTYwNjU5OTkiLCJlbXBsb3llZUlkIjoiRU1QLTAwMCIsImVtYWlsIjoiYWRtaW5AY29tcGFueS1iLmNvbSIsInJvbGUiOiJBRE1JTl9IUiIsImNvbXBhbnlJZCI6IkIiLCJpYXQiOjE3NzU0MzAxMDcsImV4cCI6MTc3NjAzNDkwN30.wbxRo7IAtcf4MkHm1WT_HNwbuIAbtl3qN0jbY39Kiyg\",\n        \"expiresIn\": 3600\n    }\n}"
+            },
+            {
+              "name": "Invalid token",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWQyZTYwZjQ3NTk1YjNiMTYwNjU5OTkiLCJlbXBsb3llZUlkIjoiRU1QLTAwMCIsImVtYWlsIjoiYWRtaW5AY29tcGFueS1iLmNvbSIsInJvbGUiOiJBRE1JTl9IUiIsImNvbXBhbnlJZCI6IkIiLCJpYXQiOjE3NzU0Mjk0OTAsImV4cCI6MTc3NjAzNDI5MH0.HmXT6cnXHietIkIYUTHF78ZgGiN_GbVnrD4Gm1oy\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/{{company_service}}/auth/refresh",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "{{company_service}}",
+                    "auth",
+                    "refresh"
+                  ]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Server",
+                  "value": "nginx/1.29.7"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 05 Apr 2026 23:02:18 GMT"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "63"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"3f-8sDOxrq7xCOOe8nQutC1/3iASgk\""
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": \"error\",\n    \"message\": \"Invalid or expired refresh token\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Employees",
+      "item": [
+        {
+          "name": "Create a new employee",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"employeeId\": \"{{createdEmployeeId}}\",\r\n  \"fullName\": \"New Employee\",\r\n  \"email\": \"{{createdEmployeeEmail}}\",\r\n  \"companyId\": \"{{companyId}}\",\r\n  \"joinDate\": \"{{createdEmployeeJoinDate}}\",\r\n  \"employmentStatus\": \"active\",\r\n  \"workSchedule\": {\r\n    \"startTime\": \"09:00\",\r\n    \"endTime\": \"17:00\",\r\n    \"workDays\": [1, 2, 3, 4, 5]\r\n  },\r\n  \"timezone\": \"Asia/Jakarta\",\r\n  \"role\": \"EMPLOYEE\",\r\n  \"password\": \"password123\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/{{company_service}}/employees",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{company_service}}",
+                "employees"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const suffix = `${Date.now()}-${Math.floor(Math.random() * 10000)}`;",
+                  "pm.environment.set('createdEmployeeId', `EMP-${suffix}`);",
+                  "pm.environment.set('createdEmployeeEmail', `emp-${suffix}@company-a.com`);",
+                  "pm.environment.set('createdEmployeeJoinDate', new Date().toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status code is 201', () => {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('employee created response shape is valid', () => {",
+                  "  pm.expect(json).to.have.property('status', 'success');",
+                  "  pm.expect(json).to.have.property('message');",
+                  "  pm.expect(json).to.have.property('data');",
+                  "  pm.expect(json.data).to.have.property('employeeId', pm.environment.get('createdEmployeeId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Validation Error",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"employeeId\": \"EMP-B-010\",\r\n    \"fullName\": \"John Doe\",\r\n    \"companyId\": \"B\",\r\n    \"joinDate\": \"2025-01-15T00:00:00.000Z\",\r\n    \"employmentStatus\": \"ACTIVE\",\r\n    \"workSchedule\": {\r\n      \"startTime\": \"09:00\",\r\n      \"endTime\": \"17:00\",\r\n      \"workingDays\": [\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\"]\r\n    },\r\n    \"timezone\": \"Asia/Jakarta\",\r\n    \"role\": \"EMPLOYEE\",\r\n    \"password\": \"password123\"\r\n  }",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/{{company_service}}/employees",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "{{company_service}}",
+                    "employees"
+                  ]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Server",
+                  "value": "nginx/1.29.7"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 05 Apr 2026 23:26:24 GMT"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "107"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"6b-V5H7eKO4W2La+VJa/bSkLnToyt0\""
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": \"error\",\n    \"message\": \"Validation failed\",\n    \"errors\": [\n        {\n            \"field\": \"email\",\n            \"message\": \"email is required\"\n        }\n    ]\n}"
+            },
+            {
+              "name": "No token",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"employeeId\": \"EMP-B-010\",\r\n    \"fullName\": \"John Doe\",\r\n    \"companyId\": \"B\",\r\n    \"joinDate\": \"2025-01-15T00:00:00.000Z\",\r\n    \"employmentStatus\": \"active\",\r\n    \"workSchedule\": {\r\n      \"startTime\": \"09:00\",\r\n      \"endTime\": \"17:00\",\r\n      \"workDays\": [1,2,3,4,5]\r\n    },\r\n    \"timezone\": \"Asia/Jakarta\",\r\n    \"role\": \"EMPLOYEE\",\r\n    \"password\": \"password123\"\r\n  }"
+                },
+                "url": {
+                  "raw": "{{base_url}}/{{company_service}}/employees",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "{{company_service}}",
+                    "employees"
+                  ]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Server",
+                  "value": "nginx/1.29.7"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 05 Apr 2026 23:09:14 GMT"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "48"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"30-T15caWeFPsdrj+TwRfIP0ky44zM\""
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": \"error\",\n    \"message\": \"No token provided\"\n}"
+            },
+            {
+              "name": "Invalid token",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"employeeId\": \"EMP-B-010\",\r\n    \"fullName\": \"John Doe\",\r\n    \"companyId\": \"B\",\r\n    \"joinDate\": \"2025-01-15T00:00:00.000Z\",\r\n    \"employmentStatus\": \"active\",\r\n    \"workSchedule\": {\r\n      \"startTime\": \"09:00\",\r\n      \"endTime\": \"17:00\",\r\n      \"workDays\": [1,2,3,4,5]\r\n    },\r\n    \"timezone\": \"Asia/Jakarta\",\r\n    \"role\": \"EMPLOYEE\",\r\n    \"password\": \"password123\"\r\n  }"
+                },
+                "url": {
+                  "raw": "{{base_url}}/{{company_service}}/employees",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "{{company_service}}",
+                    "employees"
+                  ]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Server",
+                  "value": "nginx/1.29.7"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 05 Apr 2026 23:09:39 GMT"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "44"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"2c-h6qSbxxFwercZGnJYga8yZHyn1s\""
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": \"error\",\n    \"message\": \"Invalid token\"\n}"
+            },
+            {
+              "name": "Conflict - employeeId already exists",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"employeeId\": \"EMP-B-010\",\r\n    \"fullName\": \"John Doe\",\r\n    \"email\": \"emp-b-010@company-b.com\",\r\n    \"companyId\": \"B\",\r\n    \"joinDate\": \"2025-01-15T00:00:00.000Z\",\r\n    \"employmentStatus\": \"ACTIVE\",\r\n    \"workSchedule\": {\r\n      \"startTime\": \"09:00\",\r\n      \"endTime\": \"17:00\",\r\n      \"workingDays\": [\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\"]\r\n    },\r\n    \"timezone\": \"Asia/Jakarta\",\r\n    \"role\": \"EMPLOYEE\",\r\n    \"password\": \"password123\"\r\n  }",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/{{company_service}}/employees",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "{{company_service}}",
+                    "employees"
+                  ]
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Server",
+                  "value": "nginx/1.29.7"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 05 Apr 2026 23:24:29 GMT"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "76"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"4c-olE27vIbaituSYXek9K5SH9kdLQ\""
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": \"error\",\n    \"message\": \"Employee with ID \\\"EMP-B-010\\\" already exists\"\n}"
+            },
+            {
+              "name": "Forbidden - cross-company access attempt",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"employeeId\": \"EMP-B-010\",\r\n    \"fullName\": \"John Doe\",\r\n    \"email\": \"emp-b-010@company-b.com\",\r\n    \"companyId\": \"A\",\r\n    \"joinDate\": \"2025-01-15T00:00:00.000Z\",\r\n    \"employmentStatus\": \"ACTIVE\",\r\n    \"workSchedule\": {\r\n      \"startTime\": \"09:00\",\r\n      \"endTime\": \"17:00\",\r\n      \"workingDays\": [\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\"]\r\n    },\r\n    \"timezone\": \"Asia/Jakarta\",\r\n    \"role\": \"EMPLOYEE\",\r\n    \"password\": \"password123\"\r\n  }",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/{{company_service}}/employees",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "{{company_service}}",
+                    "employees"
+                  ]
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Server",
+                  "value": "nginx/1.29.7"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 05 Apr 2026 23:25:52 GMT"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "92"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"5c-RqR7FGWCtmmnF86ErYkmKyc1FuA\""
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": \"error\",\n    \"message\": \"Cannot create employee for company \\\"A\\\" on Company B service\"\n}"
+            },
+            {
+              "name": "Employee created successfully",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"employeeId\": \"EMP-B-011\",\r\n    \"fullName\": \"John Lemon\",\r\n    \"email\": \"emp-b-011@company-b.com\",\r\n    \"companyId\": \"B\",\r\n    \"joinDate\": \"2025-01-15T00:00:00.000Z\",\r\n    \"employmentStatus\": \"ACTIVE\",\r\n    \"workSchedule\": {\r\n      \"startTime\": \"09:00\",\r\n      \"endTime\": \"17:00\",\r\n      \"workingDays\": [\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\"]\r\n    },\r\n    \"timezone\": \"Asia/Jakarta\",\r\n    \"role\": \"EMPLOYEE\",\r\n    \"password\": \"password123\"\r\n  }",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/{{company_service}}/employees",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "{{company_service}}",
+                    "employees"
+                  ]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Server",
+                  "value": "nginx/1.29.7"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 05 Apr 2026 23:27:38 GMT"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "481"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"1e1-unEY9sypqYxseH0xaGR8usFMqow\""
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": \"success\",\n    \"message\": \"Employee created successfully\",\n    \"data\": {\n        \"employeeId\": \"EMP-B-011\",\n        \"fullName\": \"John Lemon\",\n        \"email\": \"emp-b-011@company-b.com\",\n        \"companyId\": \"B\",\n        \"joinDate\": \"2025-01-15T00:00:00.000Z\",\n        \"status\": \"active\",\n        \"workSchedule\": {\n            \"startTime\": \"09:00\",\n            \"endTime\": \"17:00\",\n            \"toleranceMinutes\": 15,\n            \"workDays\": [\n                1,\n                2,\n                3,\n                4,\n                5\n            ]\n        },\n        \"timezone\": \"Asia/Jakarta\",\n        \"role\": \"EMPLOYEE\",\n        \"_id\": \"69d2efeae6242f5dca6f9c2c\",\n        \"createdAt\": \"2026-04-05T23:27:38.878Z\",\n        \"updatedAt\": \"2026-04-05T23:27:38.878Z\"\n    }\n}"
+            }
+          ]
+        },
+        {
+          "name": "List employees",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/{{company_service}}/employees?page=1&limit=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{company_service}}",
+                "employees"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "type": "text"
+                },
+                {
+                  "key": "employmentStatus",
+                  "value": null,
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "sortBy",
+                  "value": null,
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "sortOrder",
+                  "value": null,
+                  "type": "text",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status code is 200', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('list employees response shape is valid', () => {",
+                  "  pm.expect(json).to.have.property('status', 'success');",
+                  "  pm.expect(json).to.have.property('data');",
+                  "  pm.expect(json.data).to.be.an('array');",
+                  "  pm.expect(json).to.have.property('meta');",
+                  "  pm.expect(json.meta).to.have.property('total');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "A paginated list of employees",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/{{company_service}}/employees",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "{{company_service}}",
+                    "employees"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Server",
+                  "value": "nginx/1.29.7"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 05 Apr 2026 23:28:14 GMT"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "2133"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"855-HR9G+ALLsQTqnfXv5ig5f9UFOaI\""
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": \"success\",\n    \"data\": [\n        {\n            \"workSchedule\": {\n                \"startTime\": \"08:00\",\n                \"endTime\": \"17:00\",\n                \"toleranceMinutes\": 15,\n                \"workDays\": [\n                    1,\n                    2,\n                    3,\n                    4,\n                    5\n                ]\n            },\n            \"_id\": \"69d2e60f47595b3b16065999\",\n            \"employeeId\": \"EMP-000\",\n            \"fullName\": \"Admin HR\",\n            \"email\": \"admin@company-b.com\",\n            \"companyId\": \"B\",\n            \"joinDate\": \"2026-04-05T22:45:35.297Z\",\n            \"status\": \"active\",\n            \"timezone\": \"Asia/Jakarta\",\n            \"role\": \"ADMIN_HR\",\n            \"createdAt\": \"2026-04-05T22:45:35.305Z\",\n            \"updatedAt\": \"2026-04-05T22:45:35.305Z\"\n        },\n        {\n            \"workSchedule\": {\n                \"startTime\": \"08:00\",\n                \"endTime\": \"17:00\",\n                \"toleranceMinutes\": 15,\n                \"workDays\": [\n                    1,\n                    2,\n                    3,\n                    4,\n                    5\n                ]\n            },\n            \"_id\": \"69d2e60f47595b3b1606599a\",\n            \"employeeId\": \"EMP-001\",\n            \"fullName\": \"Employee One\",\n            \"email\": \"employee1@company-b.com\",\n            \"companyId\": \"B\",\n            \"joinDate\": \"2026-04-05T22:45:35.297Z\",\n            \"status\": \"active\",\n            \"timezone\": \"Asia/Jakarta\",\n            \"role\": \"EMPLOYEE\",\n            \"createdAt\": \"2026-04-05T22:45:35.305Z\",\n            \"updatedAt\": \"2026-04-05T22:45:35.305Z\"\n        },\n        {\n            \"workSchedule\": {\n                \"startTime\": \"09:00\",\n                \"endTime\": \"18:00\",\n                \"toleranceMinutes\": 15,\n                \"workDays\": [\n                    1,\n                    2,\n                    3,\n                    4,\n                    5\n                ]\n            },\n            \"_id\": \"69d2e60f47595b3b1606599b\",\n            \"employeeId\": \"EMP-002\",\n            \"fullName\": \"Employee Two\",\n            \"email\": \"employee2@company-b.com\",\n            \"companyId\": \"B\",\n            \"joinDate\": \"2026-04-05T22:45:35.297Z\",\n            \"status\": \"active\",\n            \"timezone\": \"Asia/Jakarta\",\n            \"role\": \"EMPLOYEE\",\n            \"createdAt\": \"2026-04-05T22:45:35.306Z\",\n            \"updatedAt\": \"2026-04-05T22:45:35.306Z\"\n        },\n        {\n            \"workSchedule\": {\n                \"startTime\": \"09:00\",\n                \"endTime\": \"17:00\",\n                \"toleranceMinutes\": 15,\n                \"workDays\": [\n                    1,\n                    2,\n                    3,\n                    4,\n                    5\n                ]\n            },\n            \"_id\": \"69d2ed4fe6242f5dca6f9c26\",\n            \"employeeId\": \"EMP-B-010\",\n            \"fullName\": \"John Doe\",\n            \"email\": \"emp-b-010@company-b.com\",\n            \"companyId\": \"B\",\n            \"joinDate\": \"2025-01-15T00:00:00.000Z\",\n            \"status\": \"active\",\n            \"timezone\": \"Asia/Jakarta\",\n            \"role\": \"EMPLOYEE\",\n            \"createdAt\": \"2026-04-05T23:16:31.465Z\",\n            \"updatedAt\": \"2026-04-05T23:16:31.465Z\"\n        },\n        {\n            \"workSchedule\": {\n                \"startTime\": \"09:00\",\n                \"endTime\": \"17:00\",\n                \"toleranceMinutes\": 15,\n                \"workDays\": [\n                    1,\n                    2,\n                    3,\n                    4,\n                    5\n                ]\n            },\n            \"_id\": \"69d2efeae6242f5dca6f9c2c\",\n            \"employeeId\": \"EMP-B-011\",\n            \"fullName\": \"John Lemon\",\n            \"email\": \"emp-b-011@company-b.com\",\n            \"companyId\": \"B\",\n            \"joinDate\": \"2025-01-15T00:00:00.000Z\",\n            \"status\": \"active\",\n            \"timezone\": \"Asia/Jakarta\",\n            \"role\": \"EMPLOYEE\",\n            \"createdAt\": \"2026-04-05T23:27:38.878Z\",\n            \"updatedAt\": \"2026-04-05T23:27:38.878Z\"\n        }\n    ],\n    \"meta\": {\n        \"total\": 5,\n        \"page\": 1,\n        \"limit\": 10,\n        \"totalPages\": 1\n    }\n}"
+            },
+            {
+              "name": "Validation error on query parameters",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/{{company_service}}/employees?page=1&limit=10&employmentStatus=udin",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "{{company_service}}",
+                    "employees"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    },
+                    {
+                      "key": "employmentStatus",
+                      "value": "udin",
+                      "type": "text"
+                    },
+                    {
+                      "key": "sortBy",
+                      "value": null,
+                      "type": "text",
+                      "disabled": true
+                    },
+                    {
+                      "key": "sortOrder",
+                      "value": null,
+                      "type": "text",
+                      "disabled": true
+                    }
+                  ]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Server",
+                  "value": "nginx/1.29.7"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 05 Apr 2026 23:29:50 GMT"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "175"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"af-/1ZF1F3Q54szK7v9ilwaFn6e8yI\""
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": \"error\",\n    \"message\": \"Query validation failed\",\n    \"errors\": [\n        {\n            \"field\": \"employmentStatus\",\n            \"message\": \"employmentStatus must be \\\"active\\\", \\\"inactive\\\", or \\\"terminated\\\"\"\n        }\n    ]\n}"
+            },
+            {
+              "name": "No Token",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/{{company_service}}/employees?page=1&limit=10&employmentStatus=udin",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "{{company_service}}",
+                    "employees"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    },
+                    {
+                      "key": "employmentStatus",
+                      "value": "udin",
+                      "type": "text"
+                    },
+                    {
+                      "key": "sortBy",
+                      "value": null,
+                      "type": "text",
+                      "disabled": true
+                    },
+                    {
+                      "key": "sortOrder",
+                      "value": null,
+                      "type": "text",
+                      "disabled": true
+                    }
+                  ]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Server",
+                  "value": "nginx/1.29.7"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 05 Apr 2026 23:30:24 GMT"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "48"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"30-T15caWeFPsdrj+TwRfIP0ky44zM\""
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": \"error\",\n    \"message\": \"No token provided\"\n}"
+            },
+            {
+              "name": "Invalid Token",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/{{company_service}}/employees?page=1&limit=10&employmentStatus=udin",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "{{company_service}}",
+                    "employees"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    },
+                    {
+                      "key": "employmentStatus",
+                      "value": "udin",
+                      "type": "text"
+                    },
+                    {
+                      "key": "sortBy",
+                      "value": null,
+                      "type": "text",
+                      "disabled": true
+                    },
+                    {
+                      "key": "sortOrder",
+                      "value": null,
+                      "type": "text",
+                      "disabled": true
+                    }
+                  ]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Server",
+                  "value": "nginx/1.29.7"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 05 Apr 2026 23:30:38 GMT"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "44"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"2c-h6qSbxxFwercZGnJYga8yZHyn1s\""
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": \"error\",\n    \"message\": \"Invalid token\"\n}"
+            },
+            {
+              "name": "Forbidden",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/{{company_service}}/employees?page=1&limit=10&employmentStatus=udin",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "{{company_service}}",
+                    "employees"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    },
+                    {
+                      "key": "employmentStatus",
+                      "value": "udin",
+                      "type": "text"
+                    },
+                    {
+                      "key": "sortBy",
+                      "value": null,
+                      "type": "text",
+                      "disabled": true
+                    },
+                    {
+                      "key": "sortOrder",
+                      "value": null,
+                      "type": "text",
+                      "disabled": true
+                    }
+                  ]
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Server",
+                  "value": "nginx/1.29.7"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 05 Apr 2026 23:32:59 GMT"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "55"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"37-XCpNlZ6vWWokYcIOELdPqE1g1Lg\""
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": \"error\",\n    \"message\": \"Insufficient permissions\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update employee's data",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"fullName\": \"New Employee Updated\",\r\n  \"employmentStatus\": \"active\",\r\n  \"workSchedule\": {\r\n    \"startTime\": \"08:00\",\r\n    \"endTime\": \"16:00\",\r\n    \"workDays\": [1, 2, 3, 4, 5]\r\n  },\r\n  \"timezone\": \"Asia/Jakarta\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/{{company_service}}/employees/{{createdEmployeeId}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{company_service}}",
+                "employees",
+                "{{createdEmployeeId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status code is 200', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('employee updated response shape is valid', () => {",
+                  "  pm.expect(json).to.have.property('status', 'success');",
+                  "  pm.expect(json).to.have.property('data');",
+                  "  pm.expect(json.data).to.have.property('employeeId', pm.environment.get('createdEmployeeId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "No Token",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/{{company_service}}/employees/{{employeeId}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "{{company_service}}",
+                    "employees",
+                    "{{employeeId}}"
+                  ]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Server",
+                  "value": "nginx/1.29.7"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 05 Apr 2026 23:36:18 GMT"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "48"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"30-T15caWeFPsdrj+TwRfIP0ky44zM\""
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": \"error\",\n    \"message\": \"No token provided\"\n}"
+            },
+            {
+              "name": "Invalid Token",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/{{company_service}}/employees/{{employeeId}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "{{company_service}}",
+                    "employees",
+                    "{{employeeId}}"
+                  ]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Server",
+                  "value": "nginx/1.29.7"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 05 Apr 2026 23:36:36 GMT"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "44"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"2c-h6qSbxxFwercZGnJYga8yZHyn1s\""
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": \"error\",\n    \"message\": \"Invalid token\"\n}"
+            },
+            {
+              "name": "Forbidden",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"fullName\": \"Jane Doe Updated\",\r\n  \"employmentStatus\": \"active\",\r\n  \"workSchedule\": {\r\n    \"startTime\": \"08:00\",\r\n    \"endTime\": \"16:00\",\r\n    \"workingDays\": [\r\n      \"Monday\",\r\n      \"Tuesday\",\r\n      \"Wednesday\",\r\n      \"Thursday\",\r\n      \"Friday\"\r\n    ]\r\n  },\r\n  \"timezone\": \"Asia/Jakarta\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/{{company_service}}/employees/{{employeeId}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "{{company_service}}",
+                    "employees",
+                    "{{employeeId}}"
+                  ]
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Server",
+                  "value": "nginx/1.29.7"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 05 Apr 2026 23:38:50 GMT"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "55"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"37-XCpNlZ6vWWokYcIOELdPqE1g1Lg\""
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": \"error\",\n    \"message\": \"Insufficient permissions\"\n}"
+            },
+            {
+              "name": "Employee updated successfully",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"fullName\": \"Jane Doe Updated\",\r\n  \"employmentStatus\": \"active\",\r\n  \"workSchedule\": {\r\n    \"startTime\": \"08:00\",\r\n    \"endTime\": \"16:00\",\r\n    \"workingDays\": [\r\n      \"Monday\",\r\n      \"Tuesday\",\r\n      \"Wednesday\",\r\n      \"Thursday\",\r\n      \"Friday\"\r\n    ]\r\n  },\r\n  \"timezone\": \"Asia/Jakarta\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/{{company_service}}/employees/{{employeeId}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "{{company_service}}",
+                    "employees",
+                    "{{employeeId}}"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Server",
+                  "value": "nginx/1.29.7"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 05 Apr 2026 23:39:21 GMT"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "485"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"1e5-8e1S9BvXchD6g37WsfKSx/h9hDs\""
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": \"success\",\n    \"message\": \"Employee updated successfully\",\n    \"data\": {\n        \"workSchedule\": {\n            \"startTime\": \"08:00\",\n            \"endTime\": \"16:00\",\n            \"toleranceMinutes\": 15,\n            \"workDays\": [\n                1,\n                2,\n                3,\n                4,\n                5\n            ]\n        },\n        \"_id\": \"69d2e60f47595b3b1606599a\",\n        \"employeeId\": \"EMP-001\",\n        \"fullName\": \"Jane Doe Updated\",\n        \"email\": \"employee1@company-b.com\",\n        \"companyId\": \"B\",\n        \"joinDate\": \"2026-04-05T22:45:35.297Z\",\n        \"status\": \"active\",\n        \"timezone\": \"Asia/Jakarta\",\n        \"role\": \"EMPLOYEE\",\n        \"createdAt\": \"2026-04-05T22:45:35.305Z\",\n        \"updatedAt\": \"2026-04-05T23:39:21.725Z\"\n    }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Retrieve employee details",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/{{company_service}}/employees/{{createdEmployeeId}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{company_service}}",
+                "employees",
+                "{{createdEmployeeId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status code is 200', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('employee details response shape is valid', () => {",
+                  "  pm.expect(json).to.have.property('status', 'success');",
+                  "  pm.expect(json).to.have.nested.property('data.employeeId', pm.environment.get('createdEmployeeId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "No Token",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/{{company_service}}/employees/{{employeeId}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "{{company_service}}",
+                    "employees",
+                    "{{employeeId}}"
+                  ]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Server",
+                  "value": "nginx/1.29.7"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 05 Apr 2026 23:34:10 GMT"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "48"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"30-T15caWeFPsdrj+TwRfIP0ky44zM\""
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": \"error\",\n    \"message\": \"No token provided\"\n}"
+            },
+            {
+              "name": "Forbidden",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/{{company_service}}/employees/{{employeeId}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "{{company_service}}",
+                    "employees",
+                    "{{employeeId}}"
+                  ]
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Server",
+                  "value": "nginx/1.29.7"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 05 Apr 2026 23:34:30 GMT"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "79"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"4f-llStOeyItZiQaEHYg7frX8MVMaA\""
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": \"error\",\n    \"message\": \"Access denied: You can only access your own data\"\n}"
+            },
+            {
+              "name": "Employee details retrieved successfully",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/{{company_service}}/employees/{{employeeId}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "{{company_service}}",
+                    "employees",
+                    "{{employeeId}}"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Server",
+                  "value": "nginx/1.29.7"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 05 Apr 2026 23:34:54 GMT"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "439"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"1b7-cJBf1NBJn0NLNbZhRP6WV24uHYk\""
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": \"success\",\n    \"data\": {\n        \"workSchedule\": {\n            \"startTime\": \"08:00\",\n            \"endTime\": \"17:00\",\n            \"toleranceMinutes\": 15,\n            \"workDays\": [\n                1,\n                2,\n                3,\n                4,\n                5\n            ]\n        },\n        \"_id\": \"69d2e60f47595b3b1606599a\",\n        \"employeeId\": \"EMP-001\",\n        \"fullName\": \"Employee One\",\n        \"email\": \"employee1@company-b.com\",\n        \"companyId\": \"B\",\n        \"joinDate\": \"2026-04-05T22:45:35.297Z\",\n        \"status\": \"active\",\n        \"timezone\": \"Asia/Jakarta\",\n        \"role\": \"EMPLOYEE\",\n        \"createdAt\": \"2026-04-05T22:45:35.305Z\",\n        \"updatedAt\": \"2026-04-05T22:45:35.305Z\"\n    }\n}"
+            },
+            {
+              "name": "Employee not found in this company's database",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/{{company_service}}/employees/XX",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "{{company_service}}",
+                    "employees",
+                    "XX"
+                  ]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Server",
+                  "value": "nginx/1.29.7"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sun, 05 Apr 2026 23:35:30 GMT"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "64"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"40-VDZNgiZ4bsyrHc4tMK/fpeNP5QU\""
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": \"error\",\n    \"message\": \"Employee with ID \\\"XX\\\" not found\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete an employee (soft delete)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/{{company_service}}/employees/{{createdEmployeeId}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{company_service}}",
+                "employees",
+                "{{createdEmployeeId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status code is 200', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('delete employee response shape is valid', () => {",
+                  "  pm.expect(json).to.have.property('status', 'success');",
+                  "  pm.expect(json).to.have.property('data');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Deactivate an employee",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/{{company_service}}/employees/{{createdEmployeeId}}/deactivate",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{company_service}}",
+                "employees",
+                "{{createdEmployeeId}}",
+                "deactivate"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status code is 200 or 409', () => {",
+                  "  pm.expect([200, 409]).to.include(pm.response.code);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('deactivate employee response shape is valid', () => {",
+                  "  pm.expect(json).to.have.property('status');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Attendance",
+      "item": [
+        {
+          "name": "Employee Check-In",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/{{attendance_service}}/attendances/checkin",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{attendance_service}}",
+                "attendances",
+                "checkin"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status code is 200 or 201', () => {",
+                  "  pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('response has success status', () => {",
+                  "  pm.expect(json).to.have.property('status', 'success');",
+                  "  pm.expect(json).to.have.property('data');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Employee Check-out",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/{{attendance_service}}/attendances/checkout",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{attendance_service}}",
+                "attendances",
+                "checkout"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status code is 200', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('response has success status', () => {",
+                  "  pm.expect(json).to.have.property('status', 'success');",
+                  "  pm.expect(json).to.have.property('data');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "List Attendance Records",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/{{attendance_service}}/attendances?companyId={{companyId}}&page=1&limit=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{attendance_service}}",
+                "attendances"
+              ],
+              "query": [
+                {
+                  "key": "companyId",
+                  "value": "{{companyId}}"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status code is 200', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('response shape is valid', () => {",
+                  "  pm.expect(json).to.have.property('status', 'success');",
+                  "  pm.expect(json).to.have.nested.property('data.attendances');",
+                  "  pm.expect(json.data.attendances).to.be.an('array');",
+                  "  pm.expect(json).to.have.nested.property('data.total');",
+                  "  pm.expect(json).to.have.nested.property('data.page');",
+                  "  pm.expect(json).to.have.nested.property('data.limit');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Get Attendance Report",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/{{attendance_service}}/attendances/report?start_date={{start_date}}&end_date={{end_date}}&group_by=day",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{attendance_service}}",
+                "attendances",
+                "report"
+              ],
+              "query": [
+                {
+                  "key": "start_date",
+                  "value": "{{start_date}}"
+                },
+                {
+                  "key": "end_date",
+                  "value": "{{end_date}}"
+                },
+                {
+                  "key": "group_by",
+                  "value": "day"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const today = new Date();",
+                  "const start = new Date(today);",
+                  "start.setDate(start.getDate() - 7);",
+                  "const toISODate = (d) => d.toISOString().slice(0, 10);",
+                  "pm.environment.set('start_date', toISODate(start));",
+                  "pm.environment.set('end_date', toISODate(today));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status code is 200', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('response shape is valid', () => {",
+                  "  pm.expect(json).to.have.property('status', 'success');",
+                  "  pm.expect(json).to.have.property('data');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Leave Permission",
+      "item": [
+        {
+          "name": "Submit Leave Request",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"startDate\": \"{{leaveStartDate}}\",\r\n  \"endDate\": \"{{leaveEndDate}}\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/{{attendance_service}}/leave",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{attendance_service}}",
+                "leave"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const today = new Date();",
+                  "const baseDays = 30 + (Math.floor(Date.now() / 1000) % 365);",
+                  "const start = new Date(today);",
+                  "start.setDate(start.getDate() + baseDays);",
+                  "const end = new Date(start);",
+                  "end.setDate(end.getDate() + 1);",
+                  "const toISODate = (d) => d.toISOString().slice(0, 10);",
+                  "pm.environment.set('leaveStartDate', toISODate(start));",
+                  "pm.environment.set('leaveEndDate', toISODate(end));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status code is 201 or 409', () => {",
+                  "  pm.expect([201, 409]).to.include(pm.response.code);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "if (pm.response.code === 201) {",
+                  "  pm.test('response shape is valid', () => {",
+                  "    pm.expect(json).to.have.property('status', 'success');",
+                  "    pm.expect(json).to.have.property('data');",
+                  "    pm.expect(json.data).to.have.property('_id');",
+                  "  });",
+                  "  pm.environment.set('leaveRequestId', json.data._id);",
+                  "} else {",
+                  "  pm.test('conflict response is valid', () => {",
+                  "    pm.expect(json).to.have.property('status', 'error');",
+                  "    pm.expect(json).to.have.property('message');",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Submit Permission Request",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"reason\": \"Medical appointment\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/{{attendance_service}}/permission",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{attendance_service}}",
+                "permission"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status code is 201', () => {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('response shape is valid', () => {",
+                  "  pm.expect(json).to.have.property('status', 'success');",
+                  "  pm.expect(json).to.have.property('data');",
+                  "  pm.expect(json.data).to.have.property('_id');",
+                  "});",
+                  "pm.environment.set('permissionRequestId', json.data._id);"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Get Leave/Permission Requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/{{attendance_service}}/requests",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{attendance_service}}",
+                "requests"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status code is 200', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('response shape is valid', () => {",
+                  "  pm.expect(json).to.have.property('status', 'success');",
+                  "  pm.expect(json).to.have.property('data');",
+                  "  pm.expect(json.data).to.be.an('array');",
+                  "  pm.expect(json).to.have.property('pagination');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Approve Leave/Permission Request",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/{{attendance_service}}/requests/{{leaveRequestId}}/approve",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{attendance_service}}",
+                "requests",
+                "{{leaveRequestId}}",
+                "approve"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('leaveRequestId')) {",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status code is 200', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('request is approved', () => {",
+                  "  pm.expect(json).to.have.property('status', 'success');",
+                  "  pm.expect(json).to.have.nested.property('data.status', 'approved');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Reject Leave/Permission Request",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/{{attendance_service}}/requests/{{permissionRequestId}}/reject",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "{{attendance_service}}",
+                "requests",
+                "{{permissionRequestId}}",
+                "reject"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('permissionRequestId')) {",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status code is 200', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('request is rejected', () => {",
+                  "  pm.expect(json).to.have.property('status', 'success');",
+                  "  pm.expect(json).to.have.nested.property('data.status', 'rejected');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    }
+  ]
+}
