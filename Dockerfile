@@ -8,6 +8,7 @@ RUN npm install -g turbo
 # Pruning stage
 FROM base AS pruner
 ARG SERVICE_NAME
+ENV SERVICE_NAME=${SERVICE_NAME}
 WORKDIR /app
 COPY . .
 RUN turbo prune @jaga-id/${SERVICE_NAME} --docker
@@ -23,6 +24,7 @@ RUN pnpm install --frozen-lockfile
 # Builder stage
 FROM base AS builder
 ARG SERVICE_NAME
+ENV SERVICE_NAME=${SERVICE_NAME}
 WORKDIR /app
 COPY --from=installer /app/ .
 COPY --from=pruner /app/out/full/ .
@@ -31,8 +33,8 @@ RUN turbo build --filter=@jaga-id/${SERVICE_NAME}
 
 # Runner stage
 FROM node:20-alpine AS runner
-WORKDIR /app
 ARG SERVICE_NAME
+ENV SERVICE_NAME=${SERVICE_NAME}
 ENV NODE_ENV=production
 
 # Don't run production as root

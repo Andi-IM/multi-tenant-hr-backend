@@ -68,3 +68,8 @@ variable "edge_gateway_image" {
   type        = string
   default     = ""
 }
+
+variable "owner_email" {
+  description = "Email of the owner/user who will have access to Artifact Registry"
+  type        = string
+}

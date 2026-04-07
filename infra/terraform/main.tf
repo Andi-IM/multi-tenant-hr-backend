@@ -28,6 +28,14 @@ resource "google_artifact_registry_repository" "docker" {
   depends_on = [google_project_service.required]
 }
 
+resource "google_artifact_registry_repository_iam_member" "docker_writer" {
+  project    = var.project_id
+  location   = var.region
+  repository = google_artifact_registry_repository.docker.name
+  role       = "roles/artifactregistry.writer"
+  member     = "user:${var.owner_email}"
+}
+
 resource "google_secret_manager_secret" "jwt_secret" {
   project   = var.project_id
   secret_id = "mthrb-jwt-secret"
@@ -73,10 +81,11 @@ resource "google_secret_manager_secret_iam_member" "runtime_can_read_refresh" {
 }
 
 resource "google_cloud_run_v2_service" "company_a" {
-  provider = google-beta
-  project  = var.project_id
-  name     = "company-a"
-  location = var.region
+  provider              = google-beta
+  project               = var.project_id
+  name                  = "company-a"
+  location              = var.region
+  deletion_protection   = false
 
   ingress = "INGRESS_TRAFFIC_ALL"
 
@@ -145,10 +154,11 @@ resource "google_cloud_run_v2_service" "company_a" {
 }
 
 resource "google_cloud_run_v2_service" "company_b" {
-  provider = google-beta
-  project  = var.project_id
-  name     = "company-b"
-  location = var.region
+  provider            = google-beta
+  project             = var.project_id
+  name                = "company-b"
+  location            = var.region
+  deletion_protection = false
 
   ingress = "INGRESS_TRAFFIC_ALL"
 
@@ -217,10 +227,11 @@ resource "google_cloud_run_v2_service" "company_b" {
 }
 
 resource "google_cloud_run_v2_service" "attendance" {
-  provider = google-beta
-  project  = var.project_id
-  name     = "attendance"
-  location = var.region
+  provider            = google-beta
+  project             = var.project_id
+  name                = "attendance"
+  location            = var.region
+  deletion_protection = false
 
   ingress = "INGRESS_TRAFFIC_ALL"
 
@@ -283,10 +294,11 @@ resource "google_cloud_run_v2_service" "attendance" {
 }
 
 resource "google_cloud_run_v2_service" "edge_gateway" {
-  provider = google-beta
-  project  = var.project_id
-  name     = "edge-gateway"
-  location = var.region
+  provider            = google-beta
+  project             = var.project_id
+  name                = "edge-gateway"
+  location            = var.region
+  deletion_protection = false
 
   ingress = "INGRESS_TRAFFIC_ALL"
 
