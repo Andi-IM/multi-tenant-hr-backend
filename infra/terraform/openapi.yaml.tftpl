@@ -14,6 +14,7 @@ paths:
       operationId: "root"
       x-google-backend:
         address: "${company_a_url}"
+      security: [] # Disables API Key requirement warning
       responses:
         "200":
           description: "OK"
@@ -22,91 +23,142 @@ paths:
   /company-a/{relPath+}:
     get:
       operationId: "company_a_get"
+      x-google-backend:
+        address: "${company_a_url}"
+        path_translation: APPEND_PATH_TO_ADDRESS
+      security: []
       responses:
         "200":
           description: "OK"
     post:
       operationId: "company_a_post"
+      x-google-backend:
+        address: "${company_a_url}"
+        path_translation: APPEND_PATH_TO_ADDRESS
+      security: []
       responses:
         "200":
           description: "OK"
     put:
       operationId: "company_a_put"
+      x-google-backend:
+        address: "${company_a_url}"
+        path_translation: APPEND_PATH_TO_ADDRESS
+      security: []
       responses:
         "200":
           description: "OK"
     delete:
       operationId: "company_a_delete"
+      x-google-backend:
+        address: "${company_a_url}"
+        path_translation: APPEND_PATH_TO_ADDRESS
+      security: []
       responses:
         "200":
           description: "OK"
     patch:
       operationId: "company_a_patch"
+      x-google-backend:
+        address: "${company_a_url}"
+        path_translation: APPEND_PATH_TO_ADDRESS
+      security: []
       responses:
         "200":
           description: "OK"
-    x-google-backend:
-      address: "${company_a_url}"
-      path_translation: APPEND_PATH_TO_ADDRESS
 
   # Company B Routing
   /company-b/{relPath+}:
     get:
       operationId: "company_b_get"
+      x-google-backend:
+        address: "${company_b_url}"
+        path_translation: APPEND_PATH_TO_ADDRESS
+      security: []
       responses:
         "200":
           description: "OK"
     post:
       operationId: "company_b_post"
+      x-google-backend:
+        address: "${company_b_url}"
+        path_translation: APPEND_PATH_TO_ADDRESS
+      security: []
       responses:
         "200":
           description: "OK"
     put:
       operationId: "company_b_put"
+      x-google-backend:
+        address: "${company_b_url}"
+        path_translation: APPEND_PATH_TO_ADDRESS
+      security: []
       responses:
         "200":
           description: "OK"
     delete:
       operationId: "company_b_delete"
+      x-google-backend:
+        address: "${company_b_url}"
+        path_translation: APPEND_PATH_TO_ADDRESS
+      security: []
       responses:
         "200":
           description: "OK"
     patch:
       operationId: "company_b_patch"
+      x-google-backend:
+        address: "${company_b_url}"
+        path_translation: APPEND_PATH_TO_ADDRESS
+      security: []
       responses:
         "200":
           description: "OK"
-    x-google-backend:
-      address: "${company_b_url}"
-      path_translation: APPEND_PATH_TO_ADDRESS
 
   # Attendance Routing
   /attendance/{relPath+}:
     get:
       operationId: "attendance_get"
+      x-google-backend:
+        address: "${attendance_url}"
+        path_translation: APPEND_PATH_TO_ADDRESS
+      security: []
       responses:
         "200":
           description: "OK"
     post:
       operationId: "attendance_post"
+      x-google-backend:
+        address: "${attendance_url}"
+        path_translation: APPEND_PATH_TO_ADDRESS
+      security: []
       responses:
         "200":
           description: "OK"
     put:
       operationId: "attendance_put"
+      x-google-backend:
+        address: "${attendance_url}"
+        path_translation: APPEND_PATH_TO_ADDRESS
+      security: []
       responses:
         "200":
           description: "OK"
     delete:
       operationId: "attendance_delete"
+      x-google-backend:
+        address: "${attendance_url}"
+        path_translation: APPEND_PATH_TO_ADDRESS
+      security: []
       responses:
         "200":
           description: "OK"
     patch:
       operationId: "attendance_patch"
+      x-google-backend:
+        address: "${attendance_url}"
+        path_translation: APPEND_PATH_TO_ADDRESS
+      security: []
       responses:
         "200":
           description: "OK"
-    x-google-backend:
-      address: "${attendance_url}"
-      path_translation: APPEND_PATH_TO_ADDRESS
