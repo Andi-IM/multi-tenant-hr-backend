@@ -341,17 +341,17 @@ resource "google_cloud_run_v2_service" "edge_gateway" {
 
       env {
         name  = "COMPANY_A_SERVICE_URL"
-        value = google_cloud_run_v2_service.company_a.uri
+        value = "https://company-a.${var.region}.a.run.internal"
       }
 
       env {
         name  = "COMPANY_B_SERVICE_URL"
-        value = google_cloud_run_v2_service.company_b.uri
+        value = "https://company-b.${var.region}.a.run.internal"
       }
 
       env {
         name  = "ATTENDANCE_SERVICE_URL"
-        value = google_cloud_run_v2_service.attendance.uri
+        value = "https://attendance.${var.region}.a.run.internal"
       }
     }
   }
