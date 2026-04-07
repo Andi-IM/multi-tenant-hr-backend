@@ -226,7 +226,6 @@ add_imported_addr "google_secret_manager_secret_iam_member.runtime_can_read_refr
 add_imported_addr "google_cloud_run_v2_service.company_a"
 add_imported_addr "google_cloud_run_v2_service.company_b"
 add_imported_addr "google_cloud_run_v2_service.attendance"
-add_imported_addr "google_cloud_run_v2_service.edge_gateway"
 add_imported_addr "google_api_gateway_api.api"
 add_imported_addr "google_compute_instance.mongodb"
 add_imported_addr "google_compute_firewall.allow_mongodb_internal"
@@ -246,7 +245,6 @@ terraform import google_secret_manager_secret_iam_member.runtime_can_read_refres
 terraform import google_cloud_run_v2_service.company_a "projects/$PROJECT_ID/locations/$REGION/services/company-a" 2>/dev/null || true
 terraform import google_cloud_run_v2_service.company_b "projects/$PROJECT_ID/locations/$REGION/services/company-b" 2>/dev/null || true
 terraform import google_cloud_run_v2_service.attendance "projects/$PROJECT_ID/locations/$REGION/services/attendance" 2>/dev/null || true
-terraform import google_cloud_run_v2_service.edge_gateway "projects/$PROJECT_ID/locations/$REGION/services/edge-gateway" 2>/dev/null || true
 
 # Import API Gateway
 terraform import google_api_gateway_api.api "projects/$PROJECT_ID/locations/global/apis/mthrb-api" 2>/dev/null || true
@@ -337,11 +335,9 @@ cd "$SCRIPT_DIR/../../"
 
 COMPANY_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY_ID}/company-service:latest"
 ATTENDANCE_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY_ID}/attendance:latest"
-EDGE_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY_ID}/edge-gateway:latest"
 
 run "Building & Pushing company-service image" retry 3 5 gcloud builds submit . --config cloudbuild.yaml --substitutions=_TAG="$COMPANY_IMAGE",_DOCKERFILE="services/company-service/Dockerfile",_CONTEXT="."
 run "Building & Pushing attendance image" retry 3 5 gcloud builds submit . --config cloudbuild.yaml --substitutions=_TAG="$ATTENDANCE_IMAGE",_DOCKERFILE="services/attendance/Dockerfile",_CONTEXT="."
-run "Building & Pushing edge-gateway image" retry 3 5 gcloud builds submit . --config cloudbuild.yaml --substitutions=_TAG="$EDGE_IMAGE",_DOCKERFILE="nginx/Dockerfile",_CONTEXT="nginx"
 
 cd "$TERRAFORM_DIR"
 STAGE="stage2"
@@ -351,5 +347,5 @@ retry 2 8 terraform apply -auto-approve
 
 STAGE="done"
 log INFO "Provisioning complete" "stage=$STAGE"
-log INFO "Service URLs" "company_a_url=$(terraform output -raw company_a_url 2>/dev/null || true)" "company_b_url=$(terraform output -raw company_b_url 2>/dev/null || true)" "attendance_url=$(terraform output -raw attendance_url 2>/dev/null || true)" "edge_gateway_url=$(terraform output -raw edge_gateway_url 2>/dev/null || true)"
+log INFO "Service URLs" "company_a_url=$(terraform output -raw company_a_url 2>/dev/null || true)" "company_b_url=$(terraform output -raw company_b_url 2>/dev/null || true)" "attendance_url=$(terraform output -raw attendance_url 2>/dev/null || true)"
 terraform output

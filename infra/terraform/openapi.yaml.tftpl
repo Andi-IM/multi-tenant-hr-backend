@@ -7,39 +7,106 @@ schemes:
 produces:
   - "application/json"
 x-google-allow: all
-x-google-backend:
-  address: "${edge_gateway_url}"
-  path_translation: "APPEND_PATH_TO_ADDRESS"
+
 paths:
   /:
     get:
       operationId: "root"
+      x-google-backend:
+        address: "${company_a_url}"
       responses:
         "200":
           description: "OK"
-  "/{relPath+:path}":
+
+  # Company A Routing
+  /company-a/{relPath+}:
     get:
-      operationId: "wildcard_get"
+      operationId: "company_a_get"
       responses:
         "200":
           description: "OK"
     post:
-      operationId: "wildcard_post"
+      operationId: "company_a_post"
       responses:
         "200":
           description: "OK"
     put:
-      operationId: "wildcard_put"
+      operationId: "company_a_put"
       responses:
         "200":
           description: "OK"
     delete:
-      operationId: "wildcard_delete"
+      operationId: "company_a_delete"
       responses:
         "200":
           description: "OK"
     patch:
-      operationId: "wildcard_patch"
+      operationId: "company_a_patch"
       responses:
         "200":
           description: "OK"
+    x-google-backend:
+      address: "${company_a_url}"
+      path_translation: APPEND_PATH_TO_ADDRESS
+
+  # Company B Routing
+  /company-b/{relPath+}:
+    get:
+      operationId: "company_b_get"
+      responses:
+        "200":
+          description: "OK"
+    post:
+      operationId: "company_b_post"
+      responses:
+        "200":
+          description: "OK"
+    put:
+      operationId: "company_b_put"
+      responses:
+        "200":
+          description: "OK"
+    delete:
+      operationId: "company_b_delete"
+      responses:
+        "200":
+          description: "OK"
+    patch:
+      operationId: "company_b_patch"
+      responses:
+        "200":
+          description: "OK"
+    x-google-backend:
+      address: "${company_b_url}"
+      path_translation: APPEND_PATH_TO_ADDRESS
+
+  # Attendance Routing
+  /attendance/{relPath+}:
+    get:
+      operationId: "attendance_get"
+      responses:
+        "200":
+          description: "OK"
+    post:
+      operationId: "attendance_post"
+      responses:
+        "200":
+          description: "OK"
+    put:
+      operationId: "attendance_put"
+      responses:
+        "200":
+          description: "OK"
+    delete:
+      operationId: "attendance_delete"
+      responses:
+        "200":
+          description: "OK"
+    patch:
+      operationId: "attendance_patch"
+      responses:
+        "200":
+          description: "OK"
+    x-google-backend:
+      address: "${attendance_url}"
+      path_translation: APPEND_PATH_TO_ADDRESS

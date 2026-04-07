@@ -294,54 +294,7 @@ resource "google_cloud_run_v2_service" "attendance" {
   ]
 }
 
-resource "google_cloud_run_v2_service" "edge_gateway" {
-  provider            = google-beta
-  project             = var.project_id
-  name                = "edge-gateway"
-  location            = var.region
-  deletion_protection = false
-
-  ingress = "INGRESS_TRAFFIC_ALL"
-
-  template {
-    scaling {
-      min_instance_count = var.cloud_run_min_instances
-      max_instance_count = var.cloud_run_max_instances
-    }
-
-    containers {
-      image = local.edge_gateway_image
-
-      ports {
-        container_port = 8080
-      }
-
-      env {
-        name  = "TZ"
-        value = var.timezone
-      }
-
-      env {
-        name  = "COMPANY_A_URL"
-        value = google_cloud_run_v2_service.company_a.uri
-      }
-
-      env {
-        name  = "COMPANY_B_URL"
-        value = google_cloud_run_v2_service.company_b.uri
-      }
-
-      env {
-        name  = "ATTENDANCE_URL"
-        value = google_cloud_run_v2_service.attendance.uri
-      }
-    }
-  }
-
-  depends_on = [
-    google_project_service.required,
-  ]
-}
+# edge_gateway service removed (direct routing enabled)
 
 resource "google_cloud_run_v2_service_iam_member" "public_company_a" {
   provider = google-beta
@@ -370,14 +323,7 @@ resource "google_cloud_run_v2_service_iam_member" "public_attendance" {
   member   = "allUsers"
 }
 
-resource "google_cloud_run_v2_service_iam_member" "public_edge_gateway" {
-  provider = google-beta
-  project  = var.project_id
-  location = var.region
-  name     = google_cloud_run_v2_service.edge_gateway.name
-  role     = "roles/run.invoker"
-  member   = "allUsers"
-}
+# public_edge_gateway IAM removed
 
 resource "google_api_gateway_api" "api" {
   provider  = google-beta
@@ -387,21 +333,31 @@ resource "google_api_gateway_api" "api" {
 }
 
 resource "google_api_gateway_api_config" "api_cfg" {
-  provider      = google-beta
-  project       = var.project_id
-  api           = google_api_gateway_api.api.api_id
-  api_config_id = "v1"
+  provider             = google-beta
+  project              = var.project_id
+  api                  = google_api_gateway_api.api.api_id
+  api_config_id_prefix = "v1-"
 
   openapi_documents {
     document {
       path     = "openapi.yaml"
-      contents = base64encode(templatefile("${path.module}/openapi.yaml.tftpl", { edge_gateway_url = google_cloud_run_v2_service.edge_gateway.uri }))
+      contents = base64encode(templatefile("${path.module}/openapi.yaml.tftpl", { 
+        company_a_url  = google_cloud_run_v2_service.company_a.uri,
+        company_b_url  = google_cloud_run_v2_service.company_b.uri,
+        attendance_url = google_cloud_run_v2_service.attendance.uri
+      }))
     }
+  }
+
+  lifecycle {
+    create_before_destroy = true
   }
 
   depends_on = [
     google_project_service.required,
-    google_cloud_run_v2_service.edge_gateway,
+    google_cloud_run_v2_service.company_a,
+    google_cloud_run_v2_service.company_b,
+    google_cloud_run_v2_service.attendance,
   ]
 }
 

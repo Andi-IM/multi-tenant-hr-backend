@@ -14,9 +14,7 @@ output "attendance_url" {
   value = google_cloud_run_v2_service.attendance.uri
 }
 
-output "edge_gateway_url" {
-  value = google_cloud_run_v2_service.edge_gateway.uri
-}
+# edge_gateway_url output removed
 
 output "api_gateway_hostname" {
   value = google_api_gateway_gateway.gateway.default_hostname
