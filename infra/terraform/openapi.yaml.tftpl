@@ -7,7 +7,7 @@ schemes:
 produces:
   - "application/json"
 
-# YAML Anchors to reduce repetition and avoid x_google_backend errors
+# YAML Anchors for cleaner backend definitions
 x-company-a-backend: &company-a-backend
   address: "${company_a_url}"
   path_translation: APPEND_PATH_TO_ADDRESS
@@ -30,8 +30,8 @@ paths:
         "200":
           description: "OK"
 
-  # Company A Routing
-  /company-a/{relPath+}:
+  # Company A Routing - Using official Google wildcard syntax {var=**}
+  /company-a/{relPath=**}:
     get:
       operationId: "company_a_get"
       x-google-backend: *company-a-backend
@@ -63,8 +63,8 @@ paths:
         "200":
           description: "OK"
 
-  # Company B Routing
-  /company-b/{relPath+}:
+  # Company B Routing - Using official Google wildcard syntax {var=**}
+  /company-b/{relPath=**}:
     get:
       operationId: "company_b_get"
       x-google-backend: *company-b-backend
@@ -96,8 +96,8 @@ paths:
         "200":
           description: "OK"
 
-  # Attendance Routing
-  /attendance/{relPath+}:
+  # Attendance Routing - Using official Google wildcard syntax {var=**}
+  /attendance/{relPath=**}:
     get:
       operationId: "attendance_get"
       x-google-backend: *attendance-backend
