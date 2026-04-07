@@ -17,3 +17,29 @@ paths:
       responses:
         "200":
           description: "OK"
+  "/{relPath+:path}":
+    get:
+      operationId: "wildcard_get"
+      responses:
+        "200":
+          description: "OK"
+    post:
+      operationId: "wildcard_post"
+      responses:
+        "200":
+          description: "OK"
+    put:
+      operationId: "wildcard_put"
+      responses:
+        "200":
+          description: "OK"
+    delete:
+      operationId: "wildcard_delete"
+      responses:
+        "200":
+          description: "OK"
+    patch:
+      operationId: "wildcard_patch"
+      responses:
+        "200":
+          description: "OK"
