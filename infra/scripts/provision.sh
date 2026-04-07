@@ -223,6 +223,13 @@ add_imported_addr "google_artifact_registry_repository.docker"
 add_imported_addr "google_artifact_registry_repository_iam_member.docker_writer"
 add_imported_addr "google_secret_manager_secret_iam_member.runtime_can_read_jwt"
 add_imported_addr "google_secret_manager_secret_iam_member.runtime_can_read_refresh"
+add_imported_addr "google_cloud_run_v2_service.company_a"
+add_imported_addr "google_cloud_run_v2_service.company_b"
+add_imported_addr "google_cloud_run_v2_service.attendance"
+add_imported_addr "google_cloud_run_v2_service.edge_gateway"
+add_imported_addr "google_api_gateway_api.api"
+add_imported_addr "google_compute_instance.mongodb"
+add_imported_addr "google_compute_firewall.allow_mongodb_internal"
 
 log INFO "Importing pre-existing resources into Terraform state" "stage=$STAGE"
 terraform import google_service_account.cloud_run_runtime "projects/$PROJECT_ID/serviceAccounts/mthrb-cloudrun-runtime@$PROJECT_ID.iam.gserviceaccount.com" 2>/dev/null || true
@@ -234,6 +241,19 @@ terraform import google_artifact_registry_repository_iam_member.docker_writer "p
 
 terraform import google_secret_manager_secret_iam_member.runtime_can_read_jwt "projects/$PROJECT_ID/secrets/mthrb-jwt-secret/roles/secretmanager.secretAccessor/serviceAccount:mthrb-cloudrun-runtime@$PROJECT_ID.iam.gserviceaccount.com" 2>/dev/null || true
 terraform import google_secret_manager_secret_iam_member.runtime_can_read_refresh "projects/$PROJECT_ID/secrets/mthrb-refresh-token-secret/roles/secretmanager.secretAccessor/serviceAccount:mthrb-cloudrun-runtime@$PROJECT_ID.iam.gserviceaccount.com" 2>/dev/null || true
+
+# Import Cloud Run services
+terraform import google_cloud_run_v2_service.company_a "projects/$PROJECT_ID/locations/$REGION/services/company-a" 2>/dev/null || true
+terraform import google_cloud_run_v2_service.company_b "projects/$PROJECT_ID/locations/$REGION/services/company-b" 2>/dev/null || true
+terraform import google_cloud_run_v2_service.attendance "projects/$PROJECT_ID/locations/$REGION/services/attendance" 2>/dev/null || true
+terraform import google_cloud_run_v2_service.edge_gateway "projects/$PROJECT_ID/locations/$REGION/services/edge-gateway" 2>/dev/null || true
+
+# Import API Gateway
+terraform import google_api_gateway_api.api "projects/$PROJECT_ID/locations/global/apis/mthrb-api" 2>/dev/null || true
+
+# Import Compute resources
+terraform import google_compute_instance.mongodb "projects/$PROJECT_ID/zones/${REGION}-a/instances/mongodb-instance" 2>/dev/null || true
+terraform import google_compute_firewall.allow_mongodb_internal "projects/$PROJECT_ID/global/firewalls/allow-mongodb-internal" 2>/dev/null || true
 
 capture_state_baseline
 
