@@ -8,7 +8,15 @@ http {
     # The RESOLVER_IP is determined in entrypoint.sh based on the environment
     resolver ${RESOLVER_IP} valid=30s;
 
+    # Dynamic OIDC token from environment (if provided)
+    # This ensures local dev doesn't send broken auth headers
+    map "${OIDC_TOKEN}" $oidc_header {
+        default "Bearer ${OIDC_TOKEN}";
+        "" "";
+    }
+
     server {
+
         # Using variable for port to handle Docker vs Cloud Run
         listen ${PORT};
 
@@ -24,8 +32,10 @@ http {
             
             rewrite ^/company-a/(.*)$ /$1 break;
             
-            # Use target service hostname for Host header
-            proxy_set_header Host $http_host;
+            # Use target service hostname for Host header and SNI
+            proxy_ssl_server_name on;
+            proxy_set_header Host $proxy_host;
+            proxy_set_header Authorization $oidc_header;
             proxy_pass $target_service_url/;
         }
 
@@ -35,7 +45,9 @@ http {
             
             rewrite ^/company-b/(.*)$ /$1 break;
             
-            proxy_set_header Host $http_host;
+            proxy_ssl_server_name on;
+            proxy_set_header Host $proxy_host;
+            proxy_set_header Authorization $oidc_header;
             proxy_pass $target_service_url/;
         }
 
@@ -45,8 +57,12 @@ http {
             
             rewrite ^/attendance/(.*)$ /$1 break;
             
-            proxy_set_header Host $http_host;
+            proxy_ssl_server_name on;
+            proxy_set_header Host $proxy_host;
+            proxy_set_header Authorization $oidc_header;
             proxy_pass $target_service_url/;
         }
+
+
     }
 }
