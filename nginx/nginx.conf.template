@@ -3,15 +3,10 @@ events {
 }
 
 http {
-    # Simple proxy without OIDC (auth.js returns empty anyway)
-    # For GCP production, integrate with Identity-Aware Proxy separately
+    # Simple proxy without OIDC
 
-    # Determine environment - check if using internal .a.run.internal URL
-    # If so, use Google DNS. Otherwise, use Docker DNS (127.0.0.11)
-    map $COMPANY_A_SERVICE_URL $resolver {
-        default "127.0.0.11";
-        "~.*\\.a\\.run\\.internal" "8.8.8.8";
-    }
+    # The RESOLVER_IP is determined in entrypoint.sh based on the environment
+    resolver ${RESOLVER_IP} valid=30s;
 
     server {
         # Using variable for port to handle Docker vs Cloud Run
@@ -27,8 +22,6 @@ http {
         location /company-a/ {
             set $target_service_url "${COMPANY_A_SERVICE_URL}";
             
-            resolver $resolver valid=30s;
-            
             rewrite ^/company-a/(.*)$ /$1 break;
             
             # Use target service hostname for Host header
@@ -39,7 +32,6 @@ http {
         # Company B Proxy
         location /company-b/ {
             set $target_service_url "${COMPANY_B_SERVICE_URL}";
-            resolver $resolver valid=30s;
             
             rewrite ^/company-b/(.*)$ /$1 break;
             
@@ -50,7 +42,6 @@ http {
         # Attendance Proxy
         location /attendance/ {
             set $target_service_url "${ATTENDANCE_SERVICE_URL}";
-            resolver $resolver valid=30s;
             
             rewrite ^/attendance/(.*)$ /$1 break;
             
