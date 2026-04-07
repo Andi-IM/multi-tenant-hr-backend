@@ -302,19 +302,15 @@ STAGE="images"
 log INFO "Building & pushing Docker images" "stage=$STAGE"
 cd "$SCRIPT_DIR/../../"
 
-retry 3 3 gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+# retry 3 3 gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet # No longer needed for Cloud Build
 
 COMPANY_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY_ID}/company-service:latest"
 ATTENDANCE_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY_ID}/attendance:latest"
 EDGE_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY_ID}/edge-gateway:latest"
 
-run "Building company-service image" docker build -f services/company-service/Dockerfile -t "$COMPANY_IMAGE" .
-run "Building attendance image" docker build -f services/attendance/Dockerfile -t "$ATTENDANCE_IMAGE" .
-run "Building edge-gateway image" docker build -f nginx/Dockerfile -t "$EDGE_IMAGE" ./nginx
-
-retry 3 5 docker push "$COMPANY_IMAGE"
-retry 3 5 docker push "$ATTENDANCE_IMAGE"
-retry 3 5 docker push "$EDGE_IMAGE"
+run "Building & Pushing company-service image" retry 3 5 gcloud builds submit --tag "$COMPANY_IMAGE" --dockerfile services/company-service/Dockerfile . 
+run "Building & Pushing attendance image" retry 3 5 gcloud builds submit --tag "$ATTENDANCE_IMAGE" --dockerfile services/attendance/Dockerfile . 
+run "Building & Pushing edge-gateway image" retry 3 5 gcloud builds submit --tag "$EDGE_IMAGE" --dockerfile nginx/Dockerfile ./nginx
 
 cd "$TERRAFORM_DIR"
 STAGE="stage2"
