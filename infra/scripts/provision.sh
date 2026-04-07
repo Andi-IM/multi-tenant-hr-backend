@@ -319,9 +319,9 @@ COMPANY_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY_ID}/company-s
 ATTENDANCE_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY_ID}/attendance:latest"
 EDGE_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY_ID}/edge-gateway:latest"
 
-run "Building & Pushing company-service image" retry 3 5 gcloud builds submit --tag "$COMPANY_IMAGE" --dockerfile services/company-service/Dockerfile . 
-run "Building & Pushing attendance image" retry 3 5 gcloud builds submit --tag "$ATTENDANCE_IMAGE" --dockerfile services/attendance/Dockerfile . 
-run "Building & Pushing edge-gateway image" retry 3 5 gcloud builds submit --tag "$EDGE_IMAGE" --dockerfile nginx/Dockerfile ./nginx
+run "Building & Pushing company-service image" retry 3 5 gcloud builds submit . --config cloudbuild.yaml --substitutions=_TAG="$COMPANY_IMAGE",_DOCKERFILE="services/company-service/Dockerfile",_CONTEXT="."
+run "Building & Pushing attendance image" retry 3 5 gcloud builds submit . --config cloudbuild.yaml --substitutions=_TAG="$ATTENDANCE_IMAGE",_DOCKERFILE="services/attendance/Dockerfile",_CONTEXT="."
+run "Building & Pushing edge-gateway image" retry 3 5 gcloud builds submit . --config cloudbuild.yaml --substitutions=_TAG="$EDGE_IMAGE",_DOCKERFILE="nginx/Dockerfile",_CONTEXT="nginx"
 
 cd "$TERRAFORM_DIR"
 STAGE="stage2"
