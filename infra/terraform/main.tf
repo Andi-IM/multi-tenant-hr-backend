@@ -67,6 +67,14 @@ resource "google_service_account" "cloud_run_runtime" {
   depends_on = [google_project_service.required]
 }
 
+resource "google_service_account" "edge_gateway" {
+  project      = var.project_id
+  account_id   = "mthrb-edge-gateway"
+  display_name = "MTHRB Edge Gateway Service Account"
+
+  depends_on = [google_project_service.required]
+}
+
 resource "google_secret_manager_secret_iam_member" "runtime_can_read_jwt" {
   project   = var.project_id
   secret_id = google_secret_manager_secret.jwt_secret.secret_id
@@ -88,7 +96,7 @@ resource "google_cloud_run_v2_service" "company_a" {
   location              = var.region
   deletion_protection   = false
 
-  ingress = "INGRESS_TRAFFIC_ALL"
+  ingress = "INGRESS_TRAFFIC_INTERNAL_ONLY"
 
   template {
     service_account = google_service_account.cloud_run_runtime.email
@@ -161,7 +169,7 @@ resource "google_cloud_run_v2_service" "company_b" {
   location            = var.region
   deletion_protection = false
 
-  ingress = "INGRESS_TRAFFIC_ALL"
+  ingress = "INGRESS_TRAFFIC_INTERNAL_ONLY"
 
   template {
     service_account = google_service_account.cloud_run_runtime.email
@@ -234,7 +242,7 @@ resource "google_cloud_run_v2_service" "attendance" {
   location            = var.region
   deletion_protection = false
 
-  ingress = "INGRESS_TRAFFIC_ALL"
+  ingress = "INGRESS_TRAFFIC_INTERNAL_ONLY"
 
   template {
     service_account = google_service_account.cloud_run_runtime.email
@@ -294,63 +302,45 @@ resource "google_cloud_run_v2_service" "attendance" {
   ]
 }
 
-# edge_gateway service removed (direct routing enabled)
+resource "google_cloud_run_v2_service" "edge_gateway" {
+  provider            = google-beta
+  project             = var.project_id
+  name                = "edge-gateway"
+  location            = var.region
+  deletion_protection = false
 
-resource "google_cloud_run_v2_service_iam_member" "public_company_a" {
-  provider = google-beta
-  project  = var.project_id
-  location = var.region
-  name     = google_cloud_run_v2_service.company_a.name
-  role     = "roles/run.invoker"
-  member   = "allUsers"
-}
+  ingress = "INGRESS_TRAFFIC_ALL"
 
-resource "google_cloud_run_v2_service_iam_member" "public_company_b" {
-  provider = google-beta
-  project  = var.project_id
-  location = var.region
-  name     = google_cloud_run_v2_service.company_b.name
-  role     = "roles/run.invoker"
-  member   = "allUsers"
-}
+  template {
+    service_account = google_service_account.edge_gateway.email
 
-resource "google_cloud_run_v2_service_iam_member" "public_attendance" {
-  provider = google-beta
-  project  = var.project_id
-  location = var.region
-  name     = google_cloud_run_v2_service.attendance.name
-  role     = "roles/run.invoker"
-  member   = "allUsers"
-}
+    containers {
+      image = local.edge_gateway_image
 
-# public_edge_gateway IAM removed
+      ports {
+        container_port = 8080
+      }
 
-resource "google_api_gateway_api" "api" {
-  provider  = google-beta
-  project   = var.project_id
-  api_id    = "mthrb-api"
-  depends_on = [google_project_service.required]
-}
+      env {
+        name  = "PORT"
+        value = "8080"
+      }
 
-resource "google_api_gateway_api_config" "api_cfg" {
-  provider             = google-beta
-  project              = var.project_id
-  api                  = google_api_gateway_api.api.api_id
-  api_config_id_prefix = "v1-"
+      env {
+        name  = "COMPANY_A_SERVICE_URL"
+        value = google_cloud_run_v2_service.company_a.uri
+      }
 
-  openapi_documents {
-    document {
-      path     = "openapi.yaml"
-      contents = base64encode(templatefile("${path.module}/openapi.yaml.tftpl", { 
-        company_a_url  = google_cloud_run_v2_service.company_a.uri,
-        company_b_url  = google_cloud_run_v2_service.company_b.uri,
-        attendance_url = google_cloud_run_v2_service.attendance.uri
-      }))
+      env {
+        name  = "COMPANY_B_SERVICE_URL"
+        value = google_cloud_run_v2_service.company_b.uri
+      }
+
+      env {
+        name  = "ATTENDANCE_SERVICE_URL"
+        value = google_cloud_run_v2_service.attendance.uri
+      }
     }
-  }
-
-  lifecycle {
-    create_before_destroy = true
   }
 
   depends_on = [
@@ -361,16 +351,39 @@ resource "google_api_gateway_api_config" "api_cfg" {
   ]
 }
 
-resource "google_api_gateway_gateway" "gateway" {
-  provider   = google-beta
-  project    = var.project_id
-  gateway_id = "mthrb-gateway"
-  region     = var.region
-
-  api_config = google_api_gateway_api_config.api_cfg.id
-
-  depends_on = [
-    google_project_service.required,
-    google_api_gateway_api_config.api_cfg,
-  ]
+resource "google_cloud_run_v2_service_iam_member" "public_edge_gateway" {
+  provider = google-beta
+  project  = var.project_id
+  location = var.region
+  name     = google_cloud_run_v2_service.edge_gateway.name
+  role     = "roles/run.invoker"
+  member   = "allUsers"
 }
+
+resource "google_cloud_run_v2_service_iam_member" "gateway_invokes_company_a" {
+  provider = google-beta
+  project  = var.project_id
+  location = var.region
+  name     = google_cloud_run_v2_service.company_a.name
+  role     = "roles/run.invoker"
+  member   = "serviceAccount:${google_service_account.edge_gateway.email}"
+}
+
+resource "google_cloud_run_v2_service_iam_member" "gateway_invokes_company_b" {
+  provider = google-beta
+  project  = var.project_id
+  location = var.region
+  name     = google_cloud_run_v2_service.company_b.name
+  role     = "roles/run.invoker"
+  member   = "serviceAccount:${google_service_account.edge_gateway.email}"
+}
+
+resource "google_cloud_run_v2_service_iam_member" "gateway_invokes_attendance" {
+  provider = google-beta
+  project  = var.project_id
+  location = var.region
+  name     = google_cloud_run_v2_service.attendance.name
+  role     = "roles/run.invoker"
+  member   = "serviceAccount:${google_service_account.edge_gateway.email}"
+}
+

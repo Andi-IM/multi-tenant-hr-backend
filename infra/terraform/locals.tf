@@ -5,7 +5,7 @@ locals {
   # Image URLs using the 'latest' tag by default
   company_service_image    = "${local.repository_url}/company-service:latest"
   attendance_service_image = "${local.repository_url}/attendance:latest"
-  # edge_gateway_image removed
+  edge_gateway_image       = "${local.repository_url}/edge-gateway:latest"
 
   # MongoDB URI using the internal IP of the GCE instance (we'll define this later)
   # This avoids manual entry of DB strings.
