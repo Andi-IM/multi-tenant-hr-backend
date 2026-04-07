@@ -169,21 +169,32 @@ require_file "$TERRAFORM_DIR/versions.tf"
 require_file "$TERRAFORM_DIR/main.tf"
 require_file "$TERRAFORM_DIR/terraform.tfvars"
 
-PROJECT_ID=$(terraform output -raw project_id 2>/dev/null || grep 'project_id' terraform.tfvars | cut -d'"' -f2)
-REGION=$(terraform output -raw region 2>/dev/null || grep 'region' terraform.tfvars | cut -d'"' -f2)
-REPOSITORY_ID=$(terraform output -raw artifact_registry_repository_id 2>/dev/null || grep 'artifact_registry_repository_id' terraform.tfvars | cut -d'"' -f2)
-OWNER_EMAIL=$(terraform output -raw owner_email 2>/dev/null || grep 'owner_email' terraform.tfvars | cut -d'"' -f2)
+extract_tfvar() {
+  local key="$1"
+  grep "^[[:space:]]*${key}[[:space:]]*=" terraform.tfvars | cut -d'=' -f2 | tr -d '"[:space:]'
+}
 
-if [ -z "$PROJECT_ID" ]; then
-  die "PROJECT_ID not found. Please ensure terraform.tfvars is configured." "file=$TERRAFORM_DIR/terraform.tfvars"
+PROJECT_ID=$(extract_tfvar "project_id")
+REGION=$(extract_tfvar "region")
+REPOSITORY_ID=$(extract_tfvar "artifact_registry_repository_id")
+OWNER_EMAIL=$(extract_tfvar "owner_email")
+
+# Fallback to terraform output if tfvars didn't have them (though they should)
+[ -z "$PROJECT_ID" ] && PROJECT_ID=$(terraform output -raw project_id 2>/dev/null || true)
+[ -z "$REGION" ] && REGION=$(terraform output -raw region 2>/dev/null || true)
+[ -z "$REPOSITORY_ID" ] && REPOSITORY_ID=$(terraform output -raw artifact_registry_repository_id 2>/dev/null || true)
+[ -z "$OWNER_EMAIL" ] && OWNER_EMAIL=$(terraform output -raw owner_email 2>/dev/null || true)
+
+if [ -z "$PROJECT_ID" ] || [[ "$PROJECT_ID" == *"Warning:"* ]]; then
+  die "PROJECT_ID not found or invalid. Please ensure terraform.tfvars is configured." "file=$TERRAFORM_DIR/terraform.tfvars"
 fi
-if [ -z "${REGION:-}" ]; then
+if [ -z "${REGION:-}" ] || [[ "$REGION" == *"Warning:"* ]]; then
   REGION="us-central1"
 fi
-if [ -z "${REPOSITORY_ID:-}" ]; then
+if [ -z "${REPOSITORY_ID:-}" ] || [[ "$REPOSITORY_ID" == *"Warning:"* ]]; then
   REPOSITORY_ID="mthrb-repo"
 fi
-if [ -z "${OWNER_EMAIL:-}" ]; then
+if [ -z "${OWNER_EMAIL:-}" ] || [[ "$OWNER_EMAIL" == *"Warning:"* ]]; then
   die "owner_email not found. Please ensure terraform.tfvars is configured." "file=$TERRAFORM_DIR/terraform.tfvars"
 fi
 
