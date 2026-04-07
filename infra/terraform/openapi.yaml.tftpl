@@ -7,25 +7,13 @@ schemes:
 produces:
   - "application/json"
 
-# Common parameter for nested wildcards to satisfy ESPv2's protobuf mapping requirements
-x-relpath-param: &relpath-param
-  name: "relPath"
-  in: "path"
-  required: true
-  type: "string"
-
-# YAML Anchors for cleaner backend definitions
-x-company-a-backend: &company-a-backend
-  address: "${company_a_url}"
-  path_translation: APPEND_PATH_TO_ADDRESS
-
-x-company-b-backend: &company-b-backend
-  address: "${company_b_url}"
-  path_translation: APPEND_PATH_TO_ADDRESS
-
-x-attendance-backend: &attendance-backend
-  address: "${attendance_url}"
-  path_translation: APPEND_PATH_TO_ADDRESS
+# Standard OpenAPI Parameter Definition
+parameters:
+  relPath:
+    name: "relPath"
+    in: "path"
+    required: true
+    type: "string"
 
 paths:
   /:
@@ -42,40 +30,50 @@ paths:
     get:
       operationId: "company_a_get"
       parameters:
-        - *relpath-param
-      x-google-backend: *company-a-backend
+        - $ref: "#/parameters/relPath"
+      x-google-backend:
+        address: "${company_a_url}"
+        path_translation: APPEND_PATH_TO_ADDRESS
       responses:
         "200":
           description: "OK"
     post:
       operationId: "company_a_post"
       parameters:
-        - *relpath-param
-      x-google-backend: *company-a-backend
+        - $ref: "#/parameters/relPath"
+      x-google-backend:
+        address: "${company_a_url}"
+        path_translation: APPEND_PATH_TO_ADDRESS
       responses:
         "200":
           description: "OK"
     put:
       operationId: "company_a_put"
       parameters:
-        - *relpath-param
-      x-google-backend: *company-a-backend
+        - $ref: "#/parameters/relPath"
+      x-google-backend:
+        address: "${company_a_url}"
+        path_translation: APPEND_PATH_TO_ADDRESS
       responses:
         "200":
           description: "OK"
     delete:
       operationId: "company_a_delete"
       parameters:
-        - *relpath-param
-      x-google-backend: *company-a-backend
+        - $ref: "#/parameters/relPath"
+      x-google-backend:
+        address: "${company_a_url}"
+        path_translation: APPEND_PATH_TO_ADDRESS
       responses:
         "200":
           description: "OK"
     patch:
       operationId: "company_a_patch"
       parameters:
-        - *relpath-param
-      x-google-backend: *company-a-backend
+        - $ref: "#/parameters/relPath"
+      x-google-backend:
+        address: "${company_a_url}"
+        path_translation: APPEND_PATH_TO_ADDRESS
       responses:
         "200":
           description: "OK"
@@ -85,40 +83,50 @@ paths:
     get:
       operationId: "company_b_get"
       parameters:
-        - *relpath-param
-      x-google-backend: *company-b-backend
+        - $ref: "#/parameters/relPath"
+      x-google-backend:
+        address: "${company_b_url}"
+        path_translation: APPEND_PATH_TO_ADDRESS
       responses:
         "200":
           description: "OK"
     post:
       operationId: "company_b_post"
       parameters:
-        - *relpath-param
-      x-google-backend: *company-b-backend
+        - $ref: "#/parameters/relPath"
+      x-google-backend:
+        address: "${company_b_url}"
+        path_translation: APPEND_PATH_TO_ADDRESS
       responses:
         "200":
           description: "OK"
     put:
       operationId: "company_b_put"
       parameters:
-        - *relpath-param
-      x-google-backend: *company-b-backend
+        - $ref: "#/parameters/relPath"
+      x-google-backend:
+        address: "${company_b_url}"
+        path_translation: APPEND_PATH_TO_ADDRESS
       responses:
         "200":
           description: "OK"
     delete:
       operationId: "company_b_delete"
       parameters:
-        - *relpath-param
-      x-google-backend: *company-b-backend
+        - $ref: "#/parameters/relPath"
+      x-google-backend:
+        address: "${company_b_url}"
+        path_translation: APPEND_PATH_TO_ADDRESS
       responses:
         "200":
           description: "OK"
     patch:
       operationId: "company_b_patch"
       parameters:
-        - *relpath-param
-      x-google-backend: *company-b-backend
+        - $ref: "#/parameters/relPath"
+      x-google-backend:
+        address: "${company_b_url}"
+        path_translation: APPEND_PATH_TO_ADDRESS
       responses:
         "200":
           description: "OK"
@@ -128,40 +136,50 @@ paths:
     get:
       operationId: "attendance_get"
       parameters:
-        - *relpath-param
-      x-google-backend: *attendance-backend
+        - $ref: "#/parameters/relPath"
+      x-google-backend:
+        address: "${attendance_url}"
+        path_translation: APPEND_PATH_TO_ADDRESS
       responses:
         "200":
           description: "OK"
     post:
       operationId: "attendance_post"
       parameters:
-        - *relpath-param
-      x-google-backend: *attendance-backend
+        - $ref: "#/parameters/relPath"
+      x-google-backend:
+        address: "${attendance_url}"
+        path_translation: APPEND_PATH_TO_ADDRESS
       responses:
         "200":
           description: "OK"
     put:
       operationId: "attendance_put"
       parameters:
-        - *relpath-param
-      x-google-backend: *attendance-backend
+        - $ref: "#/parameters/relPath"
+      x-google-backend:
+        address: "${attendance_url}"
+        path_translation: APPEND_PATH_TO_ADDRESS
       responses:
         "200":
           description: "OK"
     delete:
       operationId: "attendance_delete"
       parameters:
-        - *relpath-param
-      x-google-backend: *attendance-backend
+        - $ref: "#/parameters/relPath"
+      x-google-backend:
+        address: "${attendance_url}"
+        path_translation: APPEND_PATH_TO_ADDRESS
       responses:
         "200":
           description: "OK"
     patch:
       operationId: "attendance_patch"
       parameters:
-        - *relpath-param
-      x-google-backend: *attendance-backend
+        - $ref: "#/parameters/relPath"
+      x-google-backend:
+        address: "${attendance_url}"
+        path_translation: APPEND_PATH_TO_ADDRESS
       responses:
         "200":
           description: "OK"
