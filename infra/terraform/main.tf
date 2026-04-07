@@ -10,6 +10,7 @@ locals {
     "cloudresourcemanager.googleapis.com",
     "iam.googleapis.com",
     "cloudbuild.googleapis.com",
+    "vpcaccess.googleapis.com",
   ])
 }
 
@@ -101,6 +102,10 @@ resource "google_cloud_run_v2_service" "company_a" {
   template {
     service_account = google_service_account.cloud_run_runtime.email
 
+    vpc_access {
+      connector = google_vpc_access_connector.connector.id
+    }
+
     scaling {
       min_instance_count = var.cloud_run_min_instances
       max_instance_count = var.cloud_run_max_instances
@@ -173,6 +178,10 @@ resource "google_cloud_run_v2_service" "company_b" {
 
   template {
     service_account = google_service_account.cloud_run_runtime.email
+
+    vpc_access {
+      connector = google_vpc_access_connector.connector.id
+    }
 
     scaling {
       min_instance_count = var.cloud_run_min_instances
@@ -247,6 +256,10 @@ resource "google_cloud_run_v2_service" "attendance" {
   template {
     service_account = google_service_account.cloud_run_runtime.email
 
+    vpc_access {
+      connector = google_vpc_access_connector.connector.id
+    }
+
     scaling {
       min_instance_count = var.cloud_run_min_instances
       max_instance_count = var.cloud_run_max_instances
@@ -313,6 +326,10 @@ resource "google_cloud_run_v2_service" "edge_gateway" {
 
   template {
     service_account = google_service_account.edge_gateway.email
+
+    vpc_access {
+      connector = google_vpc_access_connector.connector.id
+    }
 
     containers {
       image = local.edge_gateway_image
