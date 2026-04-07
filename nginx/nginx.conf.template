@@ -1,16 +1,10 @@
-# Load njs module
-load_module modules/ngx_http_js_module.so;
-
 events {
     worker_connections 1024;
 }
 
 http {
-    # Import OIDC auth script
-    js_import auth from auth.js;
-    
-    # Define variable for the OIDC token
-    js_set $oidc_token auth.get_token;
+    # Simple proxy without OIDC (auth.js returns empty anyway)
+    # For GCP production, integrate with Identity-Aware Proxy separately
 
     server {
         # Using variable for port to handle Docker vs Cloud Run
@@ -24,7 +18,6 @@ http {
 
         # Company A Proxy
         location /company-a/ {
-            # We must set this variable for js_set in auth.js to see it
             set $target_service_url "${COMPANY_A_SERVICE_URL}";
             
             # Fix "no resolver defined" by providing Docker/GCP resolver
@@ -32,7 +25,6 @@ http {
             
             rewrite ^/company-a/(.*)$ /$1 break;
             
-            proxy_set_header Authorization "Bearer $oidc_token";
             proxy_set_header Host $proxy_host;
             proxy_pass $target_service_url;
         }
@@ -44,7 +36,6 @@ http {
             
             rewrite ^/company-b/(.*)$ /$1 break;
             
-            proxy_set_header Authorization "Bearer $oidc_token";
             proxy_set_header Host $proxy_host;
             proxy_pass $target_service_url;
         }
@@ -56,7 +47,6 @@ http {
             
             rewrite ^/attendance/(.*)$ /$1 break;
             
-            proxy_set_header Authorization "Bearer $oidc_token";
             proxy_set_header Host $proxy_host;
             proxy_pass $target_service_url;
         }

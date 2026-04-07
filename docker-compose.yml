@@ -122,9 +122,9 @@ services:
     environment:
       - TZ=Asia/Jakarta
       - PORT=80
-      - COMPANY_A_URL=http://company-a:3001
-      - COMPANY_B_URL=http://company-b:3002
-      - ATTENDANCE_URL=http://attendance:3003
+      - COMPANY_A_SERVICE_URL=http://company-a:3001
+      - COMPANY_B_SERVICE_URL=http://company-b:3002
+      - ATTENDANCE_SERVICE_URL=http://attendance:3003
     volumes:
       - /etc/localtime:/etc/localtime:ro
 

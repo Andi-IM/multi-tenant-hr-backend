@@ -1,12 +1,11 @@
 #!/bin/sh
 set -e
 
-# Default values for local development (Docker Compose)
-# Mapping old variable names to new ones for compatibility
-: "${COMPANY_A_SERVICE_URL:=${COMPANY_A_URL:-http://company-a:3001}}"
-: "${COMPANY_B_SERVICE_URL:=${COMPANY_B_URL:-http://company-b:3002}}"
-: "${ATTENDANCE_SERVICE_URL:=${ATTENDANCE_URL:-http://attendance:3003}}"
-: "${PORT:=80}"
+# Default values for GCP Cloud Run (uses port 8080)
+: "${PORT:=8080}"
+: "${COMPANY_A_SERVICE_URL:=http://company-a:3001}"
+: "${COMPANY_B_SERVICE_URL:=http://company-b:3002}"
+: "${ATTENDANCE_SERVICE_URL:=http://attendance:3003}"
 
 export COMPANY_A_SERVICE_URL COMPANY_B_SERVICE_URL ATTENDANCE_SERVICE_URL PORT
 
